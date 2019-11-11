@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--  <!DOCTYPE schema SYSTEM "structure/pdgfSchema.dtd">-->
+
+<!--
+/*******************************************************************************
+ * Copyright (c) 2013, bankmark and/or its affiliates. All rights reserved.
+ * bankmark UG PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ ******************************************************************************/
+-->
+<schema name="demo"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:noNamespaceSchemaLocation="structure/pdgfSchema.xsd">
+
+	<!-- All data is derived from this starting seed.
+	If this seed is the same, the generated data will the same on each computer/node/platform.
+	Change this seed to generate a different data set.-->
+	<seed>1234567890</seed>
+
+	<rng name="PdgfDefaultRandom"/>
+
+	<!--Default Scale factor for all tables -->
+	<property name="SF" type="double">10</property>
+	<property name="Users" type="double">0.7 * ${SF}</property>
+	<property name="Posts" type="double">0.7 * ${SF}</property>
+	<property name="search" type="double">0.3 * ${SF}</property>
+	<!-- ============================== -->
+
+	<table name="Users">
+		<!-- if tables should scale with -SF command line argument. Specify your scaling formula here: -->
+		<size>${Users}</size>
+		<field name="username" type="VARCHAR" primary="true" unique="true">
+			<gen_FormatString>
+				<format>%s.%s</format>
+				<gen_DictList id="FamilyNameGen">
+					<file>dicts/Family-Names.dict</file>
+					<disableRng>true</disableRng>
+				</gen_DictList>
+				<gen_DictList id="FirstNameGen">
+					<file>dicts/Given-Names.dict</file>
+					<disableRng>true</disableRng>
+				</gen_DictList>
+        </gen_FormatString>
+		</field>
+		<field name="Passwort" type="VARCHAR">
+				<gen_RandomString>
+				<max>16</max>
+	        </gen_RandomString>
+		</field>
+	</table>
+
+	<table name="Posts">
+		<size>${Posts}</size>
+		<field name="title" type="VARCHAR">
+			<!-- Generiert mit  java7 -cp pdgf.jar pdgf.util.text.MarkovChainBuilder -n 4 LICENSE.txt dicts/markovExample/Food.bin 2538.-->
+			<gen_MarkovChainText>
+						<min>2</min><max>50</max>
+						<file>dicts/markovExample/Books_Literature_Fiction.bin</file>
+			</gen_MarkovChainText>
+		</field>
+		<field name="text" type="VARCHAR">
+			<!-- Generiert mit  java7 -cp pdgf.jar pdgf.util.text.MarkovChainBuilder -n 4 LICENSE.txt dicts/markovExample/Food.bin 2538.-->
+			<gen_MarkovChainText>
+						<min>10</min><max>2000</max>
+						<file>dicts/markovExample/Electronics_Camera_Photo.bin</file>
+			</gen_MarkovChainText>
+		</field>
+	</table>
+
+	<table name="Search">
+		<size>${search}</size>
+		<field name="Benutzer" type="VARCHAR">
+			<gen_ReferenceValue choose="random" from="historical" id='SearchGenerator1'>
+				<reference field="text" table="Posts"/>
+			</gen_ReferenceValue>
+		</field>
+	</table>
+
+</schema>
