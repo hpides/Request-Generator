@@ -1,4 +1,4 @@
-package deserialisation;
+package de.hpi.tdgt.deserialisation;
 
 
 
@@ -6,15 +6,14 @@ package deserialisation;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import test.story.activity.Activity;
-import test.story.activity.Data_Generation;
-import test.story.activity.Request;
+import de.hpi.tdgt.test.story.activity.Activity;
+import de.hpi.tdgt.test.story.activity.Data_Generation;
+import de.hpi.tdgt.test.story.activity.Request;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Vector;
 
-import static deserialisation.Utils.assertInstanceOf;
+import static de.hpi.tdgt.deserialisation.Utils.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

@@ -1,4 +1,4 @@
-package test.story.activity;
+package de.hpi.tdgt.test.story.activity;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

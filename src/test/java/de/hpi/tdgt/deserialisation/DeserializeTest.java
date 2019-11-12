@@ -1,15 +1,9 @@
-package deserialisation;
+package de.hpi.tdgt.deserialisation;
 
-import lombok.val;
-import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import test.story.activity.Data_Generation;
 
 import java.io.*;
-
-import static deserialisation.Utils.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.*;
 
 public class DeserializeTest {
     private String getExampleJSON() throws IOException {

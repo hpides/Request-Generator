@@ -1,9 +1,9 @@
-package test;
+package de.hpi.tdgt.test;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import test.story.UserStory;
+import de.hpi.tdgt.test.story.UserStory;
 @Getter
 @Setter
 @NoArgsConstructor

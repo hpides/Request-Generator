@@ -1,7 +1,7 @@
-package deserialisation;
+package de.hpi.tdgt.deserialisation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import test.Test;
+import de.hpi.tdgt.test.Test;
 
 import java.io.IOException;
 

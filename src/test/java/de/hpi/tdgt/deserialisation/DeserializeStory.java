@@ -1,4 +1,4 @@
-package deserialisation;
+package de.hpi.tdgt.deserialisation;
 
 
 
@@ -15,7 +15,7 @@ public class DeserializeStory {
         return new Utils().getExampleJSON();
     }
 
-    private test.Test deserializedTest;
+    private de.hpi.tdgt.test.Test deserializedTest;
 
     @BeforeEach
     public void prepareTest() throws IOException {

@@ -1,9 +1,9 @@
-package test.story;
+package de.hpi.tdgt.test.story;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import test.story.activity.Activity;
+import de.hpi.tdgt.test.story.activity.Activity;
 
 import java.util.Arrays;
 

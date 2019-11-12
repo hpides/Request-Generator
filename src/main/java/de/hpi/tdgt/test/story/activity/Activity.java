@@ -1,13 +1,11 @@
-package test.story.activity;
+package de.hpi.tdgt.test.story.activity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.*;
-import test.story.UserStory;
+import de.hpi.tdgt.test.story.UserStory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Vector;
 
