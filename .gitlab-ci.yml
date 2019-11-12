@@ -1,0 +1,5 @@
+image: "maven:3"
+
+test:
+  script:
+    - mvn test
