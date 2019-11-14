@@ -20,7 +20,8 @@ import java.util.Vector;
 //tell Jackson which subtypes are allowed
 @JsonSubTypes({
         @JsonSubTypes.Type(value = Request.class, name = "REQUEST"),
-        @JsonSubTypes.Type(value = Data_Generation.class, name = "DATA_GENERATION")
+        @JsonSubTypes.Type(value = Data_Generation.class, name = "DATA_GENERATION"),
+        @JsonSubTypes.Type(value = Delay.class, name = "DELAY"),
 })
 public abstract class Activity {
     private String name;

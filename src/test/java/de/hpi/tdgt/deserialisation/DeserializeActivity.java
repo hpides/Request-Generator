@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import de.hpi.tdgt.test.story.activity.Activity;
 import de.hpi.tdgt.test.story.activity.Data_Generation;
 import de.hpi.tdgt.test.story.activity.Request;
+import de.hpi.tdgt.test.story.activity.Delay;
 
 import java.io.IOException;
 import java.util.Vector;
@@ -25,18 +26,25 @@ public class DeserializeActivity {
 
     private Activity firstActivityOfFirstStory;
     private Activity secondActivityOfFirstStory;
+    private Activity sixthActivityOfFirstStory;
     private Activity secondActivityOfSecondStory;
 
     @BeforeEach
     public void prepareTest() throws IOException {
         firstActivityOfFirstStory = Deserializer.deserialize(getExampleJSON()).getStories()[0].getActivities()[0];
         secondActivityOfFirstStory = Deserializer.deserialize(getExampleJSON()).getStories()[0].getActivities()[1];
+        sixthActivityOfFirstStory = Deserializer.deserialize(getExampleJSON()).getStories()[0].getActivities()[5];
         secondActivityOfSecondStory = Deserializer.deserialize(getExampleJSON()).getStories()[1].getActivities()[1];
     }
 
     @Test
     public void firstActivityOfFirstStoryIsDataGeneration() {
         assertInstanceOf(firstActivityOfFirstStory, Data_Generation.class);
+    }
+
+    @Test
+    public void sixthActivityOfFirstStoryIsDelay() {
+        assertInstanceOf(sixthActivityOfFirstStory, Delay.class);
     }
 
     @Test

@@ -28,8 +28,8 @@ public class DeserializeStory {
     }
 
     @Test
-    public void firstStoryHasSixActivities() throws IOException {
-        assertEquals(deserializedTest.getStories()[0].getActivities().length, 6);
+    public void firstStoryHasSevenActivities() throws IOException {
+        assertEquals(deserializedTest.getStories()[0].getActivities().length, 7);
     }
 
     @Test

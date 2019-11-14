@@ -59,7 +59,7 @@
 					"id":3,
 					"repeat":1,
 					"successors":[ 
-						5
+						6
 					],
 					"type":"REQUEST",
 					"verb":"POST",
@@ -97,9 +97,19 @@
 
 					]
 				},
+				{
+					"name":"Warte 1 Sekunde",
+					"id":5,
+					"repeat":1,
+					"successors":[
+						6
+					],
+					"type":"DELAY",
+					"delayMs":1000
+				},
 				{ 
 					"name":"User löschen",
-					"id":5,
+					"id":6,
 					"repeat":1,
 					"successors":[ 
 
