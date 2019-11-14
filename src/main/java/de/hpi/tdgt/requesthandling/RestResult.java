@@ -18,18 +18,21 @@ import java.util.Map;
 @Setter
 @NoArgsConstructor
 public class RestResult {
+    //parameters for httpurlconnection
     private long startTime;
     private long endTime;
     private byte[] response;
     private String contentType;
     private Map<String, List<String>> headers;
     private int returnCode;
+    //check content encoding
     public boolean isPlainText(){
         return contentType.replaceAll("\\s+","").toLowerCase().startsWith(HttpConstants.CONTENT_TYPE_TEXT_PLAIN);
     }
     public boolean isJSON(){
         return contentType.replaceAll("\\s+","").toLowerCase().startsWith(HttpConstants.CONTENT_TYPE_APPLICATION_JSON);
     }
+    //use directly or deserialize
     @Override
     public String toString(){
         if(isPlainText() | isJSON()){
@@ -40,7 +43,7 @@ public class RestResult {
             return null;
         }
     }
-
+    //parse contenttype header
     private Charset getCharset() {
         val contentTypeHeader = contentType.toLowerCase().split(";charset=");
         if(contentTypeHeader.length == 2){
@@ -49,13 +52,14 @@ public class RestResult {
         return StandardCharsets.US_ASCII;
     }
     private final ObjectMapper mapper = new ObjectMapper();
+    //return JsonNode, because we do not know if it is array or object
     public JsonNode toJson() throws IOException {
         if(!isJSON()){
             return null;
         }
         return mapper.readTree(response);
     }
-
+    //calculate durations
     public long durationNanos(){
         return endTime - startTime;
     }

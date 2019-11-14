@@ -1,5 +1,8 @@
 package de.hpi.tdgt.requesthandling;
 
+/**
+ * Some HTTP constants for reuse.
+ */
 public class HttpConstants {
     //copied from jmeter
     public static String SC_MOVED_PERMANENTLY = "301";

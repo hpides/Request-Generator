@@ -18,230 +18,20 @@ import static org.hamcrest.Matchers.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestRequestHandling {
-    //Web server setup taken from https://www.codeproject.com/tips/1040097/create-a-simple-web-server-in-java-http-server
-    public static void parseQuery(String query, Map<String,
-            Object> parameters) throws UnsupportedEncodingException {
 
-        if (query != null) {
-            String pairs[] = query.split("[&]");
-            for (String pair : pairs) {
-                String param[] = pair.split("[=]");
-                String key = null;
-                String value = null;
-                if (param.length > 0) {
-                    key = URLDecoder.decode(param[0],
-                            System.getProperty("file.encoding"));
-                }
-
-                if (param.length > 1) {
-                    value = URLDecoder.decode(param[1],
-                            System.getProperty("file.encoding"));
-                }
-
-                if (parameters.containsKey(key)) {
-                    Object obj = parameters.get(key);
-                    if (obj instanceof List<?>) {
-                        List<String> values = (List<String>) obj;
-                        values.add(value);
-
-                    } else if (obj instanceof String) {
-                        List<String> values = new ArrayList<String>();
-                        values.add((String) obj);
-                        values.add(value);
-                        parameters.put(key, values);
-                    }
-                } else {
-                    parameters.put(key, value);
-                }
-            }
-        }
-    }
-    private class GetHandler implements HttpHandler{
-
-        @Override
-        public void handle(HttpExchange he) throws IOException {
-            // parse request
-            Map<String, Object> parameters = new HashMap<String, Object>();
-            URI requestedUri = he.getRequestURI();
-            String query = requestedUri.getRawQuery();
-            parseQuery(query, parameters);
-
-            // send response
-            StringBuilder responseBuilder = new StringBuilder();
-            responseBuilder.append("Welcome!\n");
-            for (String key : parameters.keySet())
-                responseBuilder.append(key).append(" = ").append(parameters.get(key)).append("\n");
-            String response = responseBuilder.toString();
-            val headers = he.getResponseHeaders();
-            headers.put(HttpConstants.HEADER_CONTENT_TYPE,Collections.singletonList(HttpConstants.CONTENT_TYPE_TEXT_PLAIN_UTF8));
-            he.sendResponseHeaders(200, response.length());
-            OutputStream os = he.getResponseBody();
-            os.write(response.toString().getBytes());
-
-            os.close();
-        }
-    }
-
-    private class JSONObjectGetHandler implements HttpHandler{
-
-        @Override
-        public void handle(HttpExchange he) throws IOException {
-            // parse request
-            Map<String, Object> parameters = new HashMap<String, Object>();
-            URI requestedUri = he.getRequestURI();
-            String query = requestedUri.getRawQuery();
-            parseQuery(query, parameters);
-
-            // send response
-            StringBuilder responseBuilder = new StringBuilder();
-            responseBuilder.append("{\n");
-            boolean first = true;
-            for (String key : parameters.keySet()) {
-                if (!first) {
-                    responseBuilder.append(",");
-                }
-                first = false;
-                responseBuilder.append("\"").append(key).append("\"").append(" : ").append("\"").append(parameters.get(key)).append("\"").append("\n");
-            }
-            responseBuilder.append("}");
-            String response = responseBuilder.toString();
-            val headers = he.getResponseHeaders();
-            headers.put(HttpConstants.HEADER_CONTENT_TYPE,Collections.singletonList(HttpConstants.CONTENT_TYPE_APPLICATION_JSON));
-            he.sendResponseHeaders(200, response.length());
-            OutputStream os = he.getResponseBody();
-            os.write(response.toString().getBytes());
-
-            os.close();
-        }
-    }
-    private class JSONArrayGetHandler implements HttpHandler{
-
-        @Override
-        public void handle(HttpExchange he) throws IOException {
-            // parse request
-            Map<String, Object> parameters = new HashMap<String, Object>();
-            URI requestedUri = he.getRequestURI();
-            String query = requestedUri.getRawQuery();
-            parseQuery(query, parameters);
-
-            // send response
-            StringBuilder responseBuilder = new StringBuilder();
-            responseBuilder.append("[\n");
-            boolean first = true;
-            for (String key : parameters.keySet()) {
-                if (!first) {
-                    responseBuilder.append(",");
-                }
-                first = false;
-                responseBuilder.append("{\"").append(key).append("\"").append(" : ").append("\"").append(parameters.get(key)).append("\"}").append("\n");
-            }
-            responseBuilder.append("]");
-            String response = responseBuilder.toString();
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            val headers = he.getResponseHeaders();
-            headers.put(HttpConstants.HEADER_CONTENT_TYPE,Collections.singletonList(HttpConstants.CONTENT_TYPE_APPLICATION_JSON));
-            he.sendResponseHeaders(200, response.length());
-            OutputStream os = he.getResponseBody();
-            os.write(response.toString().getBytes());
-
-            os.close();
-        }
-    }
-
-    private class PostHandler implements HttpHandler {
-
-        @Override
-
-        public void handle(HttpExchange he) throws IOException {
-            // parse request
-            Map<String, Object> parameters = new HashMap<String, Object>();
-            InputStreamReader isr = new InputStreamReader(he.getRequestBody(), "utf-8");
-            BufferedReader br = new BufferedReader(isr);
-            String query = br.readLine();
-            parseQuery(query, parameters);
-
-            // send response
-            StringBuilder responseBuilder = new StringBuilder();
-            for (String key : parameters.keySet())
-                responseBuilder.append(key).append(" = ").append(parameters.get(key)).append("\n");
-            String response = responseBuilder.toString();
-            val headers = he.getResponseHeaders();
-            headers.put(HttpConstants.HEADER_CONTENT_TYPE,Collections.singletonList(HttpConstants.CONTENT_TYPE_TEXT_PLAIN_UTF8));
-            he.sendResponseHeaders(200, response.length());
-            OutputStream os = he.getResponseBody();
-            os.write(response.toString().getBytes());
-            os.close();
-        }
-    }
-    private class PostBodyHandler implements HttpHandler {
-
-        @Override
-
-        public void handle(HttpExchange he) throws IOException {
-            // parse request
-            Map<String, Object> parameters = new HashMap<String, Object>();
-            InputStreamReader isr = new InputStreamReader(he.getRequestBody(), "utf-8");
-            BufferedReader br = new BufferedReader(isr);
-            StringBuilder body = new StringBuilder();
-            String query = br.readLine();
-            body.append(query);
-            while((query = br.readLine()) != null){
-                body.append(query);
-            }
-            // send response
-            String response = body.toString();
-            val headers = he.getResponseHeaders();
-            headers.put(HttpConstants.HEADER_CONTENT_TYPE,Collections.singletonList(HttpConstants.CONTENT_TYPE_APPLICATION_JSON));
-            he.sendResponseHeaders(200, response.length());
-            OutputStream os = he.getResponseBody();
-            os.write(response.getBytes());
-            os.close();
-        }
-    }
-
-    private class AuthHandler implements HttpHandler {
-        public static final String username = "user";
-        public static final String password = "pw";
-        @Override
-        public void handle(HttpExchange he) throws IOException {
-            val requestHeaders = he.getRequestHeaders();
-            val auth = requestHeaders.getFirst(HttpConstants.HEADER_AUTHORIZATION);
-            if(auth != null && Base64.getDecoder().decode(auth) != null && new String(Base64.getDecoder().decode(auth)).equals(username+":"+password)) {
-                String response = "OK";
-                val headers = he.getResponseHeaders();
-                headers.put(HttpConstants.HEADER_CONTENT_TYPE, Collections.singletonList(HttpConstants.CONTENT_TYPE_TEXT_PLAIN));
-                he.sendResponseHeaders(200, response.length());
-                OutputStream os = he.getResponseBody();
-                os.write(response.getBytes());
-                os.close();
-            }
-            else {
-                String response = "UNAUTHORIZED";
-                val headers = he.getResponseHeaders();
-                headers.put(HttpConstants.HEADER_CONTENT_TYPE, Collections.singletonList(HttpConstants.CONTENT_TYPE_TEXT_PLAIN));
-                he.sendResponseHeaders(401, response.length());
-                OutputStream os = he.getResponseBody();
-                os.write(response.getBytes());
-                os.close();
-            }
-        }
-    }
+    //Based on https://www.codeproject.com/tips/1040097/create-a-simple-web-server-in-java-http-server
     @BeforeAll
     public void launchTestServer() throws IOException {
         int port = 9000;
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         System.out.println("server started at " + port);
-        server.createContext("/", new GetHandler());
-        server.createContext("/jsonObject", new JSONObjectGetHandler());
-        server.createContext("/jsonArray", new JSONArrayGetHandler());
-        server.createContext("/echoPost", new PostHandler());
-        server.createContext("/postWithBody", new PostBodyHandler());
-        server.createContext("/putWithBody", new PostBodyHandler());
-        server.createContext("/auth", new AuthHandler());
+        server.createContext("/", new HttpHandlers.GetHandler());
+        server.createContext("/jsonObject", new HttpHandlers.JSONObjectGetHandler());
+        server.createContext("/jsonArray", new HttpHandlers.JSONArrayGetHandler());
+        server.createContext("/echoPost", new HttpHandlers.PostHandler());
+        server.createContext("/postWithBody", new HttpHandlers.PostBodyHandler());
+        server.createContext("/putWithBody", new HttpHandlers.PostBodyHandler());
+        server.createContext("/auth", new HttpHandlers.AuthHandler());
         server.setExecutor(null);
         server.start();
     }
@@ -336,31 +126,31 @@ public class TestRequestHandling {
     @Test
     public void testGETWithAuth() throws IOException {
         val rc = new RestClient();
-        val result = rc.getFromEndpointWithAuth(new URL("http://localhost:9000/auth"),null,AuthHandler.username, AuthHandler.password);
+        val result = rc.getFromEndpointWithAuth(new URL("http://localhost:9000/auth"),null,HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
         assertThat(result.getReturnCode(), equalTo(200));
     }
     @Test
     public void testPOSTBodyWithAuth() throws IOException {
         val rc = new RestClient();
-        val result = rc.postBodyToEndpointWithAuth(new URL("http://localhost:9000/auth"),"\"Something\"",AuthHandler.username, AuthHandler.password);
+        val result = rc.postBodyToEndpointWithAuth(new URL("http://localhost:9000/auth"),"\"Something\"",HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
         assertThat(result.getReturnCode(), equalTo(200));
     }
     @Test
     public void testPOSTFormWithAuth() throws IOException {
         val rc = new RestClient();
-        val result = rc.postFormToEndpointWithAuth(new URL("http://localhost:9000/auth"),new HashMap<>(),AuthHandler.username, AuthHandler.password);
+        val result = rc.postFormToEndpointWithAuth(new URL("http://localhost:9000/auth"),new HashMap<>(),HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
         assertThat(result.getReturnCode(), equalTo(200));
     }
     @Test
     public void testPUTBodyWithAuth() throws IOException {
         val rc = new RestClient();
-        val result = rc.putBodyToEndpointWithAuth(new URL("http://localhost:9000/auth"),"\"Something\"",AuthHandler.username, AuthHandler.password);
+        val result = rc.putBodyToEndpointWithAuth(new URL("http://localhost:9000/auth"),"\"Something\"",HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
         assertThat(result.getReturnCode(), equalTo(200));
     }
     @Test
     public void testPUTFormWithAuth() throws IOException {
         val rc = new RestClient();
-        val result = rc.putFormToEndpointWithAuth(new URL("http://localhost:9000/auth"),new HashMap<>(),AuthHandler.username, AuthHandler.password);
+        val result = rc.putFormToEndpointWithAuth(new URL("http://localhost:9000/auth"),new HashMap<>(),HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
         assertThat(result.getReturnCode(), equalTo(200));
     }
 
