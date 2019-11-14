@@ -10,11 +10,12 @@ import de.hpi.tdgt.test.story.activity.Activity;
 import de.hpi.tdgt.test.story.activity.Data_Generation;
 import de.hpi.tdgt.test.story.activity.Request;
 import de.hpi.tdgt.test.story.activity.Delay;
+import de.hpi.tdgt.Utils;
 
 import java.io.IOException;
 import java.util.Vector;
 
-import static de.hpi.tdgt.deserialisation.Utils.assertInstanceOf;
+import static de.hpi.tdgt.Utils.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -58,6 +59,13 @@ public class DeserializeActivity {
         assertArrayEquals(new String[]{"username","password"},firstActivityOfFirstStory.getData());
         assertEquals("users", firstActivityOfFirstStory.getTable());
     }
+
+    @Test
+    public void sixthActivityOfFirstStoryWaitsOneSecond() {
+        val sixthActivityOfFirstStory = (Delay) this.sixthActivityOfFirstStory;
+        assertEquals(1000, sixthActivityOfFirstStory.getDelayMs());
+    }
+
     @Test
     public void secondActivityOfSecondStorySendsGETRequest(){
         val secondActivityOfSecondStory = (Request) this.secondActivityOfSecondStory;

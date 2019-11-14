@@ -12,7 +12,12 @@ public class Delay extends Activity{
 
     @Override
     public void perform() {
-        //TODO implement
-
+        try {
+            if (delayMs > 0) {
+                Thread.sleep(delayMs);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }

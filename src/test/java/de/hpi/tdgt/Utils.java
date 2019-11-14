@@ -1,4 +1,4 @@
-package de.hpi.tdgt.deserialisation;
+package de.hpi.tdgt;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Assertions;
