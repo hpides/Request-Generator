@@ -202,6 +202,34 @@ public class TestRequestHandling {
             os.close();
         }
     }
+
+    private class AuthHandler implements HttpHandler {
+        public static final String username = "user";
+        public static final String password = "pw";
+        @Override
+        public void handle(HttpExchange he) throws IOException {
+            val requestHeaders = he.getRequestHeaders();
+            val auth = requestHeaders.getFirst(HttpConstants.HEADER_AUTHORIZATION);
+            if(auth != null && Base64.getDecoder().decode(auth) != null && new String(Base64.getDecoder().decode(auth)).equals(username+":"+password)) {
+                String response = "OK";
+                val headers = he.getResponseHeaders();
+                headers.put(HttpConstants.HEADER_CONTENT_TYPE, Collections.singletonList(HttpConstants.CONTENT_TYPE_TEXT_PLAIN));
+                he.sendResponseHeaders(200, response.length());
+                OutputStream os = he.getResponseBody();
+                os.write(response.getBytes());
+                os.close();
+            }
+            else {
+                String response = "UNAUTHORIZED";
+                val headers = he.getResponseHeaders();
+                headers.put(HttpConstants.HEADER_CONTENT_TYPE, Collections.singletonList(HttpConstants.CONTENT_TYPE_TEXT_PLAIN));
+                he.sendResponseHeaders(401, response.length());
+                OutputStream os = he.getResponseBody();
+                os.write(response.getBytes());
+                os.close();
+            }
+        }
+    }
     @BeforeAll
     public void launchTestServer() throws IOException {
         int port = 9000;
@@ -213,6 +241,7 @@ public class TestRequestHandling {
         server.createContext("/echoPost", new PostHandler());
         server.createContext("/postWithBody", new PostBodyHandler());
         server.createContext("/putWithBody", new PostBodyHandler());
+        server.createContext("/auth", new AuthHandler());
         server.setExecutor(null);
         server.start();
     }
@@ -302,6 +331,37 @@ public class TestRequestHandling {
         val body = "{\"param\":\"value\"}";
         val result = rc.putBodyToEndpoint(new URL("http://localhost:9000/postWithBody"), body);
         assertThat(result.toString(), equalTo(body));
+    }
+
+    @Test
+    public void testGETWithAuth() throws IOException {
+        val rc = new RestClient();
+        val result = rc.getFromEndpointWithAuth(new URL("http://localhost:9000/auth"),null,AuthHandler.username, AuthHandler.password);
+        assertThat(result.getReturnCode(), equalTo(200));
+    }
+    @Test
+    public void testPOSTBodyWithAuth() throws IOException {
+        val rc = new RestClient();
+        val result = rc.postBodyToEndpointWithAuth(new URL("http://localhost:9000/auth"),"\"Something\"",AuthHandler.username, AuthHandler.password);
+        assertThat(result.getReturnCode(), equalTo(200));
+    }
+    @Test
+    public void testPOSTFormWithAuth() throws IOException {
+        val rc = new RestClient();
+        val result = rc.postFormToEndpointWithAuth(new URL("http://localhost:9000/auth"),new HashMap<>(),AuthHandler.username, AuthHandler.password);
+        assertThat(result.getReturnCode(), equalTo(200));
+    }
+    @Test
+    public void testPUTBodyWithAuth() throws IOException {
+        val rc = new RestClient();
+        val result = rc.putBodyToEndpointWithAuth(new URL("http://localhost:9000/auth"),"\"Something\"",AuthHandler.username, AuthHandler.password);
+        assertThat(result.getReturnCode(), equalTo(200));
+    }
+    @Test
+    public void testPUTFormWithAuth() throws IOException {
+        val rc = new RestClient();
+        val result = rc.putFormToEndpointWithAuth(new URL("http://localhost:9000/auth"),new HashMap<>(),AuthHandler.username, AuthHandler.password);
+        assertThat(result.getReturnCode(), equalTo(200));
     }
 
 

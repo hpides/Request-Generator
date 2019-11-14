@@ -36,4 +36,6 @@ public class Request {
      * Set to true if using PUT / POST you want to send URL-Encoded parameters. Else set to false.
      */
     private boolean form=false;
+
+    private String username = null, password = null;
 }

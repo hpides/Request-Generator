@@ -12,11 +12,13 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 @Log4j2
 public class RestClient {
+
     public RestResult getFromEndpoint(URL url, Map<String, String> getParams) throws IOException {
         val request = new Request();
         request.setUrl(url);
@@ -88,6 +90,87 @@ public class RestClient {
         request.setBody(body);
         return exchangeWithEndpoint(request);
     }
+    public RestResult getFromEndpointWithAuth(URL url, Map<String, String> getParams, String username, String password) throws IOException {
+        val request = new Request();
+        request.setUrl(url);
+        request.setParams(getParams);
+        request.setMethod(HttpConstants.GET);
+        request.setUsername(username);
+        request.setPassword(password);
+        return exchangeWithEndpoint(request);
+    }
+
+    /**
+     * Post formencoded data to endpoint.
+     * @param url
+     * @param getParams
+     * @return
+     * @throws IOException
+     */
+    public RestResult postFormToEndpointWithAuth(URL url, Map<String, String> getParams, String username, String password) throws IOException {
+        val request = new Request();
+        request.setUrl(url);
+        request.setParams(getParams);
+        request.setMethod(HttpConstants.POST);
+        request.setForm(true);
+        request.setUsername(username);
+        request.setPassword(password);
+        return exchangeWithEndpoint(request);
+    }
+
+    /**
+     * Post a body to an endpoint.
+     * @param url
+     * @param body
+     * @return
+     * @throws IOException
+     */
+    public RestResult postBodyToEndpointWithAuth(URL url, String body, String username, String password) throws IOException {
+        val request = new Request();
+        request.setUrl(url);
+        request.setMethod(HttpConstants.POST);
+        request.setForm(false);
+        request.setBody(body);
+        request.setUsername(username);
+        request.setPassword(password);
+        return exchangeWithEndpoint(request);
+    }
+
+    /**
+     * Post formencoded data to endpoint.
+     * @param url
+     * @param getParams
+     * @return
+     * @throws IOException
+     */
+    public RestResult putFormToEndpointWithAuth(URL url, Map<String, String> getParams, String username, String password) throws IOException {
+        val request = new Request();
+        request.setUrl(url);
+        request.setParams(getParams);
+        request.setMethod(HttpConstants.PUT);
+        request.setForm(true);
+        request.setUsername(username);
+        request.setPassword(password);
+        return exchangeWithEndpoint(request);
+    }
+
+    /**
+     * Post a body to an endpoint.
+     * @param url
+     * @param body
+     * @return
+     * @throws IOException
+     */
+    public RestResult putBodyToEndpointWithAuth(URL url, String body, String username, String password) throws IOException {
+        val request = new Request();
+        request.setUrl(url);
+        request.setMethod(HttpConstants.PUT);
+        request.setForm(false);
+        request.setBody(body);
+        request.setUsername(username);
+        request.setPassword(password);
+        return exchangeWithEndpoint(request);
+    }
 
 
 
@@ -98,6 +181,10 @@ public class RestClient {
 
         final HttpURLConnection httpURLConnection = prepareHttpUrlConnection(url, request.getMethod(), request.isFollowsRedirects(), request.getConnectTimeout(), request.getResponseTimeout(), request.isSendKeepAlive());
         int retry;
+        val start = System.nanoTime();
+        if(request.getUsername() != null && request.getPassword()!=null){
+            httpURLConnection.setRequestProperty(HttpConstants.HEADER_AUTHORIZATION, Base64.getEncoder().encodeToString((request.getUsername() + ":" + request.getPassword()).getBytes()));
+        }
         if(request.isForm() && (request.getMethod().equals(HttpConstants.POST) || request.getMethod().equals(HttpConstants.PUT))){
             String body = mapToURLEncodedString(request.getParams()).toString();
             httpURLConnection.setDoOutput(true);
@@ -113,7 +200,6 @@ public class RestClient {
             out.flush();
             out.close();
         }
-        val start = System.nanoTime();
         for(retry = -1; retry < request.getRetries(); retry++){
             try{
                 httpURLConnection.connect();
@@ -232,6 +318,7 @@ public class RestClient {
                res.setEndTime(System.nanoTime());
                res.setContentType(conn.getContentType());
                res.setHeaders(conn.getHeaderFields());
+               res.setReturnCode(conn.getResponseCode());
             }
 
             if(log.isInfoEnabled()) {
@@ -271,5 +358,6 @@ public class RestClient {
         res.setEndTime(System.nanoTime());
         res.setContentType(conn.getContentType());
         res.setHeaders(conn.getHeaderFields());
+        res.setReturnCode(conn.getResponseCode());
     }
 }

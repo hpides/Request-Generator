@@ -23,7 +23,7 @@ public class RestResult {
     private byte[] response;
     private String contentType;
     private Map<String, List<String>> headers;
-
+    private int returnCode;
     public boolean isPlainText(){
         return contentType.replaceAll("\\s+","").toLowerCase().startsWith(HttpConstants.CONTENT_TYPE_TEXT_PLAIN);
     }
