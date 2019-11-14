@@ -169,6 +169,18 @@ public class HttpHandlers {
             // parse request
             Map<String, Object> parameters = new HashMap<String, Object>();
             InputStreamReader isr = new InputStreamReader(he.getRequestBody(), "utf-8");
+            var headers = he.getRequestHeaders();
+            val contentType = headers.getFirst(HttpConstants.HEADER_CONTENT_TYPE);
+            if(contentType == null || !contentType.equals(HttpConstants.APPLICATION_X_WWW_FORM_URLENCODED)){
+                val message = "Missing Content Type Header!";
+                headers = he.getResponseHeaders();
+                headers.put(HttpConstants.HEADER_CONTENT_TYPE,Collections.singletonList(HttpConstants.CONTENT_TYPE_APPLICATION_JSON));
+                he.sendResponseHeaders(200, message.length());
+                OutputStream os = he.getResponseBody();
+                os.write(message.getBytes());
+                os.close();
+                return;
+            }
             BufferedReader br = new BufferedReader(isr);
             String query = br.readLine();
             parseQuery(query, parameters);
@@ -178,7 +190,7 @@ public class HttpHandlers {
             for (String key : parameters.keySet())
                 responseBuilder.append(key).append(" = ").append(parameters.get(key)).append("\n");
             String response = responseBuilder.toString();
-            val headers = he.getResponseHeaders();
+            headers = he.getResponseHeaders();
             headers.put(HttpConstants.HEADER_CONTENT_TYPE,Collections.singletonList(HttpConstants.CONTENT_TYPE_TEXT_PLAIN_UTF8));
             he.sendResponseHeaders(200, response.length());
             OutputStream os = he.getResponseBody();
@@ -197,6 +209,18 @@ public class HttpHandlers {
         public void handle(HttpExchange he) throws IOException {
             // parse request
             Map<String, Object> parameters = new HashMap<String, Object>();
+            var headers = he.getRequestHeaders();
+            val contentType = headers.getFirst(HttpConstants.HEADER_CONTENT_TYPE);
+            if(contentType == null || !contentType.equals(HttpConstants.CONTENT_TYPE_APPLICATION_JSON)){
+                val message = "Missing Content Type Header!";
+                headers = he.getResponseHeaders();
+                headers.put(HttpConstants.HEADER_CONTENT_TYPE,Collections.singletonList(HttpConstants.CONTENT_TYPE_APPLICATION_JSON));
+                he.sendResponseHeaders(200, message.length());
+                OutputStream os = he.getResponseBody();
+                os.write(message.getBytes());
+                os.close();
+                return;
+            }
             InputStreamReader isr = new InputStreamReader(he.getRequestBody(), "utf-8");
             BufferedReader br = new BufferedReader(isr);
             StringBuilder body = new StringBuilder();
@@ -207,7 +231,7 @@ public class HttpHandlers {
             }
             // send response
             String response = body.toString();
-            val headers = he.getResponseHeaders();
+            headers = he.getResponseHeaders();
             headers.put(HttpConstants.HEADER_CONTENT_TYPE,Collections.singletonList(HttpConstants.CONTENT_TYPE_APPLICATION_JSON));
             he.sendResponseHeaders(200, response.length());
             OutputStream os = he.getResponseBody();
@@ -225,7 +249,10 @@ public class HttpHandlers {
         @Override
         public void handle(HttpExchange he) throws IOException {
             val requestHeaders = he.getRequestHeaders();
-            val auth = requestHeaders.getFirst(HttpConstants.HEADER_AUTHORIZATION);
+            var auth = requestHeaders.getFirst(HttpConstants.HEADER_AUTHORIZATION);
+            if(auth != null && auth.startsWith("Basic ")){
+                auth = auth.substring(auth.indexOf("Basic ")+"Basic ".length());
+            }
             if(auth != null && Base64.getDecoder().decode(auth) != null && new String(Base64.getDecoder().decode(auth)).equals(username+":"+password)) {
                 String response = "OK";
                 val headers = he.getResponseHeaders();

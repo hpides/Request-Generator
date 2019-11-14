@@ -27,10 +27,10 @@ public class RestResult {
     private int returnCode;
     //check content encoding
     public boolean isPlainText(){
-        return contentType.replaceAll("\\s+","").toLowerCase().startsWith(HttpConstants.CONTENT_TYPE_TEXT_PLAIN);
+        return contentType != null && contentType.replaceAll("\\s+","").toLowerCase().startsWith(HttpConstants.CONTENT_TYPE_TEXT_PLAIN);
     }
     public boolean isJSON(){
-        return contentType.replaceAll("\\s+","").toLowerCase().startsWith(HttpConstants.CONTENT_TYPE_APPLICATION_JSON);
+        return  contentType != null && contentType.replaceAll("\\s+","").toLowerCase().startsWith(HttpConstants.CONTENT_TYPE_APPLICATION_JSON);
     }
     //use directly or deserialize
     @Override

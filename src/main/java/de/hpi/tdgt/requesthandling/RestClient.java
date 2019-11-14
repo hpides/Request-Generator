@@ -125,6 +125,24 @@ public class RestClient {
         return exchangeWithEndpoint(request);
     }
 
+    public RestResult deleteFromEndpoint(URL url, Map<String, String> getParams) throws IOException {
+        val request = new Request();
+        request.setUrl(url);
+        request.setParams(getParams);
+        request.setMethod(HttpConstants.DELETE);
+        return exchangeWithEndpoint(request);
+    }
+
+    public RestResult deleteFromEndpointWithAuth(URL url, Map<String, String> getParams, String username, String password) throws IOException {
+        val request = new Request();
+        request.setUrl(url);
+        request.setParams(getParams);
+        request.setMethod(HttpConstants.DELETE);
+        request.setUsername(username);
+        request.setPassword(password);
+        return exchangeWithEndpoint(request);
+    }
+
     //above methods are for user's convenience, this method does the actual request
     public RestResult exchangeWithEndpoint(Request request) throws IOException {
         //append GET parameters if necessary
@@ -136,10 +154,11 @@ public class RestClient {
         val start = System.nanoTime();
         //ste auth header if required
         if (request.getUsername() != null && request.getPassword() != null) {
-            httpURLConnection.setRequestProperty(HttpConstants.HEADER_AUTHORIZATION, Base64.getEncoder().encodeToString((request.getUsername() + ":" + request.getPassword()).getBytes()));
+            httpURLConnection.setRequestProperty(HttpConstants.HEADER_AUTHORIZATION, "Basic "+Base64.getEncoder().encodeToString((request.getUsername() + ":" + request.getPassword()).getBytes()));
         }
         //set POST Body to contain formencoded data
         if (request.isForm() && (request.getMethod().equals(HttpConstants.POST) || request.getMethod().equals(HttpConstants.PUT))) {
+            httpURLConnection.setRequestProperty("Content-Type", HttpConstants.APPLICATION_X_WWW_FORM_URLENCODED);
             String body = mapToURLEncodedString(request.getParams()).toString();
             httpURLConnection.setDoOutput(true);
             OutputStream out = httpURLConnection.getOutputStream();
@@ -149,6 +168,7 @@ public class RestClient {
         }
         //set POST body to what was passed
         if (!request.isForm() && (request.getMethod().equals(HttpConstants.POST) || request.getMethod().equals(HttpConstants.PUT)) && request.getBody() != null) {
+            httpURLConnection.setRequestProperty("Content-Type", HttpConstants.CONTENT_TYPE_APPLICATION_JSON);
             httpURLConnection.setDoOutput(true);
             OutputStream out = httpURLConnection.getOutputStream();
             out.write(request.getBody().getBytes(StandardCharsets.UTF_8));
@@ -198,7 +218,7 @@ public class RestClient {
 
     private URL appendGetParametersToUrlIfNecessary(URL url, Map<String, String> params, String method) throws MalformedURLException {
         //add URL parameters
-        if (method.equals(HttpConstants.GET) && params != null && !params.isEmpty()) {
+        if (((method.equals(HttpConstants.GET)) || method.equals(HttpConstants.DELETE)) && params != null && !params.isEmpty()) {
             url = new URL(url.toString() + "?" + mapToURLEncodedString(params));
         }
 
@@ -207,7 +227,7 @@ public class RestClient {
 
     private StringBuilder mapToURLEncodedString(Map<String, String> params) {
         val finalURL = new StringBuilder();
-        if (!params.isEmpty()) {
+        if (params != null && !params.isEmpty()) {
             boolean firstParam = true;
             for (val key : params.keySet()) {
                 if (!firstParam) {

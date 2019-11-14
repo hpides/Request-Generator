@@ -66,6 +66,15 @@ public class TestRequestHandling {
     }
 
     @Test
+    public void testDELETEParams() throws IOException {
+        val rc = new RestClient();
+        val params = new HashMap<String,String>();
+        params.put("param","value");
+        val result = rc.deleteFromEndpoint(new URL("http://localhost:9000/"), params);
+        assertThat(result.toString(), stringContainsInOrder("param","value"));
+    }
+
+    @Test
     public void testJSON() throws IOException {
         val rc = new RestClient();
         val params = new HashMap<String,String>();
@@ -127,6 +136,13 @@ public class TestRequestHandling {
     public void testGETWithAuth() throws IOException {
         val rc = new RestClient();
         val result = rc.getFromEndpointWithAuth(new URL("http://localhost:9000/auth"),null,HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
+        assertThat(result.getReturnCode(), equalTo(200));
+    }
+
+    @Test
+    public void testDELETEWithAuth() throws IOException {
+        val rc = new RestClient();
+        val result = rc.deleteFromEndpointWithAuth(new URL("http://localhost:9000/auth"),null,HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
         assertThat(result.getReturnCode(), equalTo(200));
     }
     @Test
