@@ -24,7 +24,7 @@ public class TestDelay {
         val startTime = System.currentTimeMillis();
         delayActivity.perform();
         val endTime = System.currentTimeMillis();
-        assertTrue((endTime - startTime) > 100);
+        assertTrue((endTime - startTime) > 90);
     }
 
     @Test
@@ -33,6 +33,6 @@ public class TestDelay {
         val startTime = System.currentTimeMillis();
         delayActivity.perform();
         val endTime = System.currentTimeMillis();
-        assertTrue((endTime - startTime) > 1000);
+        assertTrue((endTime - startTime) > 990);
     }
 }
