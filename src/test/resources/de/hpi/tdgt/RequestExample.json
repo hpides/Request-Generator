@@ -47,13 +47,13 @@
 					"successors":[
 					],
 					"type":"REQUEST",
-					"verb":"POST",
+					"verb":"GET",
 					"addr":"http://localhost:9000/jsonObject",
 					"requestParams":[ 
 						"key",
 						"value"
 					],
-					"responseParams":[ 
+					"responseJSONObject":[ 
 						"key",
 						"value"
 					]

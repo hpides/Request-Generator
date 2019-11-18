@@ -7,6 +7,7 @@ import lombok.*;
 import de.hpi.tdgt.test.story.UserStory;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
@@ -32,8 +33,14 @@ public abstract class Activity {
     @Getter(AccessLevel.NONE)
     private int[] successors;
 
+    @JsonIgnore
     private int predecessorCount = 0;
+    @JsonIgnore
     private int predecessorsReady = 0;
+
+    @JsonIgnore
+    @Getter
+    private final Map<String,String> knownParams = new HashMap<String,String>();
 
     //do not try to read this from json, no accessors --> only used internally
     @JsonIgnore
@@ -42,7 +49,7 @@ public abstract class Activity {
     private Activity[] successorLinks = new Activity[0];
     private int repeat;
 
-    public abstract Map<String,String> perform(Map<String,String> dataMap);
+    public abstract void perform();
     //use this method to get successors of this activity
     public Activity[] getSuccessors() {
         return successorLinks;
@@ -50,8 +57,10 @@ public abstract class Activity {
 
     public void run(Map<String,String> dataMap) {
         predecessorsReady++;
-        if (predecessorsReady == predecessorCount) {
-            runSuccessors(perform(dataMap));
+        this.getKnownParams().putAll(dataMap);
+        if (predecessorsReady >= predecessorCount) {
+            perform();
+            runSuccessors();
         }
     }
 
@@ -69,7 +78,7 @@ public abstract class Activity {
         this.successorLinks = successorList.toArray(new Activity[0]);
     }
 
-    private void runSuccessors(Map<String,String> dataMap) {
-        Arrays.stream(successorLinks).forEach(successorLink -> successorLink.run(dataMap));
+    private void runSuccessors() {
+        Arrays.stream(successorLinks).forEach(successorLink -> successorLink.run(this.getKnownParams()));
     }
 }

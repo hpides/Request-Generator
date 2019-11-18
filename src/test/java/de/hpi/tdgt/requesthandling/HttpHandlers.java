@@ -1,5 +1,6 @@
 package de.hpi.tdgt.requesthandling;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import lombok.Getter;
@@ -235,6 +236,7 @@ public class HttpHandlers {
             }
             // send response
             String response = body.toString();
+            lastParameters = new ObjectMapper().readValue(response, Map.class);
             headers = he.getResponseHeaders();
             headers.put(HttpConstants.HEADER_CONTENT_TYPE,Collections.singletonList(HttpConstants.CONTENT_TYPE_APPLICATION_JSON));
             he.sendResponseHeaders(200, response.length());
@@ -262,8 +264,8 @@ public class HttpHandlers {
                 auth = auth.substring(auth.indexOf("Basic ")+"Basic ".length());
             }
             if(auth != null && Base64.getDecoder().decode(auth) != null && new String(Base64.getDecoder().decode(auth)).equals(username+":"+password)) {
-                lastLoginWasOK = false;
-                String response = "OK";
+                lastLoginWasOK = true;
+                String response = "{\"message\":\"OK\"}";
                 val headers = he.getResponseHeaders();
                 headers.put(HttpConstants.HEADER_CONTENT_TYPE, Collections.singletonList(HttpConstants.CONTENT_TYPE_TEXT_PLAIN));
                 he.sendResponseHeaders(200, response.length());
@@ -272,7 +274,7 @@ public class HttpHandlers {
                 os.close();
             }
             else {
-                lastLoginWasOK = true;
+                lastLoginWasOK = false;
                 String response = "UNAUTHORIZED";
                 val headers = he.getResponseHeaders();
                 headers.put(HttpConstants.HEADER_CONTENT_TYPE, Collections.singletonList(HttpConstants.CONTENT_TYPE_TEXT_PLAIN));

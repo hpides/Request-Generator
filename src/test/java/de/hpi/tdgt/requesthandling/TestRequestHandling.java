@@ -182,11 +182,13 @@ public class TestRequestHandling {
     @Test
     public void testUserStoryAgainstTestServer() throws IOException {
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
-        //TODO test.start()
+        test.start();
         //assume that "user" and "pw" have been transmitted as form parameters.
-        assertThat(postBodyHandler.getLastParameters(), hasEntry(HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password));
+        assertThat(postBodyHandler.getLastParameters(), hasEntry("key", HttpHandlers.AuthHandler.username));
+        assertThat(postBodyHandler.getLastParameters(), hasEntry("value", HttpHandlers.AuthHandler.password));
         //assume that these parameters have been
-        assertThat(jsonObjectGetHandler.getLastParameters(), hasEntry(HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password));
+        assertThat(jsonObjectGetHandler.getLastParameters(), hasEntry("key", HttpHandlers.AuthHandler.username));
+        assertThat(jsonObjectGetHandler.getLastParameters(), hasEntry("value", HttpHandlers.AuthHandler.password));
         //assume  that params have been used correctly in basic auth
         assertThat(authHandler.isLastLoginWasOK(), is(true));
     }

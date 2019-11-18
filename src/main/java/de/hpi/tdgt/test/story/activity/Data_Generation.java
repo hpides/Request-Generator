@@ -13,10 +13,9 @@ public class Data_Generation extends Activity {
     private String table;
 
     @Override
-    public Map<String,String> perform(Map<String,String> dataMap) {
+    public void perform() {
         val generatedData = readBuffer();
-        generatedData.putAll(dataMap);
-        return generatedData;
+        this.getKnownParams().putAll(generatedData);
     }
 
     public Map<String,String> readBuffer() {
