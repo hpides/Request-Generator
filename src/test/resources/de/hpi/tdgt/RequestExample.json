@@ -62,8 +62,7 @@
 					"name":"GET with auth",
 					"id":3,
 					"repeat":10,
-					"successors":[ 
-						5
+					"successors":[
 					],
 					"type":"REQUEST",
 					"verb":"GET",

@@ -3,6 +3,8 @@ package de.hpi.tdgt.requesthandling;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import de.hpi.tdgt.Utils;
+import de.hpi.tdgt.deserialisation.Deserializer;
 import lombok.val;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -19,19 +21,27 @@ import static org.hamcrest.Matchers.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestRequestHandling {
 
+    private final HttpHandlers.GetHandler getHandler = new HttpHandlers.GetHandler();
+    private final HttpHandlers.JSONObjectGetHandler jsonObjectGetHandler = new HttpHandlers.JSONObjectGetHandler();
+    private final HttpHandlers.JSONArrayGetHandler jsonArrayGetHandler = new HttpHandlers.JSONArrayGetHandler();
+    private final HttpHandlers.PostHandler postHandler = new HttpHandlers.PostHandler();
+    private final HttpHandlers.PostBodyHandler postBodyHandler = new HttpHandlers.PostBodyHandler();
+    private final HttpHandlers.PostBodyHandler putBodyHandler = new HttpHandlers.PostBodyHandler();
+    private final HttpHandlers.AuthHandler authHandler = new HttpHandlers.AuthHandler();
+
     //Based on https://www.codeproject.com/tips/1040097/create-a-simple-web-server-in-java-http-server
     @BeforeAll
     public void launchTestServer() throws IOException {
         int port = 9000;
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         System.out.println("server started at " + port);
-        server.createContext("/", new HttpHandlers.GetHandler());
-        server.createContext("/jsonObject", new HttpHandlers.JSONObjectGetHandler());
-        server.createContext("/jsonArray", new HttpHandlers.JSONArrayGetHandler());
-        server.createContext("/echoPost", new HttpHandlers.PostHandler());
-        server.createContext("/postWithBody", new HttpHandlers.PostBodyHandler());
-        server.createContext("/putWithBody", new HttpHandlers.PostBodyHandler());
-        server.createContext("/auth", new HttpHandlers.AuthHandler());
+        server.createContext("/", getHandler);
+        server.createContext("/jsonObject", jsonObjectGetHandler);
+        server.createContext("/jsonArray", jsonArrayGetHandler);
+        server.createContext("/echoPost", postHandler);
+        server.createContext("/postWithBody", postBodyHandler);
+        server.createContext("/putWithBody", putBodyHandler);
+        server.createContext("/auth", authHandler);
         server.setExecutor(null);
         server.start();
     }
@@ -169,6 +179,16 @@ public class TestRequestHandling {
         val result = rc.putFormToEndpointWithAuth(new URL("http://localhost:9000/auth"),new HashMap<>(),HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
         assertThat(result.getReturnCode(), equalTo(200));
     }
-
+    @Test
+    public void testUserStoryAgainstTestServer() throws IOException {
+        de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
+        //TODO test.start()
+        //assume that "user" and "pw" have been transmitted as form parameters.
+        assertThat(postBodyHandler.getLastParameters(), hasEntry(HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password));
+        //assume that these parameters have been
+        assertThat(jsonObjectGetHandler.getLastParameters(), hasEntry(HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password));
+        //assume  that params have been used correctly in basic auth
+        assertThat(authHandler.isLastLoginWasOK(), is(true));
+    }
 
 }

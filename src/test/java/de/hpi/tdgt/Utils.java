@@ -12,6 +12,12 @@ public class Utils {
         IOUtils.copy(getClass().getResourceAsStream("test_config_example.json"), writer);
         return writer.toString();
     }
+
+    public String getRequestExampleJSON() throws IOException {
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(getClass().getResourceAsStream("RequestExample.json"), writer);
+        return writer.toString();
+    }
     public static void assertInstanceOf(Object o, Class c){
         Assertions.assertTrue(c.isInstance(o), "First activity of first story should be a data generation activity and not a "+o.getClass().getName());
     }

@@ -2,6 +2,7 @@ package de.hpi.tdgt.requesthandling;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import lombok.Getter;
 import lombok.val;
 
 import java.io.*;
@@ -57,7 +58,8 @@ public class HttpHandlers {
         }
     }
     public static class GetHandler implements HttpHandler {
-
+        @Getter
+        private Map<String,Object> lastParameters = null;
         @Override
         public void handle(HttpExchange he) throws IOException {
             // parse request
@@ -65,7 +67,7 @@ public class HttpHandlers {
             URI requestedUri = he.getRequestURI();
             String query = requestedUri.getRawQuery();
             parseQuery(query, parameters);
-
+            lastParameters = parameters;
             // send response
             StringBuilder responseBuilder = new StringBuilder();
             responseBuilder.append("Welcome!\n");
@@ -86,7 +88,8 @@ public class HttpHandlers {
      * Makes request URL Parameters to a JSON Object with the Request keys as keys and their values as values.
      */
     public static class JSONObjectGetHandler implements HttpHandler{
-
+        @Getter
+        private Map<String, Object> lastParameters = null;
         @Override
         public void handle(HttpExchange he) throws IOException {
             // parse request
@@ -94,7 +97,7 @@ public class HttpHandlers {
             URI requestedUri = he.getRequestURI();
             String query = requestedUri.getRawQuery();
             parseQuery(query, parameters);
-
+            lastParameters = parameters;
             // send response
             StringBuilder responseBuilder = new StringBuilder();
             responseBuilder.append("{\n");
@@ -203,12 +206,13 @@ public class HttpHandlers {
      * Expects request in body.
      */
     public static class PostBodyHandler implements HttpHandler {
+        @Getter
+        private Map<String, Object> lastParameters = null;
 
         @Override
-
         public void handle(HttpExchange he) throws IOException {
             // parse request
-            Map<String, Object> parameters = new HashMap<String, Object>();
+            lastParameters = new HashMap<String, Object>();
             var headers = he.getRequestHeaders();
             val contentType = headers.getFirst(HttpConstants.HEADER_CONTENT_TYPE);
             if(contentType == null || !contentType.equals(HttpConstants.CONTENT_TYPE_APPLICATION_JSON)){
@@ -241,19 +245,24 @@ public class HttpHandlers {
     }
 
     /**
-     * Expects requests to be authorized with username and password.
+     * Expects requests to be authorized with username (hardcoded "user") and password (hardcoded "password").
+     * Saves in the field "lastLoginWasOK" if the last login used the correct username and password.
      */
     public static class AuthHandler implements HttpHandler {
         static final String username = "user";
         static final String password = "pw";
+        @Getter
+        private boolean lastLoginWasOK = false;
         @Override
         public void handle(HttpExchange he) throws IOException {
+            lastLoginWasOK = false;
             val requestHeaders = he.getRequestHeaders();
             var auth = requestHeaders.getFirst(HttpConstants.HEADER_AUTHORIZATION);
             if(auth != null && auth.startsWith("Basic ")){
                 auth = auth.substring(auth.indexOf("Basic ")+"Basic ".length());
             }
             if(auth != null && Base64.getDecoder().decode(auth) != null && new String(Base64.getDecoder().decode(auth)).equals(username+":"+password)) {
+                lastLoginWasOK = false;
                 String response = "OK";
                 val headers = he.getResponseHeaders();
                 headers.put(HttpConstants.HEADER_CONTENT_TYPE, Collections.singletonList(HttpConstants.CONTENT_TYPE_TEXT_PLAIN));
@@ -263,6 +272,7 @@ public class HttpHandlers {
                 os.close();
             }
             else {
+                lastLoginWasOK = true;
                 String response = "UNAUTHORIZED";
                 val headers = he.getResponseHeaders();
                 headers.put(HttpConstants.HEADER_CONTENT_TYPE, Collections.singletonList(HttpConstants.CONTENT_TYPE_TEXT_PLAIN));
