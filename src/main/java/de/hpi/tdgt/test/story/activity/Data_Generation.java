@@ -1,8 +1,9 @@
 package de.hpi.tdgt.test.story.activity;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import java.util.HashMap;
+import java.util.Map;
+
+import lombok.*;
 
 @NoArgsConstructor
 @Getter
@@ -12,7 +13,16 @@ public class Data_Generation extends Activity {
     private String table;
 
     @Override
-    public void perform() {
+    public Map<String,String> perform(Map<String,String> dataMap) {
+        val generatedData = readBuffer();
+        generatedData.putAll(dataMap);
+        return generatedData;
+    }
 
+    public Map<String,String> readBuffer() {
+        val buffer = new HashMap<String,String>();
+        buffer.put("key", "user");
+        buffer.put("value", "pw");
+        return buffer;
     }
 }
