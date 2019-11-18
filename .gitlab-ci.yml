@@ -4,6 +4,7 @@ stages:
 junit:
   stage: test
   image: "maven:3"
-  tags: BP-TDGT-CI
+  tags: 
+    - BP-TDGT-CI
   script:
     - mvn test
