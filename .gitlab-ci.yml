@@ -19,4 +19,5 @@ spotbugs:
   tags:
     - BP-TDGT-CI
   script:
+    - mvn compile site
     - mvn verify -Dmaven.test.skip=true
