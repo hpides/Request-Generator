@@ -13,6 +13,7 @@ spotbugs:
   stage: test
   image: "maven:3"
   artifacts:
+    when: on_failure
     paths:
       - target/site/*
   tags:
