@@ -12,6 +12,9 @@ junit:
 spotbugs:
   stage: test
   image: "maven:3"
+  artifacts:
+    paths:
+      - target/site/*
   tags:
     - BP-TDGT-CI
   script:
