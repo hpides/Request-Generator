@@ -154,7 +154,7 @@ public class RestClient {
         val start = System.nanoTime();
         //ste auth header if required
         if (request.getUsername() != null && request.getPassword() != null) {
-            httpURLConnection.setRequestProperty(HttpConstants.HEADER_AUTHORIZATION, "Basic "+Base64.getEncoder().encodeToString((request.getUsername() + ":" + request.getPassword()).getBytes()));
+            httpURLConnection.setRequestProperty(HttpConstants.HEADER_AUTHORIZATION, "Basic "+Base64.getEncoder().encodeToString((request.getUsername() + ":" + request.getPassword()).getBytes(StandardCharsets.UTF_8)));
         }
         //set POST Body to contain formencoded data
         if (request.isForm() && (request.getMethod().equals(HttpConstants.POST) || request.getMethod().equals(HttpConstants.PUT))) {
@@ -229,14 +229,14 @@ public class RestClient {
         val finalURL = new StringBuilder();
         if (params != null && !params.isEmpty()) {
             boolean firstParam = true;
-            for (val key : params.keySet()) {
+            for (val key : params.entrySet()) {
                 if (!firstParam) {
                     finalURL.append("&");
                 }
                 firstParam = false;
-                finalURL.append(key);
+                finalURL.append(key.getKey());
                 finalURL.append("=");
-                finalURL.append(params.get(key));
+                finalURL.append(key.getValue());
             }
         }
         return finalURL;
@@ -256,7 +256,7 @@ public class RestClient {
     private void readResponse(HttpURLConnection conn, RestResult res) throws IOException {
         BufferedInputStream in = null;
 
-        final long contentLength = conn.getContentLength();
+        //final long contentLength = conn.getContentLength();
         //might return nullbyte here if we do not need actual content
 
         // works OK even if ContentEncoding is null

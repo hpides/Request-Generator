@@ -2,10 +2,7 @@ package de.hpi.tdgt.requesthandling;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.val;
+import lombok.*;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -16,15 +13,16 @@ import java.util.Map;
 
 @Getter
 @Setter
-@NoArgsConstructor
 public class RestResult {
     //parameters for httpurlconnection
     private long startTime;
     private long endTime;
+    @Setter(AccessLevel.PACKAGE)
     private byte[] response;
     private String contentType;
     private Map<String, List<String>> headers;
     private int returnCode;
+
     //check content encoding
     public boolean isPlainText(){
         return contentType != null && contentType.replaceAll("\\s+","").toLowerCase().startsWith(HttpConstants.CONTENT_TYPE_TEXT_PLAIN);
@@ -35,12 +33,12 @@ public class RestResult {
     //use directly or deserialize
     @Override
     public String toString(){
-        if(isPlainText() | isJSON()){
+        if(isPlainText() || isJSON()){
                 return new String(response, getCharset());
         }
         //can not return a string representation
         else {
-            return null;
+            return "";
         }
     }
     //parse contenttype header
