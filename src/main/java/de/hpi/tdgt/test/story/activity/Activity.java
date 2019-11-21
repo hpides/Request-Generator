@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -25,6 +26,7 @@ import java.util.Vector;
         @JsonSubTypes.Type(value = Data_Generation.class, name = "DATA_GENERATION"),
         @JsonSubTypes.Type(value = Delay.class, name = "DELAY"),
 })
+@EqualsAndHashCode
 public abstract class Activity {
     private String name;
     private int id;
@@ -80,5 +82,19 @@ public abstract class Activity {
 
     private void runSuccessors() {
         Arrays.stream(successorLinks).forEach(successorLink -> successorLink.run(this.getKnownParams()));
+    }
+
+    protected abstract Activity performClone();
+
+    @Override
+    public Activity clone(){
+        val activity = performClone();
+        //do NOT clone predecessorsReady or knownParams
+        activity.setId(this.getId());
+        activity.setName(this.getName());
+        activity.setPredecessorCount(this.getPredecessorCount());
+        activity.setRepeat(this.getRepeat());
+        activity.successorLinks = Arrays.stream(this.getSuccessors()).map(Activity::clone).toArray(Activity[]::new);
+        return activity;
     }
 }

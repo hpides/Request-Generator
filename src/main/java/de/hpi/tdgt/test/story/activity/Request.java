@@ -18,6 +18,7 @@ import lombok.*;
 @Getter
 @Setter
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class Request extends Activity {
     private String verb;
     private String addr;
@@ -65,6 +66,20 @@ public class Request extends Activity {
             handleGet();
             break;
         }
+    }
+
+    @Override
+    public Activity performClone() {
+        val ret = new Request();
+        ret.setAddr(this.getAddr());
+        ret.setVerb(this.getVerb());
+        ret.setResponseJSONObject(this.getResponseJSONObject());
+        ret.setRequestParams(this.getRequestParams());
+        ret.setBasicAuth(this.getBasicAuth());
+        ret.setRequestJSONObject(this.getRequestJSONObject());
+        ret.setResponseJSONObject(this.getResponseJSONObject());
+        ret.setResponseParams(this.getResponseParams());
+        return ret;
     }
 
     private void handlePost() {
@@ -376,7 +391,8 @@ public class Request extends Activity {
     @Getter
     @Setter
     @NoArgsConstructor
-    private class BasicAuth{
+    @AllArgsConstructor
+    public static class BasicAuth{
         private String user;
         private String password;
     }

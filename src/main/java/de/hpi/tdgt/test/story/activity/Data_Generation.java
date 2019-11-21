@@ -14,6 +14,7 @@ import lombok.*;
 @NoArgsConstructor
 @Getter
 @Setter
+@EqualsAndHashCode(callSuper = true)
 public class Data_Generation extends Activity {
     private String[] data;
     private String table;
@@ -50,6 +51,14 @@ public class Data_Generation extends Activity {
     public void perform() {
         val generatedData = readBuffer();
         this.getKnownParams().putAll(generatedData);
+    }
+
+    @Override
+    public Activity performClone() {
+        val ret = new Data_Generation();
+        ret.setTable(this.table);
+        ret.setData(this.data);
+        return ret;
     }
 
     public Map<String, String> readBuffer() {

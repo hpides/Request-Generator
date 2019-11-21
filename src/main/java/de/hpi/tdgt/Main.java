@@ -16,7 +16,7 @@ import java.util.HashMap;
 public class Main {
     public static final String USERNAME="superuser";
     public static final String PASSWORD="somepw";
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         if(args.length == 0){
             try {
                 System.err.println("Usage: java -jar "+new java.io.File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getName()+" load <Path to request JSON> <Path to generated Data>");

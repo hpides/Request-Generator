@@ -1,5 +1,9 @@
 package de.hpi.tdgt.activities;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -8,6 +12,9 @@ import org.junit.jupiter.api.Test;
 import de.hpi.tdgt.test.story.activity.Delay;
 
 import lombok.val;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class TestDelay {
 
@@ -34,5 +41,19 @@ public class TestDelay {
         delayActivity.perform();
         val endTime = System.currentTimeMillis();
         assertTrue((endTime - startTime) > 990);
+    }
+
+    @Test
+    public void cloneCreatesEquivalentObject() {
+        Map<String, String> params = new HashMap<>();
+        val clone = delayActivity.clone();
+        assertThat(clone, equalTo(delayActivity));
+    }
+
+    @Test
+    public void cloneCreatesOtherObject() {
+        Map<String, String> params = new HashMap<>();
+        val clone = delayActivity.clone();
+        assertNotSame(clone, delayActivity);
     }
 }

@@ -1,12 +1,11 @@
 package de.hpi.tdgt.test.story.activity;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class Delay extends Activity{
     private int delayMs;
 
@@ -19,5 +18,12 @@ public class Delay extends Activity{
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public Activity performClone() {
+        val ret = new Delay();
+        ret.setDelayMs(this.getDelayMs());
+        return ret;
     }
 }

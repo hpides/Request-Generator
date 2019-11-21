@@ -233,7 +233,7 @@ public class TestRequestHandling {
         assertThat(result.getReturnCode(), equalTo(200));
     }
     @Test
-    public void testUserStoryAgainstTestServer() throws IOException {
+    public void testUserStoryAgainstTestServer() throws IOException, InterruptedException {
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
         test.start();
         //assume that "user" and "pw" have been transmitted as form parameters.
