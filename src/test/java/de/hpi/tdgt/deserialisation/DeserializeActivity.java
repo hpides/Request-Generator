@@ -35,7 +35,7 @@ public class DeserializeActivity {
         firstActivityOfFirstStory = Deserializer.deserialize(getExampleJSON()).getStories()[0].getActivities()[0];
         secondActivityOfFirstStory = Deserializer.deserialize(getExampleJSON()).getStories()[0].getActivities()[1];
         sixthActivityOfFirstStory = Deserializer.deserialize(getExampleJSON()).getStories()[0].getActivities()[5];
-        secondActivityOfSecondStory = Deserializer.deserialize(getExampleJSON()).getStories()[1].getActivities()[1];
+        secondActivityOfSecondStory = Deserializer.deserialize(getExampleJSON()).getStories()[1].getActivities()[3];
     }
 
     @Test
@@ -87,11 +87,11 @@ public class DeserializeActivity {
     @Test
     public void secondActivityOfSecondStoryHasCorrectResponseParams(){
         val secondActivityOfSecondStory = (Request) this.secondActivityOfSecondStory;
-        assertArrayEquals(new String[0], secondActivityOfSecondStory.getResponseParams());
+        assertArrayEquals(null, secondActivityOfSecondStory.getResponseParams());
     }
     @Test
-    public void secondActivityOfSecondStoryHasNoSuccessors(){
-        assertArrayEquals(new Activity[0], secondActivityOfSecondStory.getSuccessors());
+    public void lastActivityOfSecondStoryHasNoSuccessors(){
+        assertArrayEquals(new Activity[0], secondActivityOfSecondStory.getSuccessors()[0].getSuccessors());
     }
     @Test
     public void firstActivityOfFirstStoryHasOneSuccessor(){
@@ -110,4 +110,5 @@ public class DeserializeActivity {
         }
         assertArrayEquals(new Integer[]{2,4}, successors.toArray(new Integer[0]));
     }
+
 }
