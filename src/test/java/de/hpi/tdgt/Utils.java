@@ -4,6 +4,7 @@ import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Assertions;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringWriter;
 
 public class Utils {
@@ -20,5 +21,8 @@ public class Utils {
     }
     public static void assertInstanceOf(Object o, Class c){
         Assertions.assertTrue(c.isInstance(o), "First activity of first story should be a data generation activity and not a "+o.getClass().getName());
+    }
+    public InputStream getUsersCSV() throws IOException {
+        return getClass().getResourceAsStream("users.csv");
     }
 }
