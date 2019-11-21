@@ -38,11 +38,11 @@ public abstract class Activity {
     @JsonIgnore
     private int predecessorCount = 0;
     @JsonIgnore
-    private int predecessorsReady = 0;
+    private int predecessorsReady;
 
     @JsonIgnore
-    @Getter
-    private final Map<String,String> knownParams = new HashMap<String,String>();
+    private Map<String, String> knownParams = new HashMap<>();
+
 
     //do not try to read this from json, no accessors --> only used internally
     @JsonIgnore
@@ -57,10 +57,11 @@ public abstract class Activity {
         return successorLinks;
     }
 
-    public void run(Map<String,String> dataMap) {
-        predecessorsReady++;
-        this.getKnownParams().putAll(dataMap);
-        if (predecessorsReady >= predecessorCount) {
+    public void run(Map<String,String> dataMap) throws InterruptedException {
+        System.out.println("Running Activity "+getName()+" in Thread "+Thread.currentThread().getId());
+        this.setPredecessorsReady(this.getPredecessorsReady() + 1);
+        getKnownParams().putAll(dataMap);
+        if (this.getPredecessorsReady() >= predecessorCount) {
             perform();
             runSuccessors();
         }
@@ -80,21 +81,40 @@ public abstract class Activity {
         this.successorLinks = successorList.toArray(new Activity[0]);
     }
 
-    private void runSuccessors() {
-        Arrays.stream(successorLinks).forEach(successorLink -> successorLink.run(this.getKnownParams()));
+    private void runSuccessors() throws InterruptedException {
+        val threads = Arrays.stream(successorLinks).map(successorLink -> new Thread( () -> {
+            try {
+                successorLink.run(getKnownParams());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        })).collect(Collectors.toUnmodifiableList());
+        threads.forEach(Thread::start);
+        for(val thread : threads){
+            thread.join();
+        }
     }
 
+    /**
+     * This is used to make sure that not 2 copies are created of an activity with 2 predecessors. See Test.
+     * @return
+     */
     protected abstract Activity performClone();
-
+    private boolean alreadyCloned = false;
+    /**
+     * TODO: Unsure if we actually need this.
+     * My original thought was to clone the activities of every story per Thread, while every Thread represents a user. This should guarantee that every user has an own state (knownParams, predecessorsReady, ...).
+     * Using ThreadLocalStorage we should be able to avoid this problem, and keep our structure reentrant.
+     * @return
+     */
     @Override
     public Activity clone(){
         val activity = performClone();
         //do NOT clone predecessorsReady or knownParams
         activity.setId(this.getId());
         activity.setName(this.getName());
-        activity.setPredecessorCount(this.getPredecessorCount());
         activity.setRepeat(this.getRepeat());
-        activity.successorLinks = Arrays.stream(this.getSuccessors()).map(Activity::clone).toArray(Activity[]::new);
+        activity.successors = successors;
         return activity;
     }
 }

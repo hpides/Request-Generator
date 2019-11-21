@@ -50,6 +50,8 @@ public class TestRequest {
         requestActivity.setSuccessors(new int[0]);
 
         val clone = requestActivity.clone();
+        //would have been set by story
+        clone.setPredecessorCount(1);
         assertThat(clone, equalTo(requestActivity));
     }
 

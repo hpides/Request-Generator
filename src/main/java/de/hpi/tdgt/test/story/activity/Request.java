@@ -51,7 +51,7 @@ public class Request extends Activity {
 
     @Override
     public void perform() {
-        System.out.println("Sending request "+addr);
+        System.out.println("Sending request "+addr+" in Thread "+Thread.currentThread().getId());
         switch (verb) {
         case "POST":
             handlePost();

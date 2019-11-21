@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.val;
 
 import java.io.*;
@@ -307,6 +308,9 @@ public class HttpHandlers {
         static final String password = "pw";
         @Getter
         private boolean lastLoginWasOK = false;
+        @Setter
+        @Getter
+        private int numberFailedLogins = 0;
         @Override
         public void handle(HttpExchange he) throws IOException {
             lastLoginWasOK = false;
@@ -327,6 +331,7 @@ public class HttpHandlers {
             }
             else {
                 lastLoginWasOK = false;
+                numberFailedLogins ++;
                 String response = "UNAUTHORIZED";
                 val headers = he.getResponseHeaders();
                 headers.put(HttpConstants.HEADER_CONTENT_TYPE, Collections.singletonList(HttpConstants.CONTENT_TYPE_TEXT_PLAIN));

@@ -284,7 +284,7 @@ public class RestClient {
             }
         } catch (IOException e) {
             if (!(e.getCause() instanceof FileNotFoundException)) {
-                log.error("readResponse: {}", e.toString());
+                log.error("Thread "+Thread.currentThread().getId()+"readResponse: {}", e.toString());
                 Throwable cause = e.getCause();
                 if (cause != null) {
                     log.error("Cause: {}", cause.toString());

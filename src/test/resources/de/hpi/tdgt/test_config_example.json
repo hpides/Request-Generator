@@ -99,7 +99,7 @@
 					"id":5,
 					"repeat":1,
 					"successors":[
-						6
+						7
 					],
 					"type":"DELAY",
 					"delayMs":1000
@@ -123,7 +123,7 @@
 					}
 				},
 				{
-					"name":"User löschen",
+					"name":"User löschen story 1",
 					"id":7,
 					"repeat":1,
 					"successors":[
@@ -208,7 +208,7 @@
 					}
 				},
 				{
-					"name":"User löschen",
+					"name":"User löschen Story 2",
 					"id":4,
 					"repeat":1,
 					"successors":[

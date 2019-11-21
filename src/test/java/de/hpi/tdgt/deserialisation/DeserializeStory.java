@@ -45,9 +45,9 @@ public class DeserializeStory {
     @Test
     public void cloneCreatesEquivalentStory(){
         val story = deserializedTest.getStories()[0];
-        val firstActivity = story.getActivities()[0];
-        val clone = firstActivity.clone();
-        assertThat(clone.getSuccessors()[0].getName(), equalTo("User anlegen"));
+        val clone = story.clone();
+        val firstActivity = clone.getActivities()[0];
+        assertThat(firstActivity.getSuccessors()[0].getName(), equalTo("User anlegen"));
     }
 
     @Test
@@ -61,15 +61,13 @@ public class DeserializeStory {
     @Test
     public void cloneCreatesEqualObject(){
         val story = deserializedTest.getStories()[0];
-        val firstActivity = story.getActivities()[0];
-        val clone = firstActivity.clone();
-        assertThat(clone, equalTo(firstActivity));
+        val clone = story.clone();
+        assertThat(clone.getActivities()[0], equalTo(story.getActivities()[0]));
     }
     @Test
     public void cloneCreatesNewSuccessorObjects(){
         val story = deserializedTest.getStories()[0];
-        val firstActivity = story.getActivities()[0];
-        val clone = firstActivity.clone();
-        assertNotSame( firstActivity.getSuccessors()[0],  clone.getSuccessors()[0]);
+        val clone = story.clone();
+        assertNotSame( clone.getActivities()[0], story.getActivities()[0]);
     }
 }

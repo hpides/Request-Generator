@@ -73,6 +73,7 @@ public class Data_Generation extends Activity {
         synchronized (sc) {
             if (sc.hasNextLine()) {
                 line = sc.nextLine();
+                System.out.println("Retrieved "+line+"from table"+" in Thread "+Thread.currentThread().getId());
             } else {
                 System.err.println("No data remains!");
                 sc.close();

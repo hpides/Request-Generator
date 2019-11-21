@@ -5,13 +5,11 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import de.hpi.tdgt.Utils;
 import de.hpi.tdgt.deserialisation.Deserializer;
+import de.hpi.tdgt.test.story.UserStory;
 import de.hpi.tdgt.test.story.activity.Data_Generation;
 import lombok.val;
 import org.apache.commons.io.IOUtils;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 
 import java.io.*;
 import java.net.*;
@@ -32,12 +30,13 @@ public class TestRequestHandling {
     private final HttpHandlers.PostBodyHandler postBodyHandler = new HttpHandlers.PostBodyHandler();
     private final HttpHandlers.PostBodyHandler putBodyHandler = new HttpHandlers.PostBodyHandler();
     private final HttpHandlers.AuthHandler authHandler = new HttpHandlers.AuthHandler();
+    private HttpServer server;
 
     //Based on https://www.codeproject.com/tips/1040097/create-a-simple-web-server-in-java-http-server
-    @BeforeAll
+    @BeforeEach
     public void launchTestServer() throws IOException {
         int port = 9000;
-        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+        server = HttpServer.create(new InetSocketAddress(port), 0);
         System.out.println("server started at " + port);
         server.createContext("/", getHandler);
         server.createContext("/getWithBody", getWithBodyHandler);
@@ -57,9 +56,12 @@ public class TestRequestHandling {
         os.close();
     }
 
-    @AfterAll
+    @AfterEach
     public void removeSideEffects(){
+        //clean side effects
+        authHandler.setNumberFailedLogins(0);
         Data_Generation.reset();
+        server.stop(0);
     }
     @Test
     public void testSimpleRequest() throws IOException {
@@ -128,7 +130,7 @@ public class TestRequestHandling {
     }
     //Regression test
     @Test
-    public void testJSONWithInteger() throws IOException {
+    public void testJSONWithInteger() throws IOException, InterruptedException {
         val rq = new de.hpi.tdgt.test.story.activity.Request();
         rq.setAddr("http://localhost:9000/jsonObject");
         rq.setRequestParams(new String[] {"param"});
@@ -233,8 +235,10 @@ public class TestRequestHandling {
         assertThat(result.getReturnCode(), equalTo(200));
     }
     @Test
-    public void testUserStoryAgainstTestServer() throws IOException, InterruptedException {
+    public void testFirstUserStory() throws IOException, InterruptedException {
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
+        //do not run second story for this time around; messes with results
+        test.setStories(new UserStory[]{test.getStories()[0]});
         test.start();
         //assume that "user" and "pw" have been transmitted as form parameters.
         assertThat(postBodyHandler.getLastParameters(), hasEntry("key", HttpHandlers.AuthHandler.username));
@@ -242,8 +246,15 @@ public class TestRequestHandling {
         //assume that these parameters have been
         assertThat(jsonObjectGetHandler.getLastParameters(), hasEntry("key", HttpHandlers.AuthHandler.username));
         assertThat(jsonObjectGetHandler.getLastParameters(), hasEntry("value", HttpHandlers.AuthHandler.password));
-        //assume  that params have been used correctly in basic auth
-        assertThat(authHandler.isLastLoginWasOK(), is(true));
+        //exactly one Thread should have received wrong data
+        assertThat(authHandler.getNumberFailedLogins(), is(0));
+    }
+
+    @Test
+    public void testUserStoryAgainstTestServer() throws IOException, InterruptedException {
+        de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
+        test.start();
+        assertThat(authHandler.getNumberFailedLogins(), is(1));
     }
 
 }
