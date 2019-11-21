@@ -15,6 +15,15 @@ public class Data_Generation extends Activity {
     private String table;
     private InputStream stream;
     private static final Map<String, Scanner> association = new HashMap<>();
+
+    /**
+     * Removes all class state.
+     * Instances will start reading files from the beginning again.
+     */
+    public static void reset(){
+        association.clear();
+    }
+
     private Scanner sc;
     @Override
     public void perform() {

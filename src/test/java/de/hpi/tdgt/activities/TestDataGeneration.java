@@ -24,7 +24,8 @@ public class TestDataGeneration {
     private Data_Generation otherGeneration;
 
     @BeforeEach
-    public void beforeAll() throws IOException {
+    public void beforeEach() throws IOException {
+        Data_Generation.reset();
         generation = new Data_Generation();
         generation.setStream(new Utils().getUsersCSV());
         generation.setData(new String[]{"username", "password"});
