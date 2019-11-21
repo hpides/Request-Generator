@@ -167,7 +167,6 @@ public class RestClient {
         val start = System.nanoTime();
         //ste auth header if required
         if (request.getUsername() != null && request.getPassword() != null) {
-            System.out.println("Auth: "+request.getUsername()+":"+request.getPassword());
             httpURLConnection.setRequestProperty(HttpConstants.HEADER_AUTHORIZATION, "Basic "+Base64.getEncoder().encodeToString((request.getUsername() + ":" + request.getPassword()).getBytes(StandardCharsets.UTF_8)));
         }
         //set POST Body to contain formencoded data
