@@ -1,10 +1,14 @@
 package de.hpi.tdgt.test.story.activity;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 @NoArgsConstructor
@@ -13,7 +17,15 @@ import lombok.*;
 public class Data_Generation extends Activity {
     private String[] data;
     private String table;
+
+    //should not be serialized or accessible from other classes
+    @JsonIgnore
+    @Setter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE)
     private InputStream stream;
+
+    //this is used to synchronise current line in all file(s)
+    @JsonIgnore
     private static final Map<String, Scanner> association = new HashMap<>();
 
     /**
@@ -21,9 +33,16 @@ public class Data_Generation extends Activity {
      * Instances will start reading files from the beginning again.
      */
     public static void reset(){
+        //close all Scanners
+        for(val scanner : association.values()){
+            scanner.close();
+        }
         association.clear();
     }
-
+    //should not be serialized or accessible from other classes
+    @JsonIgnore
+    @Setter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE)
     private Scanner sc;
     @Override
     public void perform() {
@@ -32,7 +51,8 @@ public class Data_Generation extends Activity {
     }
 
     public Map<String, String> readBuffer() {
-        if (stream != null) {
+        if (stream != null || table != null) {
+            initStream();
             initScanner();
             //sc has a value now
             val buffer = new HashMap<String, String>();
@@ -44,6 +64,7 @@ public class Data_Generation extends Activity {
                     line = sc.nextLine();
                 } else {
                     System.err.println("No data remains!");
+                    sc.close();
                     return buffer;
                 }
                 // Scanner suppresses exceptions
@@ -63,11 +84,23 @@ public class Data_Generation extends Activity {
             }
 
             return buffer;
-        } else {
+        }
+        else {
             val buffer = new HashMap<String, String>();
             buffer.put("key", "user");
             buffer.put("value", "pw");
             return buffer;
+        }
+    }
+
+    private void initStream() {
+        if(stream == null && table != null){
+            File table = new File(getTable()+".csv");
+            try {
+                stream = new FileInputStream(table);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -78,7 +111,7 @@ public class Data_Generation extends Activity {
                 if (association.containsKey(table)) {
                     sc = association.get(table);
                 } else {
-                    sc = new Scanner(this.getStream(), "UTF-8");
+                    sc = new Scanner(stream, "UTF-8");
                     association.put(table, sc);
                 }
             }
