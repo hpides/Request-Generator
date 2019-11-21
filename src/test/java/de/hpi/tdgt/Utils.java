@@ -28,4 +28,8 @@ public class Utils {
     public InputStream getPostsCSV() throws IOException {
         return getClass().getResourceAsStream("posts.csv");
     }
+
+    public InputStream getValuesCSV() throws IOException {
+        return getClass().getResourceAsStream("values.csv");
+    }
 }

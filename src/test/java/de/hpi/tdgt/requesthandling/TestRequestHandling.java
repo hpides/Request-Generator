@@ -5,7 +5,10 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import de.hpi.tdgt.Utils;
 import de.hpi.tdgt.deserialisation.Deserializer;
+import de.hpi.tdgt.test.story.activity.Data_Generation;
 import lombok.val;
+import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -44,6 +47,17 @@ public class TestRequestHandling {
         server.createContext("/auth", authHandler);
         server.setExecutor(null);
         server.start();
+
+        File values = new File("values.csv");
+        values.deleteOnExit();
+        var os = new FileOutputStream(values);
+        IOUtils.copy(new Utils().getValuesCSV(), os);
+        os.close();
+    }
+
+    @AfterAll
+    public void removeSideEffects(){
+        Data_Generation.reset();
     }
     @Test
     public void testSimpleRequest() throws IOException {
