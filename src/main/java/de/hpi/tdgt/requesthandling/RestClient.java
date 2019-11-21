@@ -8,6 +8,10 @@ import org.apache.commons.io.input.CountingInputStream;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.Charset;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
@@ -24,6 +28,14 @@ public class RestClient {
         return exchangeWithEndpoint(request);
     }
 
+    public RestResult getBodyFromEndpoint(URL url, String body) throws IOException {
+        val request = new Request();
+        request.setUrl(url);
+        request.setMethod(HttpConstants.GET);
+        request.setBody(body);
+        request.setForm(false);
+        return exchangeWithEndpoint(request);
+    }
 
     public RestResult postFormToEndpoint(URL url, Map<String, String> getParams) throws IOException {
         val request = new Request();
@@ -34,7 +46,6 @@ public class RestClient {
         return exchangeWithEndpoint(request);
     }
 
-
     public RestResult postBodyToEndpoint(URL url, String body) throws IOException {
         val request = new Request();
         request.setUrl(url);
@@ -44,7 +55,6 @@ public class RestClient {
         return exchangeWithEndpoint(request);
     }
 
-
     public RestResult putFormToEndpoint(URL url, Map<String, String> getParams) throws IOException {
         val request = new Request();
         request.setUrl(url);
@@ -53,7 +63,6 @@ public class RestClient {
         request.setForm(true);
         return exchangeWithEndpoint(request);
     }
-
 
     public RestResult putBodyToEndpoint(URL url, String body) throws IOException {
         val request = new Request();
@@ -74,6 +83,16 @@ public class RestClient {
         return exchangeWithEndpoint(request);
     }
 
+    public RestResult getBodyFromEndpointWithAuth(URL url, String body, String username, String password) throws IOException {
+        val request = new Request();
+        request.setUrl(url);
+        request.setMethod(HttpConstants.GET);
+        request.setBody(body);
+        request.setForm(false);
+        request.setUsername(username);
+        request.setPassword(password);
+        return exchangeWithEndpoint(request);
+    }
 
     public RestResult postFormToEndpointWithAuth(URL url, Map<String, String> getParams, String username, String password) throws IOException {
         val request = new Request();
@@ -86,7 +105,6 @@ public class RestClient {
         return exchangeWithEndpoint(request);
     }
 
-
     public RestResult postBodyToEndpointWithAuth(URL url, String body, String username, String password) throws IOException {
         val request = new Request();
         request.setUrl(url);
@@ -98,7 +116,6 @@ public class RestClient {
         return exchangeWithEndpoint(request);
     }
 
-
     public RestResult putFormToEndpointWithAuth(URL url, Map<String, String> getParams, String username, String password) throws IOException {
         val request = new Request();
         request.setUrl(url);
@@ -109,7 +126,6 @@ public class RestClient {
         request.setPassword(password);
         return exchangeWithEndpoint(request);
     }
-
 
     public RestResult putBodyToEndpointWithAuth(URL url, String body, String username, String password) throws IOException {
         val request = new Request();
@@ -165,7 +181,7 @@ public class RestClient {
             out.close();
         }
         //set POST body to what was passed
-        if (!request.isForm() && (request.getMethod().equals(HttpConstants.POST) || request.getMethod().equals(HttpConstants.PUT)) && request.getBody() != null) {
+        if (!request.isForm() && (request.getMethod().equals(HttpConstants.POST) || request.getMethod().equals(HttpConstants.PUT) || request.getMethod().equals(HttpConstants.GET)) && request.getBody() != null) {
             httpURLConnection.setRequestProperty("Content-Type", HttpConstants.CONTENT_TYPE_APPLICATION_JSON);
             httpURLConnection.setDoOutput(true);
             OutputStream out = httpURLConnection.getOutputStream();

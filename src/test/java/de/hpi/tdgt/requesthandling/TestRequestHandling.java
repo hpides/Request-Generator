@@ -25,6 +25,7 @@ import static org.hamcrest.Matchers.*;
 public class TestRequestHandling {
 
     private final HttpHandlers.GetHandler getHandler = new HttpHandlers.GetHandler();
+    private final HttpHandlers.GetWithBodyHandler getWithBodyHandler = new HttpHandlers.GetWithBodyHandler();
     private final HttpHandlers.JSONObjectGetHandler jsonObjectGetHandler = new HttpHandlers.JSONObjectGetHandler();
     private final HttpHandlers.JSONArrayGetHandler jsonArrayGetHandler = new HttpHandlers.JSONArrayGetHandler();
     private final HttpHandlers.PostHandler postHandler = new HttpHandlers.PostHandler();
@@ -39,6 +40,7 @@ public class TestRequestHandling {
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         System.out.println("server started at " + port);
         server.createContext("/", getHandler);
+        server.createContext("/getWithBody", getWithBodyHandler);
         server.createContext("/jsonObject", jsonObjectGetHandler);
         server.createContext("/jsonArray", jsonArrayGetHandler);
         server.createContext("/echoPost", postHandler);
@@ -97,6 +99,14 @@ public class TestRequestHandling {
         params.put("param","value");
         val result = rc.getFromEndpoint(new URL("http://localhost:9000/"), params);
         assertThat(result.toString(), stringContainsInOrder("param","value"));
+    }
+
+    @Test
+    public void testGETBodyParams() throws IOException {
+        val rc = new RestClient();
+        val body = "{\"param\":\"value\"}";
+        val result = rc.getBodyFromEndpoint(new URL("http://localhost:9000/getWithBody"), body);
+        assertThat(result.toString(), equalTo(body));
     }
 
     @Test
@@ -184,6 +194,12 @@ public class TestRequestHandling {
         val rc = new RestClient();
         val result = rc.getFromEndpointWithAuth(new URL("http://localhost:9000/auth"),null,HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
         assertThat(result.getReturnCode(), equalTo(200));
+    }
+
+    @Test
+    public void testGETBodyWithAuth() throws IOException {
+        val rc = new RestClient();
+        val result = rc.getBodyFromEndpointWithAuth(new URL("http://localhost:9000/auth"), "\"Something\"", HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
     }
 
     @Test

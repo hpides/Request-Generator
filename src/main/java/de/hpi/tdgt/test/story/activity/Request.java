@@ -118,11 +118,22 @@ public class Request extends Activity {
     }
     private void extractResponseParams(final de.hpi.tdgt.requesthandling.RestResult result)
             throws IOException, JsonParseException, JsonMappingException {
-        String json = new String(result.getResponse(), StandardCharsets.UTF_8);
-        val map = om.readValue(json, Map.class);
-        getKnownParams().putAll(toStringMap(map));
+        if(result.isJSON()) {
+            if(result.toJson().isObject()) {
+                String json = new String(result.getResponse(), StandardCharsets.UTF_8);
+                val map = om.readValue(json, Map.class);
+                getKnownParams().putAll(toStringMap(map));
+            }
+            else{
+                System.err.println("I can not handle Arrays.");
+                System.err.println(result);
+            }
+        }
+        else {
+            System.err.println("Not JSON! Response is ignored.");
+            System.err.println(result);
+        }
     }
-
     private void handlePostWithBody() {
         val params = new HashMap<String, String>();
         if (requestJSONObject != null) {
@@ -165,7 +176,86 @@ public class Request extends Activity {
     }
 
     private void handlePut() {
-        // TODO implement
+        if (requestJSONObject != null) {
+            handlePutWithBody();
+        } else {
+            handlePutWithForm();
+        }
+    }
+
+    private void handlePutWithForm() {
+        val params = new HashMap<String, String>();
+        if (requestParams != null) {
+            for (val key : requestParams) {
+                params.put(key, getKnownParams().get(key));
+            }
+        }
+        
+        if (basicAuth == null) {
+            try {
+                extractResponseParams(rc.putFormToEndpoint(new URL(this.addr), params));
+            } catch (MalformedURLException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                extractResponseParams(
+                    rc.putFormToEndpointWithAuth(new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
+                        getKnownParams().get(basicAuth.getPassword()))
+                );
+            } catch (MalformedURLException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void handlePutWithBody() {
+        val params = new HashMap<String, String>();
+        if (requestJSONObject != null) {
+            for (val key : requestJSONObject) {
+                params.put(key, getKnownParams().get(key));
+            }
+        }
+        var jsonParams = "";
+        try {
+            jsonParams = om.writeValueAsString(params);
+        } catch (JsonProcessingException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+
+        if (basicAuth == null) {
+            try {
+                extractResponseParams(rc.putBodyToEndpoint(new URL(this.addr), jsonParams));
+            } catch (MalformedURLException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                extractResponseParams(
+                    rc.putBodyToEndpointWithAuth(new URL(this.addr), jsonParams, getKnownParams().get(basicAuth.getUser()),
+                        getKnownParams().get(basicAuth.getPassword()))
+                );
+            } catch (MalformedURLException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
     }
 
     private void handleDelete() {
@@ -201,6 +291,14 @@ public class Request extends Activity {
     }
 
     private void handleGet() {
+        if (requestJSONObject != null) {
+            handleGetWithBody();
+        } else {
+            handleGetWithForm();
+        }
+    }
+
+    private void handleGetWithForm() {
         val params = new HashMap<String, String>();
         if (requestParams != null) {
             for (val key : requestParams) {
@@ -210,7 +308,7 @@ public class Request extends Activity {
         
         if (basicAuth == null) {
             try {
-                rc.getFromEndpoint(new URL(this.addr), params);
+                extractResponseParams(rc.getFromEndpoint(new URL(this.addr), params));
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -220,8 +318,51 @@ public class Request extends Activity {
             }
         } else {
             try {
-                rc.getFromEndpointWithAuth(new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
-                    getKnownParams().get(basicAuth.getPassword()));
+                extractResponseParams(
+                    rc.getFromEndpointWithAuth(new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
+                        getKnownParams().get(basicAuth.getPassword()))
+                );
+            } catch (MalformedURLException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void handleGetWithBody() {
+        val params = new HashMap<String, String>();
+        if (requestJSONObject != null) {
+            for (val key : requestJSONObject) {
+                params.put(key, getKnownParams().get(key));
+            }
+        }
+        var jsonParams = "";
+        try {
+            jsonParams = om.writeValueAsString(params);
+        } catch (JsonProcessingException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+
+        if (basicAuth == null) {
+            try {
+                extractResponseParams(rc.getBodyFromEndpoint(new URL(this.addr), jsonParams));
+            } catch (MalformedURLException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                extractResponseParams(
+                    rc.getBodyFromEndpointWithAuth(new URL(this.addr), jsonParams, getKnownParams().get(basicAuth.getUser()),
+                        getKnownParams().get(basicAuth.getPassword()))
+                );
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

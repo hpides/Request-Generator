@@ -1,7 +1,5 @@
 package de.hpi.tdgt.test.story.activity;
 
-import java.util.Map;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
