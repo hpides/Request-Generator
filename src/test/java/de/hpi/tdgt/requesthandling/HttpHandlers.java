@@ -9,6 +9,8 @@ import lombok.val;
 import java.io.*;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -61,12 +63,18 @@ public class HttpHandlers {
     public static class GetHandler implements HttpHandler {
         @Getter
         private Map<String,Object> lastParameters = null;
+        @Getter
+        private String request = "";
         @Override
         public void handle(HttpExchange he) throws IOException {
             // parse request
             Map<String, Object> parameters = new HashMap<String, Object>();
             URI requestedUri = he.getRequestURI();
             String query = requestedUri.getRawQuery();
+            if(query != null){
+                query = URLDecoder.decode(query, StandardCharsets.UTF_8);
+            }
+            request = query;
             parseQuery(query, parameters);
             lastParameters = parameters;
             // send response
@@ -110,6 +118,10 @@ public class HttpHandlers {
                 first = false;
                 responseBuilder.append("\"").append(key).append("\"").append(" : ").append("\"").append(parameters.get(key)).append("\"").append("\n");
             }
+            if(!parameters.isEmpty()) {
+                responseBuilder.append(",");
+            }
+            responseBuilder.append("\"id\"").append(" : ").append(40);
             responseBuilder.append("}");
             String response = responseBuilder.toString();
             val headers = he.getResponseHeaders();

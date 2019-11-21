@@ -68,6 +68,16 @@ public class TestRequestHandling {
     }
 
     @Test
+    public void testInvalidCharacter() throws IOException {
+        val rc = new RestClient();
+        val params = new HashMap<String, String>();
+        params.put("key","It is what it is...and does what it offers");
+        val result = rc.getFromEndpoint(new URL("http://localhost:9000/"), params);
+        String response = new String(result.getResponse(),StandardCharsets.UTF_8);
+        assertThat(getHandler.getRequest(),equalTo("key=It is what it is...and does what it offers"));
+    }
+
+    @Test
     public void testContentType() throws IOException {
         val rc = new RestClient();
         val result = rc.getFromEndpoint(new URL("http://localhost:9000/"), new HashMap<>());
@@ -105,6 +115,19 @@ public class TestRequestHandling {
         params.put("param","value");
         val result = rc.getFromEndpoint(new URL("http://localhost:9000/jsonObject"), params);
         assertThat(result.toJson().isObject(),is(true));
+    }
+    //Regression test
+    @Test
+    public void testJSONWithInteger() throws IOException {
+        val rq = new de.hpi.tdgt.test.story.activity.Request();
+        rq.setAddr("http://localhost:9000/jsonObject");
+        rq.setRequestParams(new String[] {"param"});
+        rq.setVerb("POST");
+        rq.setResponseJSONObject(new String[]{"id"});
+        val params = new HashMap<String,String>();
+        params.put("param","value");
+        rq.run(params);
+        assertThat(rq.getKnownParams(), hasEntry("id","40"));
     }
     @Test
     public void testJSONArray() throws IOException {

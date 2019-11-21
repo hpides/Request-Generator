@@ -88,10 +88,10 @@ public class Data_Generation extends Activity {
         return buffer;
 
     }
-
+    public static String outputDirectory =".";
     private void initStream() {
         if (stream == null && table != null) {
-            File table = new File(getTable() + ".csv");
+            File table = new File(outputDirectory + "/"+ getTable() + ".csv");
             try {
                 stream = new FileInputStream(table);
             } catch (FileNotFoundException e) {

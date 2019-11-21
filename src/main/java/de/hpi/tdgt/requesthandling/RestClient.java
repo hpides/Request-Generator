@@ -6,10 +6,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CountingInputStream;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.SocketTimeoutException;
-import java.net.URL;
+import java.net.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -154,6 +151,7 @@ public class RestClient {
         val start = System.nanoTime();
         //ste auth header if required
         if (request.getUsername() != null && request.getPassword() != null) {
+            System.out.println("Auth: "+request.getUsername()+":"+request.getPassword());
             httpURLConnection.setRequestProperty(HttpConstants.HEADER_AUTHORIZATION, "Basic "+Base64.getEncoder().encodeToString((request.getUsername() + ":" + request.getPassword()).getBytes(StandardCharsets.UTF_8)));
         }
         //set POST Body to contain formencoded data
@@ -234,9 +232,9 @@ public class RestClient {
                     finalURL.append("&");
                 }
                 firstParam = false;
-                finalURL.append(key.getKey());
+                finalURL.append(URLEncoder.encode(key.getKey(), StandardCharsets.UTF_8));
                 finalURL.append("=");
-                finalURL.append(key.getValue());
+                finalURL.append(URLEncoder.encode(key.getValue(), StandardCharsets.UTF_8));
             }
         }
         return finalURL;
@@ -333,5 +331,6 @@ public class RestClient {
         res.setContentType(conn.getContentType());
         res.setHeaders(conn.getHeaderFields());
         res.setReturnCode(conn.getResponseCode());
+        System.out.println("Request took "+res.durationMillis()+" ms.");
     }
 }

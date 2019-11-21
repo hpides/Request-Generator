@@ -3,6 +3,7 @@ package de.hpi.tdgt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.hpi.tdgt.deserialisation.Deserializer;
 import de.hpi.tdgt.requesthandling.RestClient;
+import de.hpi.tdgt.test.story.activity.Data_Generation;
 import lombok.val;
 import org.apache.commons.io.IOUtils;
 import de.hpi.tdgt.test.Test;
@@ -18,7 +19,7 @@ public class Main {
     public static void main(String[] args) throws IOException {
         if(args.length == 0){
             try {
-                System.err.println("Usage: java -jar "+new java.io.File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getName()+" load <Path to request JSON>");
+                System.err.println("Usage: java -jar "+new java.io.File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getName()+" load <Path to request JSON> <Path to generated Data>");
                 System.err.println("or: java -jar "+new java.io.File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getName()+" testRest");
                 System.exit(1);
             } catch (URISyntaxException e) {
@@ -28,10 +29,13 @@ public class Main {
         if(args[0].equals("load") ) {
             try {
                 StringWriter writer = new StringWriter();
-                IOUtils.copy(new FileInputStream(args[0]), writer);
+                IOUtils.copy(new FileInputStream(args[1]), writer);
                 String json = writer.toString();
                 Test deserializedTest = Deserializer.deserialize(json);
                 System.out.println("Successfully deserialized input json including " + deserializedTest.getStories().length + " stories.");
+                System.out.println("Running test...");
+                Data_Generation.outputDirectory = args[2];
+                deserializedTest.start();
             } catch (IOException e) {
                 e.printStackTrace();
             }
