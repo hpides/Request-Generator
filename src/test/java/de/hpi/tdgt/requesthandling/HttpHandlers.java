@@ -85,6 +85,46 @@ public class HttpHandlers {
         }
     }
 
+    public static class GetWithBodyHandler implements HttpHandler {
+        @Getter
+        private Map<String, Object> lastParameters = null;
+
+        @Override
+        public void handle(HttpExchange he) throws IOException {
+            // parse request
+            lastParameters = new HashMap<String, Object>();
+            var headers = he.getRequestHeaders();
+            val contentType = headers.getFirst(HttpConstants.HEADER_CONTENT_TYPE);
+            if(contentType == null || !contentType.equals(HttpConstants.CONTENT_TYPE_APPLICATION_JSON)){
+                val message = "Missing Content Type Header!";
+                headers = he.getResponseHeaders();
+                headers.put(HttpConstants.HEADER_CONTENT_TYPE,Collections.singletonList(HttpConstants.CONTENT_TYPE_APPLICATION_JSON));
+                he.sendResponseHeaders(200, message.length());
+                OutputStream os = he.getResponseBody();
+                os.write(message.getBytes());
+                os.close();
+                return;
+            }
+            InputStreamReader isr = new InputStreamReader(he.getRequestBody(), "utf-8");
+            BufferedReader br = new BufferedReader(isr);
+            StringBuilder body = new StringBuilder();
+            String query = br.readLine();
+            body.append(query);
+            while((query = br.readLine()) != null){
+                body.append(query);
+            }
+            // send response
+            String response = body.toString();
+            lastParameters = new ObjectMapper().readValue(response, Map.class);
+            headers = he.getResponseHeaders();
+            headers.put(HttpConstants.HEADER_CONTENT_TYPE,Collections.singletonList(HttpConstants.CONTENT_TYPE_APPLICATION_JSON));
+            he.sendResponseHeaders(200, response.length());
+            OutputStream os = he.getResponseBody();
+            os.write(response.getBytes());
+            os.close();
+        }
+    }
+
     /**
      * Makes request URL Parameters to a JSON Object with the Request keys as keys and their values as values.
      */
