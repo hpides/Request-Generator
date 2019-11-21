@@ -19,3 +19,8 @@
 # Maven
 log/
 target/
+
+#created in tests
+users.csv
+values.csv
+search.csv
