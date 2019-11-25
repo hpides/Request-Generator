@@ -185,4 +185,15 @@ public class TestDataGeneration {
         val clone = firstGeneration.clone();
         assertThat(clone, equalTo(firstGeneration));
     }
+    @Test
+    public void dataGenerationCanHandleEmptyValuesInLastCSVColumn() throws InterruptedException {
+        for(int i = 0; i < 17; i++){
+            firstGeneration.run(new HashMap<>());
+        }
+        //17th line is "Abdul-Nour.Abdallah;"
+        Map<String, String> params;
+        params = firstGeneration.getKnownParams();
+        assertThat(params, hasEntry("username", "Abdul-Nour.Abdallah"));
+        assertThat(params, hasEntry("password", ""));
+    }
 }

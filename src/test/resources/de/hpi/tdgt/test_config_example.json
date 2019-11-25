@@ -1,6 +1,6 @@
 {
 	"repeat":1,
-	"scaleFactor":4,
+	"scaleFactor":1000,
 	"stories":[
 		{
 			"scalePercentage":0.5,
@@ -30,7 +30,7 @@
 					],
 					"type":"REQUEST",
 					"verb":"POST",
-					"addr":"http://users/users/new",
+					"addr":"http://users:8080/users/new",
 					"requestJSONObject":[
 						"username",
 						"password"
@@ -63,7 +63,7 @@
 					],
 					"type":"REQUEST",
 					"verb":"POST",
-					"addr":"http://posts/posts/new",
+					"addr":"http://posts:8081/posts/new",
 					"requestParams":[
 						"title",
 						"text"
@@ -85,7 +85,7 @@
 					],
 					"type":"REQUEST",
 					"verb":"GET",
-					"addr":"http://posts/posts/all",
+					"addr":"http://posts:8081/posts/all",
 					"requestParams":[
 
 					],
@@ -116,7 +116,7 @@
 					],
 					"type":"REQUEST",
 					"verb":"DELETE",
-					"addr":"http://posts/posts/delete",
+					"addr":"http://posts:8081/posts/delete",
 					"basicAuth":{
 						"user":"username",
 						"password":"password"
@@ -131,7 +131,7 @@
 					],
 					"type":"REQUEST",
 					"verb":"DELETE",
-					"addr":"http://users/users/delete",
+					"addr":"http://users:8080/users/delete",
 					"basicAuth":{
 						"user":"username",
 						"password":"password"
@@ -166,7 +166,7 @@
 					],
 					"type":"REQUEST",
 					"verb":"POST",
-					"addr":"http://users/users/new",
+					"addr":"http://users:8080/users/new",
 					"requestJSONObject":[
 						"username",
 						"password"
@@ -198,7 +198,7 @@
 					],
 					"type":"REQUEST",
 					"verb":"GET",
-					"addr":"http://search/posts/search",
+					"addr":"http://search:8082/posts/search",
 					"requestParams":[
 						"key"
 					],
@@ -216,7 +216,7 @@
 					],
 					"type":"REQUEST",
 					"verb":"DELETE",
-					"addr":"http://users/users/delete",
+					"addr":"http://users:8080/users/delete",
 					"basicAuth":{
 						"user":"username",
 						"password":"password"

@@ -89,11 +89,17 @@ public class Data_Generation extends Activity {
         }
         //can be done without synchronisation, saves time spent in sequential mode
         String[] values = line.split(";");
-        if (values.length < this.getData().length) {
+        if (values.length < this.getData().length -1) {
             log.error("Generated data does not match required data!");
         } else {
             for (int i = 0; i < data.length; i++) {
-                buffer.put(data[i], values[i]);
+                //assume last csv column was empty
+                if(i >= values.length){
+                    buffer.put(data[data.length-1],"");
+                }
+                else {
+                    buffer.put(data[i], values[i]);
+                }
             }
         }
 

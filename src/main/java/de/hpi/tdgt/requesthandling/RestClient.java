@@ -289,10 +289,9 @@ public class RestClient {
             }
         } catch (IOException e) {
             if (!(e.getCause() instanceof FileNotFoundException)) {
-                log.error("Thread "+Thread.currentThread().getId()+"readResponse: {}", e.toString());
                 Throwable cause = e.getCause();
                 if (cause != null) {
-                    log.error("Cause: {}", cause.toString());
+                    //log.error("Cause: {}", cause.toString());
                     if (cause instanceof Error) {
                         throw (Error) cause;
                     }
@@ -301,9 +300,6 @@ public class RestClient {
             // Normal InputStream is not available
             InputStream errorStream = conn.getErrorStream();
             if (errorStream == null) {
-                if (log.isInfoEnabled()) {
-                    log.info("Error Response Code: {}, Server sent no Errorpage", conn.getResponseCode());
-                }
                 res.setResponse(NULL_BA);
                 res.setEndTime(System.nanoTime());
                 res.setContentType(conn.getContentType());
@@ -312,9 +308,11 @@ public class RestClient {
             }
 
             if (log.isInfoEnabled()) {
-                log.info("Error Response Code: {}", conn.getResponseCode());
                 if(conn.getResponseCode() == 401 || conn.getResponseCode() == 403){
-                    log.info("Used authentication "+request.getUsername()+":"+request.getPassword());
+                    log.info("Error Response Code: " + conn.getResponseCode() + "for "+request.getMethod() +" "+request.getUrl() + " for used authentication "+request.getUsername()+":"+request.getPassword());
+                }
+                else{
+                    log.info("Error Response Code: " + conn.getResponseCode() + "for "+request.getMethod() +" "+request.getUrl());
                 }
             }
 
@@ -328,10 +326,8 @@ public class RestClient {
                 }
             }
         } catch (Exception e) {
-            log.error("readResponse: {}", e.toString());
             Throwable cause = e.getCause();
             if (cause != null) {
-                log.error("Cause: {}", cause.toString());
                 if (cause instanceof Error) {
                     throw (Error) cause;
                 }

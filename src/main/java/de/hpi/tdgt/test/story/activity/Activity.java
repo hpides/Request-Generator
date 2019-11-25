@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 })
 @EqualsAndHashCode
 @Log4j2
-public abstract class Activity {
+public abstract class Activity implements Cloneable {
     private String name;
     private int id;
 
@@ -89,7 +89,8 @@ public abstract class Activity {
     private void runSuccessors() throws InterruptedException {
         val threads = Arrays.stream(successorLinks).map(successorLink -> new Thread( () -> {
             try {
-                successorLink.run(getKnownParams());
+                val clonedMap = new HashMap<String, String>(this.getKnownParams());
+                successorLink.run(clonedMap);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -107,7 +108,6 @@ public abstract class Activity {
     protected abstract Activity performClone();
     private boolean alreadyCloned = false;
     /**
-     * TODO: Unsure if we actually need this.
      * My original thought was to clone the activities of every story per Thread, while every Thread represents a user. This should guarantee that every user has an own state (knownParams, predecessorsReady, ...).
      * Using ThreadLocalStorage we should be able to avoid this problem, and keep our structure reentrant.
      * @return
