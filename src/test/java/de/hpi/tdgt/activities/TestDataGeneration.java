@@ -4,6 +4,7 @@ import de.hpi.tdgt.Utils;
 import de.hpi.tdgt.test.story.activity.Data_Generation;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -19,7 +20,7 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.*;
 import static org.hamcrest.Matchers.*;
-
+@Log4j2
 public class TestDataGeneration {
     private Data_Generation firstGeneration;
     private Data_Generation secondGeneration;
@@ -61,8 +62,8 @@ public class TestDataGeneration {
 
         //clear side effects
         Data_Generation.reset();
-        System.out.println("Deleted users: "+users.delete());
-        System.out.println("Deleted posts: "+posts.delete());
+        log.info("Deleted users: "+users.delete());
+        log.info("Deleted posts: "+posts.delete());
     }
     @Test
     public void firstGenerationShouldContainFirstElementOfUsersCSV() throws InterruptedException {

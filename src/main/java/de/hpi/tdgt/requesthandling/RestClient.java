@@ -207,7 +207,7 @@ public class RestClient {
         //got a connection
         val result = new RestResult();
         result.setStartTime(start);
-        readResponse(httpURLConnection, result);
+        readResponse(httpURLConnection, result, request);
 
         return result;
     }
@@ -246,6 +246,11 @@ public class RestClient {
                 if (!firstParam) {
                     finalURL.append("&");
                 }
+                //error handling
+                if(key.getValue() ==null){
+                    log.error("No value!");
+                    continue;
+                }
                 firstParam = false;
                 finalURL.append(URLEncoder.encode(key.getKey(), StandardCharsets.UTF_8));
                 finalURL.append("=");
@@ -266,7 +271,7 @@ public class RestClient {
      * @return response content
      * @throws IOException if an I/O exception occurs
      */
-    private void readResponse(HttpURLConnection conn, RestResult res) throws IOException {
+    private void readResponse(HttpURLConnection conn, RestResult res, Request request) throws IOException {
         BufferedInputStream in = null;
 
         //final long contentLength = conn.getContentLength();
@@ -308,6 +313,9 @@ public class RestClient {
 
             if (log.isInfoEnabled()) {
                 log.info("Error Response Code: {}", conn.getResponseCode());
+                if(conn.getResponseCode() == 401 || conn.getResponseCode() == 403){
+                    log.info("Used authentication "+request.getUsername()+":"+request.getPassword());
+                }
             }
 
             if (gzipped) {
@@ -346,6 +354,6 @@ public class RestClient {
         res.setContentType(conn.getContentType());
         res.setHeaders(conn.getHeaderFields());
         res.setReturnCode(conn.getResponseCode());
-        System.out.println("Request took "+res.durationMillis()+" ms.");
+        log.info("Request took "+res.durationMillis()+" ms.");
     }
 }

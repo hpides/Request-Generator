@@ -7,6 +7,7 @@ import de.hpi.tdgt.Utils;
 import de.hpi.tdgt.deserialisation.Deserializer;
 import de.hpi.tdgt.test.story.UserStory;
 import de.hpi.tdgt.test.story.activity.Data_Generation;
+import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.*;
@@ -20,6 +21,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Log4j2
 public class TestRequestHandling {
 
     private final HttpHandlers.GetHandler getHandler = new HttpHandlers.GetHandler();
@@ -37,7 +39,7 @@ public class TestRequestHandling {
     public void launchTestServer() throws IOException {
         int port = 9000;
         server = HttpServer.create(new InetSocketAddress(port), 0);
-        System.out.println("server started at " + port);
+        log.info("server started at " + port);
         server.createContext("/", getHandler);
         server.createContext("/getWithBody", getWithBodyHandler);
         server.createContext("/jsonObject", jsonObjectGetHandler);

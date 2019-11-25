@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.*;
 import de.hpi.tdgt.test.story.UserStory;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
         @JsonSubTypes.Type(value = Delay.class, name = "DELAY"),
 })
 @EqualsAndHashCode
+@Log4j2
 public abstract class Activity {
     private String name;
     private int id;
@@ -58,7 +60,7 @@ public abstract class Activity {
     }
 
     public void run(Map<String,String> dataMap) throws InterruptedException {
-        System.out.println("Running Activity "+getName()+" in Thread "+Thread.currentThread().getId());
+        log.info("Running Activity "+getName()+" in Thread "+Thread.currentThread().getId());
         this.setPredecessorsReady(this.getPredecessorsReady() + 1);
         getKnownParams().putAll(dataMap);
         if (this.getPredecessorsReady() >= predecessorCount) {

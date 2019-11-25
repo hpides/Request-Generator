@@ -14,11 +14,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.hpi.tdgt.requesthandling.RestClient;
 import lombok.*;
+import lombok.extern.log4j.Log4j2;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@Log4j2
 public class Request extends Activity {
     private String verb;
     private String addr;
@@ -51,7 +53,7 @@ public class Request extends Activity {
 
     @Override
     public void perform() {
-        System.out.println("Sending request "+addr+" in Thread "+Thread.currentThread().getId());
+        log.info("Sending request "+addr+" in Thread "+Thread.currentThread().getId() + "with attributes: "+getKnownParams());
         switch (verb) {
         case "POST":
             handlePost();
@@ -140,13 +142,13 @@ public class Request extends Activity {
                 getKnownParams().putAll(toStringMap(map));
             }
             else{
-                System.err.println("I can not handle Arrays.");
-                System.err.println(result);
+                log.error("I can not handle Arrays.");
+                log.error(result);
             }
         }
         else {
-            System.err.println("Not JSON! Response is ignored.");
-            System.err.println(result);
+            log.error("Not JSON! Response is ignored.");
+            log.error(result);
         }
     }
     private void handlePostWithBody() {

@@ -10,11 +10,13 @@ import java.util.Scanner;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import lombok.extern.log4j.Log4j2;
 
 @NoArgsConstructor
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = true)
+@Log4j2
 public class Data_Generation extends Activity {
     private String[] data;
     private String table;
@@ -73,22 +75,22 @@ public class Data_Generation extends Activity {
         synchronized (sc) {
             if (sc.hasNextLine()) {
                 line = sc.nextLine();
-                System.out.println("Retrieved "+line+"from table"+" in Thread "+Thread.currentThread().getId());
+                log.info("Retrieved "+line+"from table"+" in Thread "+Thread.currentThread().getId());
             } else {
-                System.err.println("No data remains!");
+                log.error("No data remains!");
                 sc.close();
                 return buffer;
             }
             // Scanner suppresses exceptions
             if (sc.ioException() != null) {
-                System.err.println("Exception: ");
+                log.error("Exception: ");
                 sc.ioException().printStackTrace();
             }
         }
         //can be done without synchronisation, saves time spent in sequential mode
         String[] values = line.split(";");
         if (values.length < this.getData().length) {
-            System.err.println("Generated data does not match required data!");
+            log.error("Generated data does not match required data!");
         } else {
             for (int i = 0; i < data.length; i++) {
                 buffer.put(data[i], values[i]);

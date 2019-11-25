@@ -1,9 +1,9 @@
 {
 	"repeat":1,
-	"scaleFactor":10,
+	"scaleFactor":4,
 	"stories":[
 		{
-			"scalePercentage":0.7,
+			"scalePercentage":0.5,
 			"name":"User und Post erstellen",
 			"activities":[
 				{
@@ -140,7 +140,7 @@
 			]
 		},
 		{
-			"scalePercentage":0.3,
+			"scalePercentage":0.5,
 			"name":"Nach Posts suchen",
 			"activities":[
 				{

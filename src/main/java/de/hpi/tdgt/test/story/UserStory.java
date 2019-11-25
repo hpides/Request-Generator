@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import de.hpi.tdgt.test.story.activity.Activity;
+import lombok.extern.log4j.Log4j2;
 import lombok.val;
 
 import java.util.Arrays;
@@ -12,6 +13,7 @@ import java.util.HashMap;
 @Getter
 @Setter
 @NoArgsConstructor
+@Log4j2
 public class UserStory implements Runnable{
     private double scalePercentage;
     private String name;
@@ -42,7 +44,7 @@ public class UserStory implements Runnable{
                 synchronized (this) {
                     clone = this.clone();
                 }
-                System.out.println("Running story "+clone.getName()+" in thread "+Thread.currentThread().getId());
+                log.info("Running story "+clone.getName()+" in thread "+Thread.currentThread().getId());
                 clone.getActivities()[0].run(new HashMap<>());
             } catch (InterruptedException e) {
                 e.printStackTrace();

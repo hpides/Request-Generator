@@ -5,6 +5,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
 import lombok.val;
 
 import java.io.*;
@@ -14,7 +15,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
-
+@Log4j2
 public class HttpHandlers {
     //Classes and methods based on https://www.codeproject.com/tips/1040097/create-a-simple-web-server-in-java-http-server
 
@@ -331,7 +332,7 @@ public class HttpHandlers {
             if(auth != null && auth.startsWith("Basic ")){
                 auth = auth.substring(auth.indexOf("Basic ")+"Basic ".length());
             }
-            System.out.println("Auth handler called with params "+ new String(Base64.getDecoder().decode(auth)));
+            log.info("Auth handler called with params "+ new String(Base64.getDecoder().decode(auth)));
             if(auth != null && Base64.getDecoder().decode(auth) != null && new String(Base64.getDecoder().decode(auth)).equals(username+":"+password)) {
                 lastLoginWasOK = true;
                 String response = "{\"message\":\"OK\"}";
