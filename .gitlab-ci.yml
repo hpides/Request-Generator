@@ -1,5 +1,23 @@
-image: "maven:3"
+stages:
+  - test
 
-test:
+junit:
+  stage: test
+  image: "maven:3"
+  tags: 
+    - BP-TDGT-CI
   script:
     - mvn test
+
+spotbugs:
+  stage: test
+  image: "maven:3"
+  artifacts:
+    when: on_failure
+    paths:
+      - target/site/*
+  tags:
+    - BP-TDGT-CI
+  script:
+    - mvn compile site
+    - mvn verify -Dmaven.test.skip=true
