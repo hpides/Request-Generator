@@ -1,9 +1,9 @@
 {
 	"repeat":1,
-	"scaleFactor":1000,
+	"scaleFactor":70,
 	"stories":[
 		{
-			"scalePercentage":0.5,
+			"scalePercentage":0.7,
 			"name":"User und Post erstellen",
 			"activities":[
 				{
@@ -30,7 +30,7 @@
 					],
 					"type":"REQUEST",
 					"verb":"POST",
-					"addr":"http://users:8080/users/new",
+					"addr":"http://users/users/new",
 					"requestJSONObject":[
 						"username",
 						"password"
@@ -63,7 +63,7 @@
 					],
 					"type":"REQUEST",
 					"verb":"POST",
-					"addr":"http://posts:8081/posts/new",
+					"addr":"http://posts/posts/new",
 					"requestParams":[
 						"title",
 						"text"
@@ -85,7 +85,7 @@
 					],
 					"type":"REQUEST",
 					"verb":"GET",
-					"addr":"http://posts:8081/posts/all",
+					"addr":"http://posts/posts/all",
 					"requestParams":[
 
 					],
@@ -116,7 +116,7 @@
 					],
 					"type":"REQUEST",
 					"verb":"DELETE",
-					"addr":"http://posts:8081/posts/delete",
+					"addr":"http://posts/posts/delete",
 					"basicAuth":{
 						"user":"username",
 						"password":"password"
@@ -131,7 +131,7 @@
 					],
 					"type":"REQUEST",
 					"verb":"DELETE",
-					"addr":"http://users:8080/users/delete",
+					"addr":"http://users/users/delete",
 					"basicAuth":{
 						"user":"username",
 						"password":"password"
@@ -140,7 +140,7 @@
 			]
 		},
 		{
-			"scalePercentage":0.5,
+			"scalePercentage":0.3,
 			"name":"Nach Posts suchen",
 			"activities":[
 				{
@@ -166,7 +166,7 @@
 					],
 					"type":"REQUEST",
 					"verb":"POST",
-					"addr":"http://users:8080/users/new",
+					"addr":"http://users/users/new",
 					"requestJSONObject":[
 						"username",
 						"password"
@@ -198,7 +198,7 @@
 					],
 					"type":"REQUEST",
 					"verb":"GET",
-					"addr":"http://search:8082/posts/search",
+					"addr":"http://search/posts/search",
 					"requestParams":[
 						"key"
 					],
@@ -216,7 +216,7 @@
 					],
 					"type":"REQUEST",
 					"verb":"DELETE",
-					"addr":"http://users:8080/users/delete",
+					"addr":"http://users/users/delete",
 					"basicAuth":{
 						"user":"username",
 						"password":"password"
