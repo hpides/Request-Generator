@@ -18,11 +18,13 @@ public class UserStory implements Runnable{
     private double scalePercentage;
     private String name;
     private Activity[] activities;
+
     public void setActivities(Activity[] activities){
         this.activities = activities;
         //set links
         Arrays.stream(activities).forEach(activity -> activity.initSuccessors(this));
     }
+
     public UserStory clone(){
         val story = new UserStory();
         story.setName(this.getName());
@@ -36,6 +38,7 @@ public class UserStory implements Runnable{
         Arrays.stream(story.getActivities()).forEach(activity -> activity.initSuccessors(story));
         return story;
     }
+    
     @Override
     public void run() {
         Thread storyThread = new Thread(() -> {

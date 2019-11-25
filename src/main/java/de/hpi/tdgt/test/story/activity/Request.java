@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.hpi.tdgt.requesthandling.RestClient;
+import de.hpi.tdgt.requesthandling.RestResult;
 import lombok.*;
 import lombok.extern.log4j.Log4j2;
 
@@ -133,7 +134,7 @@ public class Request extends Activity {
         return ret;
 
     }
-    private void extractResponseParams(final de.hpi.tdgt.requesthandling.RestResult result)
+    private void extractResponseParams(final RestResult result)
             throws IOException, JsonParseException, JsonMappingException {
         if(result != null && result.isJSON()) {
             if(result.toJson().isObject()) {

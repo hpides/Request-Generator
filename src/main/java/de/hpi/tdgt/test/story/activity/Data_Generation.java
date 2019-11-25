@@ -64,7 +64,6 @@ public class Data_Generation extends Activity {
     }
 
     public Map<String, String> readBuffer() {
-
         initStream();
         initScanner();
         //sc has a value now
@@ -98,8 +97,8 @@ public class Data_Generation extends Activity {
         }
 
         return buffer;
-
     }
+
     public static String outputDirectory =".";
     private void initStream() {
         if (stream == null && table != null) {

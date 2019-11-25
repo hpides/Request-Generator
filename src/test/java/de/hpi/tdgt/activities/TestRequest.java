@@ -3,18 +3,12 @@ package de.hpi.tdgt.activities;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.hpi.tdgt.test.story.activity.Request;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import de.hpi.tdgt.test.story.activity.Delay;
-
 import lombok.val;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class TestRequest {
 
@@ -29,14 +23,12 @@ public class TestRequest {
 
     @Test
     public void cloneCreatesEquivalentObject() {
-        Map<String, String> params = new HashMap<>();
         val clone = requestActivity.clone();
         assertThat(clone, equalTo(requestActivity));
     }
 
     @Test
     public void cloneCreatesEquivalentObjectWhenAllAttribvutesAreSet() {
-        Map<String, String> params = new HashMap<>();
         requestActivity.setResponseJSONObject(new String[]{"item1", "item2"});
         //noch 10
         requestActivity.setResponseParams(new String[]{"item3", "item4"});
@@ -57,7 +49,6 @@ public class TestRequest {
 
     @Test
     public void cloneCreatesotherObject() {
-        Map<String, String> params = new HashMap<>();
         val clone = requestActivity.clone();
         assertNotSame(clone, requestActivity);
     }

@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 public abstract class Activity {
     private String name;
     private int id;
+    private int repeat;
 
     //should not have Getter, but needs Setter for Jackson
     @Getter(AccessLevel.NONE)
@@ -45,15 +46,14 @@ public abstract class Activity {
     @JsonIgnore
     private Map<String, String> knownParams = new HashMap<>();
 
-
     //do not try to read this from json, no accessors --> only used internally
     @JsonIgnore
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     private Activity[] successorLinks = new Activity[0];
-    private int repeat;
 
     public abstract void perform();
+    
     //use this method to get successors of this activity
     public Activity[] getSuccessors() {
         return successorLinks;
