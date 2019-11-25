@@ -10,7 +10,6 @@ import org.apache.commons.io.IOUtils;
 import de.hpi.tdgt.test.Test;
 
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;

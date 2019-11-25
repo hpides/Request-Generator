@@ -18,7 +18,6 @@ import java.util.Vector;
 import static de.hpi.tdgt.Utils.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DeserializeActivity {
     private String getExampleJSON() throws IOException {

@@ -7,7 +7,6 @@ import org.apache.commons.io.input.CountingInputStream;
 
 import java.io.*;
 import java.net.*;
-import java.nio.charset.Charset;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
@@ -165,7 +164,7 @@ public class RestClient {
         final HttpURLConnection httpURLConnection = prepareHttpUrlConnection(url, request.getMethod(), request.isFollowsRedirects(), request.getConnectTimeout(), request.getResponseTimeout(), request.isSendKeepAlive());
         int retry;
         val start = System.nanoTime();
-        //ste auth header if required
+        //set auth header if required
         if (request.getUsername() != null && request.getPassword() != null) {
             httpURLConnection.setRequestProperty(HttpConstants.HEADER_AUTHORIZATION, "Basic "+Base64.getEncoder().encodeToString((request.getUsername() + ":" + request.getPassword()).getBytes(StandardCharsets.UTF_8)));
         }
