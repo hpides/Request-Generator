@@ -38,7 +38,11 @@ public class UserStory implements Runnable{
     public void run() {
         Thread storyThread = new Thread(() -> {
             try {
-                val clone = this.clone();
+                UserStory clone;
+                synchronized (this) {
+                    clone = this.clone();
+                }
+                System.out.println("Running story "+clone.getName()+" in thread "+Thread.currentThread().getId());
                 clone.getActivities()[0].run(new HashMap<>());
             } catch (InterruptedException e) {
                 e.printStackTrace();

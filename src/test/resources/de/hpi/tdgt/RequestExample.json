@@ -61,7 +61,7 @@
         {
           "name": "GET with auth",
           "id": 3,
-          "repeat": 10,
+          "repeat": 1,
           "successors": [
           ],
           "type": "REQUEST",
@@ -79,7 +79,7 @@
       ]
     },
     {
-      "scalePercentage": 0.7,
+      "scalePercentage": 0.3,
       "name": "Send some requests with and without data",
       "activities": [
         {

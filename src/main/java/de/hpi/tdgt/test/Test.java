@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Vector;
 
 import de.hpi.tdgt.test.story.UserStory;
 import lombok.val;
@@ -19,10 +20,14 @@ public class Test {
     private UserStory[] stories;
 
     public void start() throws InterruptedException {
-        Thread[] threads = new Thread[stories.length];
+        val threads = new Vector<Thread>();
         for(int i=0; i < stories.length; i++){
-            threads[i] = new Thread(stories[i]);
-            threads[i].start();
+            //repeat stories as often as wished
+            for(int j = 0; j < scaleFactor * stories[i].getScalePercentage(); j++) {
+                val thread = new Thread(stories[i]);
+                thread.start();
+                threads.add(thread);
+            }
         }
         for(val thread : threads){
             thread.join();

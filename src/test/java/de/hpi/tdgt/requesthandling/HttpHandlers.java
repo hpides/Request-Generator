@@ -68,6 +68,7 @@ public class HttpHandlers {
         private String request = "";
         @Override
         public void handle(HttpExchange he) throws IOException {
+
             // parse request
             Map<String, Object> parameters = new HashMap<String, Object>();
             URI requestedUri = he.getRequestURI();
@@ -140,8 +141,13 @@ public class HttpHandlers {
     public static class JSONObjectGetHandler implements HttpHandler{
         @Getter
         private Map<String, Object> lastParameters = null;
+        @Setter
+        @Getter
+        private int requestsTotal = 0;
         @Override
         public void handle(HttpExchange he) throws IOException {
+            //count requests
+            requestsTotal ++;
             // parse request
             Map<String, Object> parameters = new HashMap<String, Object>();
             URI requestedUri = he.getRequestURI();
@@ -311,14 +317,21 @@ public class HttpHandlers {
         @Setter
         @Getter
         private int numberFailedLogins = 0;
+        @Setter
+        @Getter
+        private int totalRequests = 0;
         @Override
         public void handle(HttpExchange he) throws IOException {
+            synchronized (this) {
+                totalRequests++;
+            }
             lastLoginWasOK = false;
             val requestHeaders = he.getRequestHeaders();
             var auth = requestHeaders.getFirst(HttpConstants.HEADER_AUTHORIZATION);
             if(auth != null && auth.startsWith("Basic ")){
                 auth = auth.substring(auth.indexOf("Basic ")+"Basic ".length());
             }
+            System.out.println("Auth handler called with params "+ new String(Base64.getDecoder().decode(auth)));
             if(auth != null && Base64.getDecoder().decode(auth) != null && new String(Base64.getDecoder().decode(auth)).equals(username+":"+password)) {
                 lastLoginWasOK = true;
                 String response = "{\"message\":\"OK\"}";

@@ -62,7 +62,10 @@ public abstract class Activity {
         this.setPredecessorsReady(this.getPredecessorsReady() + 1);
         getKnownParams().putAll(dataMap);
         if (this.getPredecessorsReady() >= predecessorCount) {
-            perform();
+            //perform as often as requested
+            for(int i = 0; i < repeat; i++) {
+                perform();
+            }
             runSuccessors();
         }
     }

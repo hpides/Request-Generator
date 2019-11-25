@@ -133,7 +133,7 @@ public class Request extends Activity {
     }
     private void extractResponseParams(final de.hpi.tdgt.requesthandling.RestResult result)
             throws IOException, JsonParseException, JsonMappingException {
-        if(result.isJSON()) {
+        if(result != null && result.isJSON()) {
             if(result.toJson().isObject()) {
                 String json = new String(result.getResponse(), StandardCharsets.UTF_8);
                 val map = om.readValue(json, Map.class);

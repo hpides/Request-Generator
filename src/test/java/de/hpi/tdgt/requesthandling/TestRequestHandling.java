@@ -60,6 +60,8 @@ public class TestRequestHandling {
     public void removeSideEffects(){
         //clean side effects
         authHandler.setNumberFailedLogins(0);
+        authHandler.setTotalRequests(0);
+        jsonObjectGetHandler.setRequestsTotal(0);
         Data_Generation.reset();
         server.stop(0);
     }
@@ -136,6 +138,7 @@ public class TestRequestHandling {
         rq.setRequestParams(new String[] {"param"});
         rq.setVerb("POST");
         rq.setResponseJSONObject(new String[]{"id"});
+        rq.setRepeat(1);
         val params = new HashMap<String,String>();
         params.put("param","value");
         rq.run(params);
@@ -240,21 +243,40 @@ public class TestRequestHandling {
         //do not run second story for this time around; messes with results
         test.setStories(new UserStory[]{test.getStories()[0]});
         test.start();
-        //assume that "user" and "pw" have been transmitted as form parameters.
-        assertThat(postBodyHandler.getLastParameters(), hasEntry("key", HttpHandlers.AuthHandler.username));
-        assertThat(postBodyHandler.getLastParameters(), hasEntry("value", HttpHandlers.AuthHandler.password));
-        //assume that these parameters have been
-        assertThat(jsonObjectGetHandler.getLastParameters(), hasEntry("key", HttpHandlers.AuthHandler.username));
-        assertThat(jsonObjectGetHandler.getLastParameters(), hasEntry("value", HttpHandlers.AuthHandler.password));
-        //exactly one Thread should have received wrong data
-        assertThat(authHandler.getNumberFailedLogins(), is(0));
+        //only repeated once, so these values should be correct
+        assertThat(postBodyHandler.getLastParameters(), hasEntry("key", "wrong"));
+        assertThat(postBodyHandler.getLastParameters(), hasEntry("value", "wrong"));
+        //assume that "wrong" and "wrong" have been transmitted as form parameters. The whole table will be sent because of repetition, so the last value should be one of the "wrong"/"wrong"-entries.
+        assertThat(jsonObjectGetHandler.getLastParameters(), hasEntry("key", "wrong"));
+        assertThat(jsonObjectGetHandler.getLastParameters(), hasEntry("value", "wrong"));
+        //repeatet 7 times, only one thread has correct data
+        assertThat(authHandler.getNumberFailedLogins(), is(6));
     }
 
     @Test
     public void testUserStoryAgainstTestServer() throws IOException, InterruptedException {
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
         test.start();
-        assertThat(authHandler.getNumberFailedLogins(), is(1));
+        //repeated 7 times in first, 3 times 10 times in second story; only first value in corresponding table is correct
+        //in one scenario, one instance of first story gets correct param, executes once
+        //in other scenario, one instance of second story gets correct param; executes 10 times
+        assertThat(authHandler.getNumberFailedLogins(), anyOf(is(36), is(27)));
+    }
+
+    @Test
+    public void testUserStoryAgainstTestServerWithScaleFactor() throws IOException, InterruptedException {
+        de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
+        test.start();
+        assertThat(jsonObjectGetHandler.getRequestsTotal(), is(7));
+    }
+
+    @Test
+    public void testUserStoryAgainstTestServerWithScaleFactorAndRepeat() throws IOException, InterruptedException {
+        de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
+        test.start();
+        //10*0.7 times first story executed, calls this once
+        //10*0.3 times second story executed, calls this ten times
+        assertThat(authHandler.getTotalRequests(), is(7 + 3 * 10));
     }
 
 }

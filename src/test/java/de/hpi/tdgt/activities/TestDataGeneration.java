@@ -32,15 +32,17 @@ public class TestDataGeneration {
         firstGeneration = new Data_Generation();
         firstGeneration.setData(new String[]{"username", "password"});
         firstGeneration.setTable("users");
+        firstGeneration.setRepeat(1);
         secondGeneration = new Data_Generation();
         secondGeneration.setData(new String[]{"username", "password"});
         secondGeneration.setTable("users");
+        secondGeneration.setRepeat(1);
 
 
         thirdGeneration = new Data_Generation();
         thirdGeneration.setData(new String[]{"title", "text"});
         thirdGeneration.setTable("posts");
-
+        thirdGeneration.setRepeat(1);
 
         users = new File("users.csv");
         users.deleteOnExit();
