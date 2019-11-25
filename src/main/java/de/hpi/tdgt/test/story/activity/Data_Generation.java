@@ -74,16 +74,15 @@ public class Data_Generation extends Activity {
         synchronized (sc) {
             if (sc.hasNextLine()) {
                 line = sc.nextLine();
-                log.info("Retrieved "+line+"from table"+" in Thread "+Thread.currentThread().getId());
+                log.info("Retrieved "+line+"from table"+" in Thread "+Thread.currentThread().getId()+ "for activity "+this.getName());
             } else {
-                log.error("No data remains!");
+                log.error("No data remains for activity "+this.getName());
                 sc.close();
                 return buffer;
             }
             // Scanner suppresses exceptions
             if (sc.ioException() != null) {
-                log.error("Exception: ");
-                sc.ioException().printStackTrace();
+                log.error("Exception: ", sc.ioException());
             }
         }
         //can be done without synchronisation, saves time spent in sequential mode
@@ -112,7 +111,7 @@ public class Data_Generation extends Activity {
             try {
                 stream = new FileInputStream(table);
             } catch (FileNotFoundException e) {
-                e.printStackTrace();
+               log.error(e);
             }
         }
     }
