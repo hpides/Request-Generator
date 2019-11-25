@@ -14,7 +14,7 @@ import java.util.HashMap;
 @Setter
 @NoArgsConstructor
 @Log4j2
-public class UserStory implements Runnable{
+public class UserStory implements Runnable, Cloneable{
     private double scalePercentage;
     private String name;
     private Activity[] activities;
@@ -24,7 +24,7 @@ public class UserStory implements Runnable{
         //set links
         Arrays.stream(activities).forEach(activity -> activity.initSuccessors(this));
     }
-
+    @Override
     public UserStory clone(){
         val story = new UserStory();
         story.setName(this.getName());
