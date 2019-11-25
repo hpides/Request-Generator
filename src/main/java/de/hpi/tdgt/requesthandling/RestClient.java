@@ -1,5 +1,6 @@
 package de.hpi.tdgt.requesthandling;
 
+import de.hpi.tdgt.test.time_measurement.TimeStorage;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import org.apache.commons.io.IOUtils;
@@ -12,6 +13,7 @@ import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.sql.Time;
 import java.util.Base64;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
@@ -260,7 +262,7 @@ public class RestClient {
     }
 
     private static final byte[] NULL_BA = new byte[0];// can share these
-
+    private static final TimeStorage storage = TimeStorage.getInstance();
     /**
      * Taken from jmeter.
      * Reads the response from the URL connection.
@@ -349,6 +351,7 @@ public class RestClient {
         res.setContentType(conn.getContentType());
         res.setHeaders(conn.getHeaderFields());
         res.setReturnCode(conn.getResponseCode());
+        storage.registerTime(request.getMethod(), request.getUrl().toString(), res.durationNanos());
         log.info("Request took "+res.durationMillis()+" ms.");
     }
 }
