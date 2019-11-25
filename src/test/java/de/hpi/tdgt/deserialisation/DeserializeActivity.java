@@ -9,14 +9,15 @@ import org.junit.jupiter.api.Test;
 import de.hpi.tdgt.test.story.activity.Activity;
 import de.hpi.tdgt.test.story.activity.Data_Generation;
 import de.hpi.tdgt.test.story.activity.Request;
+import de.hpi.tdgt.test.story.activity.Delay;
+import de.hpi.tdgt.Utils;
 
 import java.io.IOException;
 import java.util.Vector;
 
-import static de.hpi.tdgt.deserialisation.Utils.assertInstanceOf;
+import static de.hpi.tdgt.Utils.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DeserializeActivity {
     private String getExampleJSON() throws IOException {
@@ -25,18 +26,25 @@ public class DeserializeActivity {
 
     private Activity firstActivityOfFirstStory;
     private Activity secondActivityOfFirstStory;
+    private Activity sixthActivityOfFirstStory;
     private Activity secondActivityOfSecondStory;
 
     @BeforeEach
     public void prepareTest() throws IOException {
         firstActivityOfFirstStory = Deserializer.deserialize(getExampleJSON()).getStories()[0].getActivities()[0];
         secondActivityOfFirstStory = Deserializer.deserialize(getExampleJSON()).getStories()[0].getActivities()[1];
-        secondActivityOfSecondStory = Deserializer.deserialize(getExampleJSON()).getStories()[1].getActivities()[1];
+        sixthActivityOfFirstStory = Deserializer.deserialize(getExampleJSON()).getStories()[0].getActivities()[5];
+        secondActivityOfSecondStory = Deserializer.deserialize(getExampleJSON()).getStories()[1].getActivities()[3];
     }
 
     @Test
     public void firstActivityOfFirstStoryIsDataGeneration() {
         assertInstanceOf(firstActivityOfFirstStory, Data_Generation.class);
+    }
+
+    @Test
+    public void sixthActivityOfFirstStoryIsDelay() {
+        assertInstanceOf(sixthActivityOfFirstStory, Delay.class);
     }
 
     @Test
@@ -50,6 +58,13 @@ public class DeserializeActivity {
         assertArrayEquals(new String[]{"username","password"},firstActivityOfFirstStory.getData());
         assertEquals("users", firstActivityOfFirstStory.getTable());
     }
+
+    @Test
+    public void sixthActivityOfFirstStoryWaitsOneSecond() {
+        val sixthActivityOfFirstStory = (Delay) this.sixthActivityOfFirstStory;
+        assertEquals(1000, sixthActivityOfFirstStory.getDelayMs());
+    }
+
     @Test
     public void secondActivityOfSecondStorySendsGETRequest(){
         val secondActivityOfSecondStory = (Request) this.secondActivityOfSecondStory;
@@ -71,11 +86,11 @@ public class DeserializeActivity {
     @Test
     public void secondActivityOfSecondStoryHasCorrectResponseParams(){
         val secondActivityOfSecondStory = (Request) this.secondActivityOfSecondStory;
-        assertArrayEquals(new String[0], secondActivityOfSecondStory.getResponseParams());
+        assertArrayEquals(null, secondActivityOfSecondStory.getResponseParams());
     }
     @Test
-    public void secondActivityOfSecondStoryHasNoSuccessors(){
-        assertArrayEquals(new Activity[0], secondActivityOfSecondStory.getSuccessors());
+    public void lastActivityOfSecondStoryHasNoSuccessors(){
+        assertArrayEquals(new Activity[0], secondActivityOfSecondStory.getSuccessors()[0].getSuccessors());
     }
     @Test
     public void firstActivityOfFirstStoryHasOneSuccessor(){
@@ -94,4 +109,5 @@ public class DeserializeActivity {
         }
         assertArrayEquals(new Integer[]{2,4}, successors.toArray(new Integer[0]));
     }
+
 }

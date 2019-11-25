@@ -1,6 +1,6 @@
 {
 	"repeat":1,
-	"scaleFactor":10,
+	"scaleFactor":70,
 	"stories":[
 		{
 			"scalePercentage":0.7,
@@ -31,11 +31,11 @@
 					"type":"REQUEST",
 					"verb":"POST",
 					"addr":"http://users/users/new",
-					"requestParams":[
+					"requestJSONObject":[
 						"username",
 						"password"
 					],
-					"responseParams":[
+					"responseJSONObject":[
 						"username",
 						"password"
 					]
@@ -59,7 +59,7 @@
 					"id":3,
 					"repeat":1,
 					"successors":[
-						5
+						6
 					],
 					"type":"REQUEST",
 					"verb":"POST",
@@ -72,7 +72,7 @@
 						"user":"username",
 						"password":"password"
 					},
-					"responseParams":[
+					"responseJSONObject": [
 						"id"
 					]
 				},
@@ -92,14 +92,39 @@
 					"basicAuth":{
 						"user":"username",
 						"password":"password"
-					},
-					"responseParams":[
-
-					]
+					}
 				},
 				{
-					"name":"User löschen",
+					"name":"Warte 1 Sekunde",
 					"id":5,
+					"repeat":1,
+					"successors":[
+						7
+					],
+					"type":"DELAY",
+					"delayMs":1000
+				},
+				{
+					"name":"Post löschen",
+					"id":6,
+					"repeat":1,
+					"successors":[
+						7
+					],
+					"requestParams":[
+						"id"
+					],
+					"type":"REQUEST",
+					"verb":"DELETE",
+					"addr":"http://posts/posts/delete",
+					"basicAuth":{
+						"user":"username",
+						"password":"password"
+					}
+				},
+				{
+					"name":"User löschen story 1",
+					"id":7,
 					"repeat":1,
 					"successors":[
 
@@ -107,13 +132,10 @@
 					"type":"REQUEST",
 					"verb":"DELETE",
 					"addr":"http://users/users/delete",
-					"requestParams":[
-						"username",
-						"password"
-					],
-					"responseParams":[
-
-					]
+					"basicAuth":{
+						"user":"username",
+						"password":"password"
+					}
 				}
 			]
 		},
@@ -122,11 +144,44 @@
 			"name":"Nach Posts suchen",
 			"activities":[
 				{
-					"name":"Suchschlüssel generieren",
+					"name":"Nutzerdaten generieren",
 					"id":0,
 					"repeat":1,
 					"successors":[
 						1
+					],
+					"type":"DATA_GENERATION",
+					"data":[
+						"username",
+						"password"
+					],
+					"table":"users"
+				},
+				{
+					"name":"User anlegen",
+					"id":1,
+					"repeat":1,
+					"successors":[
+						2
+					],
+					"type":"REQUEST",
+					"verb":"POST",
+					"addr":"http://users/users/new",
+					"requestJSONObject":[
+						"username",
+						"password"
+					],
+					"responseJSONObject":[
+						"username",
+						"password"
+					]
+				},
+				{
+					"name":"Suchschlüssel generieren",
+					"id":2,
+					"repeat":1,
+					"successors":[
+						3
 					],
 					"type":"DATA_GENERATION",
 					"data":[
@@ -136,10 +191,10 @@
 				},
 				{
 					"name":"Nach Suchschlüssel suchen",
-					"id":1,
+					"id":3,
 					"repeat":1,
 					"successors":[
-
+						4
 					],
 					"type":"REQUEST",
 					"verb":"GET",
@@ -147,10 +202,27 @@
 					"requestParams":[
 						"key"
 					],
-					"responseParams":[
+					"basicAuth":{
+						"user":"username",
+						"password":"password"
+					}
+				},
+				{
+					"name":"User löschen Story 2",
+					"id":4,
+					"repeat":1,
+					"successors":[
 
-					]
+					],
+					"type":"REQUEST",
+					"verb":"DELETE",
+					"addr":"http://users/users/delete",
+					"basicAuth":{
+						"user":"username",
+						"password":"password"
+					}
 				}
+
 			]
 		}
 	]
