@@ -1,17 +1,17 @@
-package de.hpi.tdgt.requesthandling;
+package de.hpi.tdgt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import lombok.Getter;
-import lombok.Setter;
+import de.hpi.tdgt.requesthandling.HttpConstants;
+import lombok.*;
 import lombok.extern.log4j.Log4j2;
-import lombok.val;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
 import java.util.*;
 import java.util.stream.Collectors;
 @Log4j2
@@ -134,13 +134,18 @@ public class HttpHandlers {
             os.close();
         }
     }
-
+    @AllArgsConstructor
+    @EqualsAndHashCode
+    @Getter
+    public static class Pair{
+        private String key, value;
+    }
     /**
      * Makes request URL Parameters to a JSON Object with the Request keys as keys and their values as values.
      */
     public static class JSONObjectGetHandler implements HttpHandler{
         @Getter
-        private Map<String, Object> lastParameters = null;
+        private Set<Pair> allParams = new HashSet<>();
         @Setter
         @Getter
         private int requestsTotal = 0;
@@ -153,7 +158,9 @@ public class HttpHandlers {
             URI requestedUri = he.getRequestURI();
             String query = requestedUri.getRawQuery();
             parseQuery(query, parameters);
-            lastParameters = parameters;
+            for(val entry : parameters.entrySet()){
+                allParams.add(new Pair(entry.getKey(), entry.getValue().toString()));
+            }
             // send response
             StringBuilder responseBuilder = new StringBuilder();
             responseBuilder.append("{\n");
@@ -267,12 +274,11 @@ public class HttpHandlers {
      */
     public static class PostBodyHandler implements HttpHandler {
         @Getter
-        private Map<String, Object> lastParameters = null;
+        private Set<Map> allParameters = new HashSet<>();
 
         @Override
         public void handle(HttpExchange he) throws IOException {
             // parse request
-            lastParameters = new HashMap<String, Object>();
             var headers = he.getRequestHeaders();
             val contentType = headers.getFirst(HttpConstants.HEADER_CONTENT_TYPE);
             if(contentType == null || !contentType.equals(HttpConstants.CONTENT_TYPE_APPLICATION_JSON)){
@@ -295,7 +301,7 @@ public class HttpHandlers {
             }
             // send response
             String response = body.toString();
-            lastParameters = new ObjectMapper().readValue(response, Map.class);
+            allParameters.add(new ObjectMapper().readValue(response, Map.class));
             headers = he.getResponseHeaders();
             headers.put(HttpConstants.HEADER_CONTENT_TYPE,Collections.singletonList(HttpConstants.CONTENT_TYPE_APPLICATION_JSON));
             he.sendResponseHeaders(200, response.length());
@@ -310,8 +316,8 @@ public class HttpHandlers {
      * Saves in the field "lastLoginWasOK" if the last login used the correct username and password.
      */
     public static class AuthHandler implements HttpHandler {
-        static final String username = "user";
-        static final String password = "pw";
+        public static final String username = "user";
+        public static final String password = "pw";
         @Getter
         private boolean lastLoginWasOK = false;
         @Setter
@@ -353,6 +359,24 @@ public class HttpHandlers {
                 os.write(response.getBytes());
                 os.close();
             }
+        }
+    }
+
+    /**
+     * Returns nothing.
+     */
+    public static class EmptyResponseHandler implements HttpHandler {
+
+        @Override
+        public void handle(HttpExchange he) throws IOException {
+
+                String response = "";
+                val headers = he.getResponseHeaders();
+                headers.put(HttpConstants.HEADER_CONTENT_TYPE, Collections.singletonList(HttpConstants.CONTENT_TYPE_TEXT_PLAIN));
+                he.sendResponseHeaders(200, response.length());
+                OutputStream os = he.getResponseBody();
+                os.write(response.getBytes());
+                os.close();
         }
     }
 }
