@@ -1,14 +1,12 @@
 package de.hpi.tdgt.requesthandling;
 
-import com.sun.net.httpserver.HttpServer;
+import de.hpi.tdgt.HttpHandlers;
 import de.hpi.tdgt.RequestHandlingFramework;
 import de.hpi.tdgt.Utils;
 import de.hpi.tdgt.deserialisation.Deserializer;
 import de.hpi.tdgt.test.story.UserStory;
-import de.hpi.tdgt.test.story.activity.Data_Generation;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
-import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.*;
 
 import java.io.*;
@@ -202,13 +200,20 @@ public class TestRequestHandling extends RequestHandlingFramework {
         //do not run second story for this time around; messes with results
         test.setStories(new UserStory[]{test.getStories()[0]});
         test.start();
-        //only repeated once, so these values should be correct
-        assertThat(postBodyHandler.getLastParameters(), hasEntry("key", "wrong"));
-        assertThat(postBodyHandler.getLastParameters(), hasEntry("value", "wrong"));
-        //assume that "wrong" and "wrong" have been transmitted as form parameters. The whole table will be sent because of repetition, so the last value should be one of the "wrong"/"wrong"-entries.
-        assertThat(jsonObjectGetHandler.getLastParameters(), hasEntry("key", "wrong"));
-        assertThat(jsonObjectGetHandler.getLastParameters(), hasEntry("value", "wrong"));
-        //repeatet 7 times, only one thread has correct data
+        Map<String, String> params1 = new HashMap<>(), params2 = new HashMap<>();
+        params1.put("key", "wrong");
+        params1.put("value","wrong");
+        params2.put("key", "user");
+        params2.put("value", "pw");
+        //should have seen wrong and wrong as well as user and pw
+        assertThat("GetHandler should have received key=wrong.",jsonObjectGetHandler.getAllParams().contains(new HttpHandlers.Pair("key", "wrong")), is(true));
+        assertThat("GetHandler should have received value=wrong.",jsonObjectGetHandler.getAllParams().contains(new HttpHandlers.Pair("value", "wrong")), is(true));
+        assertThat("GetHandler should have received key=user.",jsonObjectGetHandler.getAllParams().contains(new HttpHandlers.Pair("key", "user")), is(true));
+        assertThat("GetHandler should have received value=pw.",jsonObjectGetHandler.getAllParams().contains(new HttpHandlers.Pair("value", "pw")), is(true));
+        //should have seen wrong and wrong as well as user and pw
+        assertThat("GetHandler should have received key=wrong and value=wrong.",postBodyHandler.getAllParameters().contains(params1), is(true));
+        assertThat("GetHandler should have received key=user and value=pw.",postBodyHandler.getAllParameters().contains(params2), is(true));
+        //repeated 7 times, only one thread has correct data
         assertThat(authHandler.getNumberFailedLogins(), is(6));
     }
 
