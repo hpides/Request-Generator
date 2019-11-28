@@ -1,5 +1,6 @@
 package de.hpi.tdgt.requesthandling;
 
+import de.hpi.tdgt.test.Test;
 import de.hpi.tdgt.test.time_measurement.TimeStorage;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
@@ -189,6 +190,12 @@ public class RestClient {
             out.flush();
             out.close();
         }
+        /*if(Test.RequestThrottler.getInstance() != null) {
+            Test.RequestThrottler.getInstance().allowRequest();
+        }
+        else {
+            log.warn("Internal error: Can not limit requests per second!");
+        }*/
         //try to connect
         for (retry = -1; retry < request.getRetries(); retry++) {
             try {

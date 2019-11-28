@@ -13,6 +13,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -241,6 +242,20 @@ public class TestRequestHandling extends RequestHandlingFramework {
         //10*0.7 times first story executed, calls this once
         //10*0.3 times second story executed, calls this ten times
         assertThat(authHandler.getTotalRequests(), is(7 + 3 * 10));
+    }
+    @Test
+    public void testNoMoreRequestsPerSecondThanSetAreFired() throws InterruptedException, IOException {
+        long start = System.currentTimeMillis();
+        de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
+        //should not take forever
+        test.setRequests_per_second(10);
+        test.start();
+        long end = System.currentTimeMillis();
+        int requests_total = handlers.stream().map(HttpHandlers.HttpHandlerBase::getRequests_total).mapToInt(Integer::intValue).sum();
+        double duration_seconds = (end - start) / 1000d;
+        double requests_per_second = requests_total / duration_seconds;
+        log.info("Requests per second: "+requests_per_second);
+        assertThat(requests_per_second, lessThanOrEqualTo((double)test.getRequests_per_second()));
     }
 
 }

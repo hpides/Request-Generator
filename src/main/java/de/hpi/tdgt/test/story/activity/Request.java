@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.hpi.tdgt.requesthandling.RestClient;
 import de.hpi.tdgt.requesthandling.RestResult;
+import de.hpi.tdgt.test.Test;
 import de.hpi.tdgt.test.story.activity.assertion.Assertion;
 import lombok.*;
 import lombok.extern.log4j.Log4j2;
@@ -61,7 +62,7 @@ public class Request extends Activity {
 
     private Assertion[] assertions = new Assertion[0];
     @Override
-    public void perform() {
+    public void perform() throws InterruptedException {
         log.info("Sending request "+addr+" in Thread "+Thread.currentThread().getId() + "with attributes: "+getKnownParams());
         switch (verb) {
         case "POST":

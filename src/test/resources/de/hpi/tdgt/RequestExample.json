@@ -1,6 +1,7 @@
 {
   "repeat": 1,
   "scaleFactor": 10,
+  "requests_per_second": 100,
   "stories": [
     {
       "scalePercentage": 0.7,
