@@ -62,6 +62,7 @@ public class HttpHandlers {
         }
     }
     @Getter
+    @Setter
     public static abstract class HttpHandlerBase implements com.sun.net.httpserver.HttpHandler{
         int requests_total;
         @Override

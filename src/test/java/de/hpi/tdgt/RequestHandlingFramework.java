@@ -67,6 +67,7 @@ public class RequestHandlingFramework {
         authHandler.setTotalRequests(0);
         jsonObjectGetHandler.setRequestsTotal(0);
         Data_Generation.reset();
+        handlers.forEach(handler -> handler.setRequests_total(0));
         handlers = new ArrayList<>();
         server.stop(0);
     }

@@ -253,9 +253,11 @@ public class TestRequestHandling extends RequestHandlingFramework {
         long end = System.currentTimeMillis();
         int requests_total = handlers.stream().map(HttpHandlers.HttpHandlerBase::getRequests_total).mapToInt(Integer::intValue).sum();
         double duration_seconds = (end - start) / 1000d;
+        log.info("Total requests: "+requests_total);
         double requests_per_second = requests_total / duration_seconds;
         log.info("Requests per second: "+requests_per_second);
-        assertThat(requests_per_second, lessThanOrEqualTo((double)test.getRequests_per_second()));
+        //account for "bad luck"
+        assertThat(requests_per_second, lessThanOrEqualTo(1d +test.getRequests_per_second()));
     }
 
 }

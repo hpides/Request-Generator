@@ -38,6 +38,8 @@ public class Test {
             thread.join();
         }
         watchdog.interrupt();
+        //remove global state
+        RequestThrottler.reset();
     }
 
     /**
@@ -55,7 +57,9 @@ public class Test {
             requestLimiter =  new Semaphore(requestsPerSecond,true);
         }
         int requestsPerSecond = 0;
-
+        private static void reset(){
+            instance = null;
+        }
         /**
          * Stops threads from increasing requests per second while re-creating tickets
          */
@@ -63,9 +67,9 @@ public class Test {
         private final Semaphore requestLimiter;
         public void allowRequest() throws InterruptedException {
             log.trace("Waiting for requestLimiter...");
-            //requestLimiter.acquire();
+            requestLimiter.acquire();
             log.trace("Waiting for mutex (allowRequest)...");
-            //mutex.acquire();
+            mutex.acquire();
             requestsPerSecond++;
             mutex.release();
             log.trace("Released mutex (allowRequest)");

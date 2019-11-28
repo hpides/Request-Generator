@@ -190,12 +190,16 @@ public class RestClient {
             out.flush();
             out.close();
         }
-        /*if(Test.RequestThrottler.getInstance() != null) {
-            Test.RequestThrottler.getInstance().allowRequest();
+        if(Test.RequestThrottler.getInstance() != null) {
+            try {
+                Test.RequestThrottler.getInstance().allowRequest();
+            } catch (InterruptedException e) {
+                log.error("Interrupted wail waiting to be allowed to send a request: ",e);
+            }
         }
         else {
             log.warn("Internal error: Can not limit requests per second!");
-        }*/
+        }
         //try to connect
         for (retry = -1; retry < request.getRetries(); retry++) {
             try {
