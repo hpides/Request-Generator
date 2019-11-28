@@ -3,6 +3,11 @@ package de.hpi.tdgt.deserialisation;
 
 
 
+import de.hpi.tdgt.requesthandling.HttpConstants;
+import de.hpi.tdgt.test.story.activity.assertion.Assertion;
+import de.hpi.tdgt.test.story.activity.assertion.ContentNotEmpty;
+import de.hpi.tdgt.test.story.activity.assertion.ContentType;
+import de.hpi.tdgt.test.story.activity.assertion.ResponseCode;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +21,10 @@ import java.io.IOException;
 import java.util.Vector;
 
 import static de.hpi.tdgt.Utils.assertInstanceOf;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -28,6 +37,9 @@ public class DeserializeActivity {
     private Activity secondActivityOfFirstStory;
     private Activity sixthActivityOfFirstStory;
     private Activity secondActivityOfSecondStory;
+    private Request postWithBodyAndAssertion;
+    private Request getJSONObject;
+    private Request getWithAuth;
 
     @BeforeEach
     public void prepareTest() throws IOException {
@@ -35,6 +47,9 @@ public class DeserializeActivity {
         secondActivityOfFirstStory = Deserializer.deserialize(getExampleJSON()).getStories()[0].getActivities()[1];
         sixthActivityOfFirstStory = Deserializer.deserialize(getExampleJSON()).getStories()[0].getActivities()[5];
         secondActivityOfSecondStory = Deserializer.deserialize(getExampleJSON()).getStories()[1].getActivities()[3];
+        postWithBodyAndAssertion = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getActivities()[1];
+        getJSONObject = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getActivities()[2];
+        getWithAuth = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getActivities()[3];
     }
 
     @Test
@@ -109,5 +124,28 @@ public class DeserializeActivity {
         }
         assertArrayEquals(new Integer[]{2,4}, successors.toArray(new Integer[0]));
     }
+    @Test
+    public void postWithBodyAndAssertionAssertsContentType(){
+        assertThat(postWithBodyAndAssertion.getAssertions()[0], instanceOf(ContentType.class));
+    }
+    @Test
+    public void postWithBodyAndAssertionAssertsContentTypeJSON(){
+        ContentType assertion = (ContentType) postWithBodyAndAssertion.getAssertions()[0];
+        assertThat(assertion.getContentType(), equalTo(HttpConstants.CONTENT_TYPE_APPLICATION_JSON));
+    }
+    @Test
+    public void getJsonObjectWithAssertionAssertsContentNotEmpty(){
+        assertThat(getJSONObject.getAssertions()[0], instanceOf(ContentNotEmpty.class));
+    }
+    @Test
+    public void getWithAuthAndAssertionAssertsResponseCode(){
+        assertThat(getWithAuth.getAssertions()[0], instanceOf(ResponseCode.class));
+    }
+    @Test
+    public void getWithAuthAndAssertionAssertsResponseCode200(){
+        ResponseCode code = (ResponseCode)  getWithAuth.getAssertions()[0];
+        assertThat(code.getResponseCode(), is(200));
+    }
+
 
 }

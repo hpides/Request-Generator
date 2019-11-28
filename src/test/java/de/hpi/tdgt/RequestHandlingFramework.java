@@ -1,7 +1,6 @@
 package de.hpi.tdgt;
 
 import com.sun.net.httpserver.HttpServer;
-import de.hpi.tdgt.requesthandling.HttpHandlers;
 import de.hpi.tdgt.test.story.activity.Data_Generation;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.IOUtils;
@@ -22,6 +21,7 @@ public class RequestHandlingFramework {
     protected final HttpHandlers.PostBodyHandler postBodyHandler = new HttpHandlers.PostBodyHandler();
     protected final HttpHandlers.PostBodyHandler putBodyHandler = new HttpHandlers.PostBodyHandler();
     protected final HttpHandlers.AuthHandler authHandler = new HttpHandlers.AuthHandler();
+    protected final HttpHandlers.EmptyResponseHandler emptyResponseHandler = new HttpHandlers.EmptyResponseHandler();
     protected HttpServer server;
 
     //Based on https://www.codeproject.com/tips/1040097/create-a-simple-web-server-in-java-http-server
@@ -38,6 +38,7 @@ public class RequestHandlingFramework {
         server.createContext("/postWithBody", postBodyHandler);
         server.createContext("/putWithBody", putBodyHandler);
         server.createContext("/auth", authHandler);
+        server.createContext("/empty", emptyResponseHandler);
         server.setExecutor(null);
         server.start();
 

@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.hpi.tdgt.requesthandling.RestClient;
 import de.hpi.tdgt.requesthandling.RestResult;
+import de.hpi.tdgt.test.story.activity.assertion.Assertion;
 import lombok.*;
 import lombok.extern.log4j.Log4j2;
 
@@ -49,9 +51,12 @@ public class Request extends Activity {
     private String[] responseJSONObject;
 
     private BasicAuth basicAuth;
+    @JsonIgnore
     private static RestClient rc = new RestClient();
+    @JsonIgnore
     private static ObjectMapper om = new ObjectMapper();
 
+    private Assertion[] assertions = new Assertion[0];
     @Override
     public void perform() {
         log.info("Sending request "+addr+" in Thread "+Thread.currentThread().getId() + "with attributes: "+getKnownParams());
@@ -150,6 +155,10 @@ public class Request extends Activity {
         else {
             log.error("Not JSON! Response is ignored.");
             log.error(result);
+        }
+        //check assertions after request
+        for(val assertion : assertions){
+            assertion.check(result);
         }
     }
     private void handlePostWithBody() {
