@@ -1,8 +1,11 @@
 package de.hpi.tdgt.test.time_measurement;
 
+import lombok.extern.log4j.Log4j2;
+import lombok.val;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
+@Log4j2
 public class TimeStorage {
     protected TimeStorage(){
 
@@ -63,6 +66,14 @@ public class TimeStorage {
             sum += value;
         }
         return sum / values.length;
+    }
+
+    public void printSummary(){
+        for(val entry : registeredTimes.entrySet()){
+            for(val verbMap : entry.getValue().entrySet()) {
+                log.info("Endpoint " +verbMap.getKey()+ " " +entry.getKey()+ " min: " + getMin(verbMap.getKey(), entry.getKey())+" ns, max: "+getMax(verbMap.getKey(), entry.getKey())+" ns, avg: "+getAvg(verbMap.getKey(), entry.getKey())+" ns.");
+            }
+        }
     }
 
 
