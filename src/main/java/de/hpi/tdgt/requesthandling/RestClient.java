@@ -307,13 +307,15 @@ public class RestClient {
                 res.setHeaders(conn.getHeaderFields());
                 res.setReturnCode(conn.getResponseCode());
             }
-
             if (log.isInfoEnabled()) {
                 if(conn.getResponseCode() == 401 || conn.getResponseCode() == 403){
                     log.info("Error Response Code: " + conn.getResponseCode() + "for "+request.getMethod() +" "+request.getUrl() + " for used authentication "+request.getUsername()+":"+request.getPassword());
                 }
                 else{
                     log.info("Error Response Code: " + conn.getResponseCode() + "for "+request.getMethod() +" "+request.getUrl());
+                }
+                if(errorStream != null){
+                    log.warn("Error Response Content: ",IOUtils.toString(errorStream, "UTF-8") );
                 }
             }
 

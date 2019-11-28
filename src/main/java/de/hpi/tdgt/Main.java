@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.hpi.tdgt.deserialisation.Deserializer;
 import de.hpi.tdgt.requesthandling.RestClient;
 import de.hpi.tdgt.test.story.activity.Data_Generation;
+import de.hpi.tdgt.test.story.activity.assertion.AssertionStorage;
+import de.hpi.tdgt.test.time_measurement.TimeStorage;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import org.apache.commons.io.IOUtils;
@@ -37,6 +39,11 @@ public class Main {
                 log.info("Running test...");
                 Data_Generation.outputDirectory = args[2];
                 deserializedTest.start();
+                log.info("---Test finished---");
+                log.info("---Times---");
+                TimeStorage.getInstance().printSummary();
+                log.info("---Assertions---");
+                AssertionStorage.getInstance().printSummary();
             } catch (IOException e) {
                 e.printStackTrace();
             }
