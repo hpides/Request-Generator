@@ -9,8 +9,10 @@ import de.hpi.tdgt.RequestHandlingFramework;
 import de.hpi.tdgt.Utils;
 import de.hpi.tdgt.deserialisation.Deserializer;
 import de.hpi.tdgt.test.story.activity.Request;
+import de.hpi.tdgt.test.story.activity.assertion.Assertion;
 import de.hpi.tdgt.test.story.activity.assertion.AssertionStorage;
 import de.hpi.tdgt.test.story.activity.assertion.ContentType;
+import de.hpi.tdgt.test.story.activity.assertion.ResponseCode;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +34,7 @@ public class TestRequest extends RequestHandlingFramework {
         requestActivity = new Request();
         requestActivity.setVerb("GET");
         requestActivity.setAddr("http://example.com");
+        requestActivity.setAssertions(new Assertion[]{new ResponseCode()});
         postWithBodyAndAssertion = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getActivities()[1];
         getJsonObjectWithAssertion = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getActivities()[2];
         getWithAuth = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getActivities()[3];
@@ -52,7 +55,7 @@ public class TestRequest extends RequestHandlingFramework {
         requestActivity.setResponseJSONObject(new String[]{"item1", "item2"});
         //noch 10
         requestActivity.setResponseParams(new String[]{"item3", "item4"});
-        requestActivity.setRequestJSONObject(new String[]{"item5", "item6"});
+        requestActivity.setRequestJSONObject("{\"item5\":$item5, \"item6\":$item6}");
         requestActivity.setRequestParams(new String[]{"item7", "item8"});
         requestActivity.setBasicAuth(new Request.BasicAuth("user","pw"));
         requestActivity.setId(0);
