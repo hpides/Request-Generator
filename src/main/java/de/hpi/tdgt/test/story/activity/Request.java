@@ -116,10 +116,10 @@ public class Request extends Activity {
                 extractResponseParams(rc.postFormToEndpoint(new URL(this.addr), params));
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             }
         } else {
             try {
@@ -129,10 +129,10 @@ public class Request extends Activity {
                 );
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             }
         }
     }
@@ -205,10 +205,10 @@ public class Request extends Activity {
                 extractResponseParams(rc.postBodyToEndpoint(new URL(this.addr), jsonParams));
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             }
         } else {
             try {
@@ -218,10 +218,10 @@ public class Request extends Activity {
                 );
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             }
         }
     }
@@ -247,10 +247,10 @@ public class Request extends Activity {
                 extractResponseParams(rc.putFormToEndpoint(new URL(this.addr), params));
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             }
         } else {
             try {
@@ -260,10 +260,10 @@ public class Request extends Activity {
                 );
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             }
         }
     }
@@ -286,10 +286,10 @@ public class Request extends Activity {
                 extractResponseParams(rc.putBodyToEndpoint(new URL(this.addr), jsonParams));
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             }
         } else {
             try {
@@ -299,10 +299,10 @@ public class Request extends Activity {
                 );
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             }
         }
     }
@@ -320,10 +320,10 @@ public class Request extends Activity {
                 rc.deleteFromEndpoint(new URL(this.addr), params);
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             }
         } else {
             try {
@@ -331,10 +331,10 @@ public class Request extends Activity {
                     getKnownParams().get(basicAuth.getPassword()));
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             }
         }
     }
@@ -360,10 +360,10 @@ public class Request extends Activity {
                 extractResponseParams(rc.getFromEndpoint(new URL(this.addr), params));
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             }
         } else {
             try {
@@ -373,10 +373,10 @@ public class Request extends Activity {
                 );
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             }
         }
     }
@@ -399,10 +399,10 @@ public class Request extends Activity {
                 extractResponseParams(rc.getBodyFromEndpoint(new URL(this.addr), jsonParams));
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             }
         } else {
             try {
@@ -412,10 +412,10 @@ public class Request extends Activity {
                 );
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             }
         }
     }

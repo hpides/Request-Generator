@@ -26,7 +26,7 @@ public class Main {
                 log.error("or: java -jar "+new java.io.File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getName()+" testRest");
                 System.exit(1);
             } catch (URISyntaxException e) {
-                e.printStackTrace();
+                log.error(e);
             }
         }
         if(args[0].equals("load") ) {
@@ -45,7 +45,7 @@ public class Main {
                 log.info("---Assertions---");
                 AssertionStorage.getInstance().printSummary();
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error(e);
             }
         } else{
             val rc = new RestClient();

@@ -92,7 +92,7 @@ public abstract class Activity implements Cloneable {
                 val clonedMap = new HashMap<String, String>(this.getKnownParams());
                 successorLink.run(clonedMap);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                log.error(e);
             }
         })).collect(Collectors.toUnmodifiableList());
         threads.forEach(Thread::start);
