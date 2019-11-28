@@ -1,6 +1,7 @@
 package de.hpi.tdgt.time_measurement;
 
 import com.sun.net.httpserver.HttpServer;
+import de.hpi.tdgt.RequestHandlingFramework;
 import de.hpi.tdgt.Utils;
 import de.hpi.tdgt.deserialisation.Deserializer;
 import de.hpi.tdgt.requesthandling.HttpHandlers;
@@ -24,51 +25,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.greaterThan;
 @Log4j2
-public class TimeStorageTest {
+public class TimeStorageTest extends RequestHandlingFramework {
 
-    private final HttpHandlers.GetHandler getHandler = new HttpHandlers.GetHandler();
-    private final HttpHandlers.GetWithBodyHandler getWithBodyHandler = new HttpHandlers.GetWithBodyHandler();
-    private final HttpHandlers.JSONObjectGetHandler jsonObjectGetHandler = new HttpHandlers.JSONObjectGetHandler();
-    private final HttpHandlers.JSONArrayGetHandler jsonArrayGetHandler = new HttpHandlers.JSONArrayGetHandler();
-    private final HttpHandlers.PostHandler postHandler = new HttpHandlers.PostHandler();
-    private final HttpHandlers.PostBodyHandler postBodyHandler = new HttpHandlers.PostBodyHandler();
-    private final HttpHandlers.PostBodyHandler putBodyHandler = new HttpHandlers.PostBodyHandler();
-    private final HttpHandlers.AuthHandler authHandler = new HttpHandlers.AuthHandler();
-    private HttpServer server;
 
-    //Based on https://www.codeproject.com/tips/1040097/create-a-simple-web-server-in-java-http-server
-    @BeforeEach
-    public void launchTestServer() throws IOException {
-        int port = 9000;
-        server = HttpServer.create(new InetSocketAddress(port), 0);
-        log.info("server started at " + port);
-        server.createContext("/", getHandler);
-        server.createContext("/getWithBody", getWithBodyHandler);
-        server.createContext("/jsonObject", jsonObjectGetHandler);
-        server.createContext("/jsonArray", jsonArrayGetHandler);
-        server.createContext("/echoPost", postHandler);
-        server.createContext("/postWithBody", postBodyHandler);
-        server.createContext("/putWithBody", putBodyHandler);
-        server.createContext("/auth", authHandler);
-        server.setExecutor(null);
-        server.start();
-
-        File values = new File("values.csv");
-        values.deleteOnExit();
-        var os = new FileOutputStream(values);
-        IOUtils.copy(new Utils().getValuesCSV(), os);
-        os.close();
-    }
-
-    @AfterEach
-    public void removeSideEffects(){
-        //clean side effects
-        authHandler.setNumberFailedLogins(0);
-        authHandler.setTotalRequests(0);
-        jsonObjectGetHandler.setRequestsTotal(0);
-        Data_Generation.reset();
-        server.stop(0);
-    }
     @Test
     public void testFirstRequestOfFirstStoryTakesTime() throws IOException, InterruptedException {
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
