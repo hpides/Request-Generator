@@ -1,10 +1,12 @@
 package de.hpi.tdgt.test.story.activity.assertion;
 
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
+import lombok.val;
 
 import java.util.HashMap;
 import java.util.Map;
-
+@Log4j2
 public class AssertionStorage {
     private AssertionStorage(){}
     @Getter
@@ -24,5 +26,11 @@ public class AssertionStorage {
 
     public void reset(){
         fails.clear();
+    }
+
+    public void printSummary(){
+        for(val entry :fails.entrySet()){
+            log.info("Assertion "+entry.getKey()+" failed "+entry.getValue()+" times.");
+        }
     }
 }

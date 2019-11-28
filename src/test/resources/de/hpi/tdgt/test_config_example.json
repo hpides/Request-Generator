@@ -1,229 +1,275 @@
 {
-	"repeat":1,
-	"scaleFactor":70,
-	"stories":[
-		{
-			"scalePercentage":0.7,
-			"name":"User und Post erstellen",
-			"activities":[
-				{
-					"name":"Nutzerdaten generieren",
-					"id":0,
-					"repeat":1,
-					"successors":[
-						1
-					],
-					"type":"DATA_GENERATION",
-					"data":[
-						"username",
-						"password"
-					],
-					"table":"users"
-				},
-				{
-					"name":"User anlegen",
-					"id":1,
-					"repeat":1,
-					"successors":[
-						2,
-						4
-					],
-					"type":"REQUEST",
-					"verb":"POST",
-					"addr":"http://users/users/new",
-					"requestJSONObject":[
-						"username",
-						"password"
-					],
-					"responseJSONObject":[
-						"username",
-						"password"
-					]
-				},
-				{
-					"name":"Posts generieren",
-					"id":2,
-					"repeat":1,
-					"successors":[
-						3
-					],
-					"type":"DATA_GENERATION",
-					"data":[
-						"title",
-						"text"
-					],
-					"table":"posts"
-				},
-				{
-					"name":"Post anlegen",
-					"id":3,
-					"repeat":1,
-					"successors":[
-						6
-					],
-					"type":"REQUEST",
-					"verb":"POST",
-					"addr":"http://posts/posts/new",
-					"requestParams":[
-						"title",
-						"text"
-					],
-					"basicAuth":{
-						"user":"username",
-						"password":"password"
-					},
-					"responseJSONObject": [
-						"id"
-					]
-				},
-				{
-					"name":"Posts lesen",
-					"id":4,
-					"repeat":10,
-					"successors":[
-						5
-					],
-					"type":"REQUEST",
-					"verb":"GET",
-					"addr":"http://posts/posts/all",
-					"requestParams":[
-
-					],
-					"basicAuth":{
-						"user":"username",
-						"password":"password"
-					}
-				},
-				{
-					"name":"Warte 1 Sekunde",
-					"id":5,
-					"repeat":1,
-					"successors":[
-						7
-					],
-					"type":"DELAY",
-					"delayMs":1000
-				},
-				{
-					"name":"Post löschen",
-					"id":6,
-					"repeat":1,
-					"successors":[
-						7
-					],
-					"requestParams":[
-						"id"
-					],
-					"type":"REQUEST",
-					"verb":"DELETE",
-					"addr":"http://posts/posts/delete",
-					"basicAuth":{
-						"user":"username",
-						"password":"password"
-					}
-				},
-				{
-					"name":"User löschen story 1",
-					"id":7,
-					"repeat":1,
-					"successors":[
-
-					],
-					"type":"REQUEST",
-					"verb":"DELETE",
-					"addr":"http://users/users/delete",
-					"basicAuth":{
-						"user":"username",
-						"password":"password"
-					}
-				}
-			]
-		},
-		{
-			"scalePercentage":0.3,
-			"name":"Nach Posts suchen",
-			"activities":[
-				{
-					"name":"Nutzerdaten generieren",
-					"id":0,
-					"repeat":1,
-					"successors":[
-						1
-					],
-					"type":"DATA_GENERATION",
-					"data":[
-						"username",
-						"password"
-					],
-					"table":"users"
-				},
-				{
-					"name":"User anlegen",
-					"id":1,
-					"repeat":1,
-					"successors":[
-						2
-					],
-					"type":"REQUEST",
-					"verb":"POST",
-					"addr":"http://users/users/new",
-					"requestJSONObject":[
-						"username",
-						"password"
-					],
-					"responseJSONObject":[
-						"username",
-						"password"
-					]
-				},
-				{
-					"name":"Suchschlüssel generieren",
-					"id":2,
-					"repeat":1,
-					"successors":[
-						3
-					],
-					"type":"DATA_GENERATION",
-					"data":[
-						"key"
-					],
-					"table":"search"
-				},
-				{
-					"name":"Nach Suchschlüssel suchen",
-					"id":3,
-					"repeat":1,
-					"successors":[
-						4
-					],
-					"type":"REQUEST",
-					"verb":"GET",
-					"addr":"http://search/posts/search",
-					"requestParams":[
-						"key"
-					],
-					"basicAuth":{
-						"user":"username",
-						"password":"password"
-					}
-				},
-				{
-					"name":"User löschen Story 2",
-					"id":4,
-					"repeat":1,
-					"successors":[
-
-					],
-					"type":"REQUEST",
-					"verb":"DELETE",
-					"addr":"http://users/users/delete",
-					"basicAuth":{
-						"user":"username",
-						"password":"password"
-					}
-				}
-
-			]
-		}
-	]
+  "repeat": 1,
+  "scaleFactor": 70,
+  "stories": [
+    {
+      "scalePercentage": 0.7,
+      "name": "User und Post erstellen",
+      "activities": [
+        {
+          "name": "Nutzerdaten generieren",
+          "id": 0,
+          "repeat": 1,
+          "successors": [
+            1
+          ],
+          "type": "DATA_GENERATION",
+          "data": [
+            "username",
+            "password"
+          ],
+          "table": "users"
+        },
+        {
+          "name": "User anlegen",
+          "id": 1,
+          "repeat": 1,
+          "successors": [
+            2,
+            4
+          ],
+          "type": "REQUEST",
+          "verb": "POST",
+          "addr": "http://users/users/new",
+          "requestJSONObject": "{\"username\":$username, \"password\":$password}",
+          "responseJSONObject": [
+            "username",
+            "password"
+          ],
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "User creation returns 200.",
+              "responseCode": 200
+            }
+          ]
+        },
+        {
+          "name": "Posts generieren",
+          "id": 2,
+          "repeat": 1,
+          "successors": [
+            3
+          ],
+          "type": "DATA_GENERATION",
+          "data": [
+            "title",
+            "text"
+          ],
+          "table": "posts"
+        },
+        {
+          "name": "Post anlegen",
+          "id": 3,
+          "repeat": 1,
+          "successors": [
+            6
+          ],
+          "type": "REQUEST",
+          "verb": "POST",
+          "addr": "http://posts/posts/new",
+          "requestParams": [
+            "title",
+            "text"
+          ],
+          "basicAuth": {
+            "user": "username",
+            "password": "password"
+          },
+          "responseJSONObject": [
+            "id"
+          ],
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "Post creation returns 200.",
+              "responseCode": 200
+            }
+          ]
+        },
+        {
+          "name": "Posts lesen",
+          "id": 4,
+          "repeat": 10,
+          "successors": [
+            5
+          ],
+          "type": "REQUEST",
+          "verb": "GET",
+          "addr": "http://posts/posts/all",
+          "requestParams": [
+          ],
+          "basicAuth": {
+            "user": "username",
+            "password": "password"
+          },
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "Reading posts returns 200.",
+              "responseCode": 200
+            }
+            ]
+        },
+        {
+          "name": "Warte 1 Sekunde",
+          "id": 5,
+          "repeat": 1,
+          "successors": [
+            7
+          ],
+          "type": "DELAY",
+          "delayMs": 1000
+        },
+        {
+          "name": "Post löschen",
+          "id": 6,
+          "repeat": 1,
+          "successors": [
+            7
+          ],
+          "requestParams": [
+            "id"
+          ],
+          "type": "REQUEST",
+          "verb": "DELETE",
+          "addr": "http://posts/posts/delete",
+          "basicAuth": {
+            "user": "username",
+            "password": "password"
+          },
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "Deleting posts returns 200.",
+              "responseCode": 200
+            }
+          ]
+        },
+        {
+          "name": "User löschen story 1",
+          "id": 7,
+          "repeat": 1,
+          "successors": [
+          ],
+          "type": "REQUEST",
+          "verb": "DELETE",
+          "addr": "http://users/users/delete",
+          "basicAuth": {
+            "user": "username",
+            "password": "password"
+          },
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "Deleting users returns 200.",
+              "responseCode": 200
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scalePercentage": 0.3,
+      "name": "Nach Posts suchen",
+      "activities": [
+        {
+          "name": "Nutzerdaten generieren",
+          "id": 0,
+          "repeat": 1,
+          "successors": [
+            1
+          ],
+          "type": "DATA_GENERATION",
+          "data": [
+            "username",
+            "password"
+          ],
+          "table": "users"
+        },
+        {
+          "name": "User anlegen",
+          "id": 1,
+          "repeat": 1,
+          "successors": [
+            2
+          ],
+          "type": "REQUEST",
+          "verb": "POST",
+          "addr": "http://users/users/new",
+          "requestJSONObject": "{\"username\":$username, \"password\":$password}",
+          "responseJSONObject": [
+            "username",
+            "password"
+          ],
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "User creation in Story 2 returns 200.",
+              "responseCode": 200
+            }
+          ]
+        },
+        {
+          "name": "Suchschlüssel generieren",
+          "id": 2,
+          "repeat": 1,
+          "successors": [
+            3
+          ],
+          "type": "DATA_GENERATION",
+          "data": [
+            "key"
+          ],
+          "table": "search"
+        },
+        {
+          "name": "Nach Suchschlüssel suchen",
+          "id": 3,
+          "repeat": 1,
+          "successors": [
+            4
+          ],
+          "type": "REQUEST",
+          "verb": "GET",
+          "addr": "http://search/posts/search",
+          "requestParams": [
+            "key"
+          ],
+          "basicAuth": {
+            "user": "username",
+            "password": "password"
+          },
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "Search returns 200.",
+              "responseCode": 200
+            }
+          ]
+        },
+        {
+          "name": "User löschen Story 2",
+          "id": 4,
+          "repeat": 1,
+          "successors": [
+          ],
+          "type": "REQUEST",
+          "verb": "DELETE",
+          "addr": "http://users/users/delete",
+          "basicAuth": {
+            "user": "username",
+            "password": "password"
+          },
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "User deletion in Story 2 returns 200.",
+              "responseCode": 200
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }

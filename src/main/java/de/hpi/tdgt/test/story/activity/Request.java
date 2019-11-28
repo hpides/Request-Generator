@@ -5,7 +5,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonParseException;
@@ -42,7 +45,7 @@ public class Request extends Activity {
      * Expected usage: values of this arrays are keys. Use them as keys in a JSON
      * Object in a Request Body, get values for these keys from passed dict.
      */
-    private String[] requestJSONObject;
+    private String requestJSONObject;
     /**
      * Expected usage: values of this arrays are keys. Get the values for these keys
      * from a response body JSON object and store them in the dict passed to the
@@ -87,6 +90,8 @@ public class Request extends Activity {
         ret.setRequestJSONObject(this.getRequestJSONObject());
         ret.setResponseJSONObject(this.getResponseJSONObject());
         ret.setResponseParams(this.getResponseParams());
+        //also stateless
+        ret.setAssertions(this.assertions);
         return ret;
     }
 
@@ -148,32 +153,51 @@ public class Request extends Activity {
                 getKnownParams().putAll(toStringMap(map));
             }
             else{
-                log.error("I can not handle Arrays.");
-                log.error(result);
+                log.warn("I can not handle Arrays.");
+                log.warn(result);
             }
         }
         else {
-            log.error("Not JSON! Response is ignored.");
-            log.error(result);
+            log.warn("Not JSON! Response is ignored.");
+            log.warn(result);
         }
         //check assertions after request
         for(val assertion : assertions){
             assertion.check(result);
         }
     }
-    private void handlePostWithBody() {
-        val params = new HashMap<String, String>();
-        if (requestJSONObject != null) {
-            for (val key : requestJSONObject) {
-                params.put(key, getKnownParams().get(key));
-            }
+
+    private String fillEvaluationsInJson(){
+        String current = requestJSONObject;
+        for(val entry : getKnownParams().entrySet()){
+            current = current.replaceAll("\\$"+entry.getKey(),'\"'+entry.getValue()+'\"');
         }
+        //should show a warning
+        if(Pattern.matches("\\$[a-zA-Z]*", current)){
+            Pattern p = Pattern.compile("\\$[a-zA-Z]*");
+            Matcher m = p.matcher(current);
+            val allUncompiled = new HashSet<String>();
+            while(m.find()){
+                allUncompiled.add(m.group());
+            }
+            StringBuilder builder = new StringBuilder();
+            boolean first = true;
+            for(String unmatched : allUncompiled){
+                if(!first){
+                    builder.append(',');
+                }
+                first = false;
+                builder.append(' ').append(unmatched);
+            }
+            log.warn("Request "+getName()+": Could not replace variable(s) "+builder.toString());
+        }
+        return current;
+    }
+
+    private void handlePostWithBody() {
         var jsonParams = "";
-        try {
-            jsonParams = om.writeValueAsString(params);
-        } catch (JsonProcessingException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
+        if (requestJSONObject != null) {
+            jsonParams = fillEvaluationsInJson();
         }
         
         if (basicAuth == null) {
@@ -247,9 +271,7 @@ public class Request extends Activity {
     private void handlePutWithBody() {
         val params = new HashMap<String, String>();
         if (requestJSONObject != null) {
-            for (val key : requestJSONObject) {
-                params.put(key, getKnownParams().get(key));
-            }
+            //fill out template
         }
         var jsonParams = "";
         try {
@@ -362,9 +384,7 @@ public class Request extends Activity {
     private void handleGetWithBody() {
         val params = new HashMap<String, String>();
         if (requestJSONObject != null) {
-            for (val key : requestJSONObject) {
-                params.put(key, getKnownParams().get(key));
-            }
+            //fill out template
         }
         var jsonParams = "";
         try {

@@ -31,10 +31,7 @@
           "type": "REQUEST",
           "verb": "POST",
           "addr": "http://localhost:9000/postWithBody",
-          "requestJSONObject": [
-            "key",
-            "value"
-          ],
+          "requestJSONObject": "{\"key\":$key, \"value\":$value}",
           "responseJSONObject": [
             "key",
             "value"
