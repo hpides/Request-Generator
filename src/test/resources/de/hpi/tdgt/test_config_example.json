@@ -32,11 +32,11 @@
         },
         {
           "name": "User anlegen",
-          "id": 1,
+          "id": 2,
           "repeat": 1,
           "successors": [
-            2,
-            4
+            3,
+            5
           ],
           "type": "REQUEST",
           "verb": "POST",
@@ -70,7 +70,7 @@
         },
         {
           "name": "Post anlegen",
-          "id": 3,
+          "id": 4,
           "repeat": 1,
           "successors": [
             6
