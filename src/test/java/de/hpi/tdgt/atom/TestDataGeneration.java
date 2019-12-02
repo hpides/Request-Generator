@@ -1,7 +1,7 @@
-package de.hpi.tdgt.activities;
+package de.hpi.tdgt.atom;
 
 import de.hpi.tdgt.Utils;
-import de.hpi.tdgt.test.story.activity.Data_Generation;
+import de.hpi.tdgt.test.story.atom.Data_Generation;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;

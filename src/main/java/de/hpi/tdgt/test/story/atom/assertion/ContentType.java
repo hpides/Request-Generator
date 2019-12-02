@@ -1,4 +1,4 @@
-package de.hpi.tdgt.test.story.activity.assertion;
+package de.hpi.tdgt.test.story.atom.assertion;
 
 import de.hpi.tdgt.requesthandling.RestResult;
 import lombok.EqualsAndHashCode;
@@ -12,13 +12,13 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Setter
 @Log4j2
-public class ResponseCode extends Assertion{
-    private int responseCode;
+public class ContentType extends Assertion {
+    private String contentType;
 
     @Override
     public void check(RestResult restResult) {
-        if(responseCode!=restResult.getReturnCode()){
-            log.error("Failed response code assertion\""+getName()+"\": expected \""+responseCode+"\" but is actually \""+restResult.getReturnCode()+"\"!");
+        if(!contentType.equals(restResult.getContentType())){
+            log.error("Failed content type assertion\""+getName()+"\": expected \""+contentType+"\" but is actually \""+restResult.getContentType()+"\"!");
             AssertionStorage.getInstance().addFailure(this.getName());
         }
     }

@@ -4,7 +4,7 @@ import de.hpi.tdgt.RequestHandlingFramework;
 import de.hpi.tdgt.Utils;
 import de.hpi.tdgt.deserialisation.Deserializer;
 import de.hpi.tdgt.test.story.UserStory;
-import de.hpi.tdgt.test.story.activity.Request;
+import de.hpi.tdgt.test.story.atom.Request;
 import de.hpi.tdgt.test.time_measurement.TimeStorage;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
@@ -25,7 +25,7 @@ public class TimeStorageTest extends RequestHandlingFramework {
         test.setStories(new UserStory[]{test.getStories()[0]});
         test.start();
         val storage = TimeStorage.getInstance();
-        Request firstRequest = (Request) test.getStories()[0].getActivities()[1];
+        Request firstRequest = (Request) test.getStories()[0].getAtoms()[1];
         assertThat(storage.getTimes(firstRequest.getVerb(), firstRequest.getAddr()).length, greaterThan(0));
     }
 
@@ -36,7 +36,7 @@ public class TimeStorageTest extends RequestHandlingFramework {
         test.setStories(new UserStory[]{test.getStories()[0]});
         test.start();
         val storage = TimeStorage.getInstance();
-        Request firstRequest = (Request) test.getStories()[0].getActivities()[1];
+        Request firstRequest = (Request) test.getStories()[0].getAtoms()[1];
         assertThat(storage.getMax(firstRequest.getVerb(), firstRequest.getAddr()), greaterThan(0L));
     }
     @Test
@@ -46,7 +46,7 @@ public class TimeStorageTest extends RequestHandlingFramework {
         test.setStories(new UserStory[]{test.getStories()[0]});
         test.start();
         val storage = TimeStorage.getInstance();
-        Request firstRequest = (Request) test.getStories()[0].getActivities()[1];
+        Request firstRequest = (Request) test.getStories()[0].getAtoms()[1];
         assertThat(storage.getMin(firstRequest.getVerb(), firstRequest.getAddr()), greaterThan(0L));
     }
     @Test
@@ -56,7 +56,7 @@ public class TimeStorageTest extends RequestHandlingFramework {
         test.setStories(new UserStory[]{test.getStories()[0]});
         test.start();
         val storage = TimeStorage.getInstance();
-        Request firstRequest = (Request) test.getStories()[0].getActivities()[1];
+        Request firstRequest = (Request) test.getStories()[0].getAtoms()[1];
         assertThat(storage.getAvg(firstRequest.getVerb(), firstRequest.getAddr()), greaterThan(0d));
     }
 }

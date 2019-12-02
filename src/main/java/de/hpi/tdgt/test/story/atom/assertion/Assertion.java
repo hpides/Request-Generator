@@ -1,11 +1,8 @@
-package de.hpi.tdgt.test.story.activity.assertion;
+package de.hpi.tdgt.test.story.atom.assertion;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.hpi.tdgt.requesthandling.RestResult;
-import de.hpi.tdgt.test.story.activity.Data_Generation;
-import de.hpi.tdgt.test.story.activity.Delay;
-import de.hpi.tdgt.test.story.activity.Request;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
