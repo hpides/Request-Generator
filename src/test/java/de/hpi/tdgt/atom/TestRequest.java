@@ -162,6 +162,15 @@ public class TestRequest extends RequestHandlingFramework {
         getWithAuth.run(params);
         assertThat(AssertionStorage.getInstance().getActual("auth does not return 401"), contains("401"));
     }
+    @Test
+    public void ResponseAssertHasCorrectResponseCodeForDelete() throws InterruptedException {
+        val params = new HashMap<String, String>();
+        params.put("key", "wrong");
+        params.put("value", "wrong");
+        getWithAuth.setVerb("DELETE");
+        getWithAuth.run(params);
+        assertThat(AssertionStorage.getInstance().getActual("auth does not return 401"), contains("401"));
+    }
 
     @Test
     public void resetOfAssertWorks() throws InterruptedException {
