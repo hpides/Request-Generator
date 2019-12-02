@@ -111,7 +111,7 @@ public class TestDataGeneration {
             try {
                 gen.run(new HashMap<>());
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                log.error(e);
             }
             knownParams = gen.getKnownParams();
         }

@@ -1,11 +1,13 @@
 package de.hpi.tdgt.test.story.activity;
 
 import lombok.*;
+import lombok.extern.log4j.Log4j2;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@Log4j2
 public class Delay extends Activity{
     private int delayMs;
 
@@ -16,7 +18,7 @@ public class Delay extends Activity{
                 Thread.sleep(delayMs);
             }
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.error(e);
         }
     }
 
