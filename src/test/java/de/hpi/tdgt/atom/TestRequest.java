@@ -1,4 +1,4 @@
-package de.hpi.tdgt.activities;
+package de.hpi.tdgt.atom;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -8,11 +8,11 @@ import de.hpi.tdgt.HttpHandlers;
 import de.hpi.tdgt.RequestHandlingFramework;
 import de.hpi.tdgt.Utils;
 import de.hpi.tdgt.deserialisation.Deserializer;
-import de.hpi.tdgt.test.story.activity.Request;
-import de.hpi.tdgt.test.story.activity.assertion.Assertion;
-import de.hpi.tdgt.test.story.activity.assertion.AssertionStorage;
-import de.hpi.tdgt.test.story.activity.assertion.ContentType;
-import de.hpi.tdgt.test.story.activity.assertion.ResponseCode;
+import de.hpi.tdgt.test.story.atom.Request;
+import de.hpi.tdgt.test.story.atom.assertion.Assertion;
+import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
+import de.hpi.tdgt.test.story.atom.assertion.ContentType;
+import de.hpi.tdgt.test.story.atom.assertion.ResponseCode;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,19 +25,19 @@ import java.util.HashMap;
 
 public class TestRequest extends RequestHandlingFramework {
 
-    private Request requestActivity;
+    private Request requestAtom;
     private Request postWithBodyAndAssertion;
     private Request getJsonObjectWithAssertion;
     private Request getWithAuth;
     @BeforeEach
     public void prepareTest() throws IOException {
-        requestActivity = new Request();
-        requestActivity.setVerb("GET");
-        requestActivity.setAddr("http://example.com");
-        requestActivity.setAssertions(new Assertion[]{new ResponseCode()});
-        postWithBodyAndAssertion = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getActivities()[1];
-        getJsonObjectWithAssertion = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getActivities()[2];
-        getWithAuth = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getActivities()[3];
+        requestAtom = new Request();
+        requestAtom.setVerb("GET");
+        requestAtom.setAddr("http://example.com");
+        requestAtom.setAssertions(new Assertion[]{new ResponseCode()});
+        postWithBodyAndAssertion = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getAtoms()[1];
+        getJsonObjectWithAssertion = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getAtoms()[2];
+        getWithAuth = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getAtoms()[3];
     }
     @AfterEach
     public void clearAssertions(){
@@ -46,34 +46,34 @@ public class TestRequest extends RequestHandlingFramework {
 
     @Test
     public void cloneCreatesEquivalentObject() {
-        val clone = requestActivity.clone();
-        assertThat(clone, equalTo(requestActivity));
+        val clone = requestAtom.clone();
+        assertThat(clone, equalTo(requestAtom));
     }
 
     @Test
     public void cloneCreatesEquivalentObjectWhenAllAttribvutesAreSet() {
-        requestActivity.setResponseJSONObject(new String[]{"item1", "item2"});
+        requestAtom.setResponseJSONObject(new String[]{"item1", "item2"});
         //noch 10
-        requestActivity.setResponseParams(new String[]{"item3", "item4"});
-        requestActivity.setRequestJSONObject("{\"item5\":$item5, \"item6\":$item6}");
-        requestActivity.setRequestParams(new String[]{"item7", "item8"});
-        requestActivity.setBasicAuth(new Request.BasicAuth("user","pw"));
-        requestActivity.setId(0);
-        requestActivity.setName("Some Request");
-        requestActivity.setPredecessorCount(1);
-        requestActivity.setRepeat(3);
-        requestActivity.setSuccessors(new int[0]);
+        requestAtom.setResponseParams(new String[]{"item3", "item4"});
+        requestAtom.setRequestJSONObject("{\"item5\":$item5, \"item6\":$item6}");
+        requestAtom.setRequestParams(new String[]{"item7", "item8"});
+        requestAtom.setBasicAuth(new Request.BasicAuth("user","pw"));
+        requestAtom.setId(0);
+        requestAtom.setName("Some Request");
+        requestAtom.setPredecessorCount(1);
+        requestAtom.setRepeat(3);
+        requestAtom.setSuccessors(new int[0]);
 
-        val clone = requestActivity.clone();
+        val clone = requestAtom.clone();
         //would have been set by story
         clone.setPredecessorCount(1);
-        assertThat(clone, equalTo(requestActivity));
+        assertThat(clone, equalTo(requestAtom));
     }
 
     @Test
     public void cloneCreatesotherObject() {
-        val clone = requestActivity.clone();
-        assertNotSame(clone, requestActivity);
+        val clone = requestAtom.clone();
+        assertNotSame(clone, requestAtom);
     }
     @Test
     public void ContentTypeAssertNotFailingIfCorrect() throws InterruptedException {

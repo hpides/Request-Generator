@@ -1,4 +1,4 @@
-package de.hpi.tdgt.test.story.activity;
+package de.hpi.tdgt.test.story.atom;
 
 import lombok.*;
 import lombok.extern.log4j.Log4j2;
@@ -8,7 +8,7 @@ import lombok.extern.log4j.Log4j2;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Log4j2
-public class Delay extends Activity{
+public class Delay extends Atom {
     private int delayMs;
 
     @Override
@@ -23,7 +23,7 @@ public class Delay extends Activity{
     }
 
     @Override
-    public Activity performClone() {
+    public Atom performClone() {
         val ret = new Delay();
         ret.setDelayMs(this.getDelayMs());
         return ret;

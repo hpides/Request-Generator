@@ -1,7 +1,7 @@
 package de.hpi.tdgt;
 
 import com.sun.net.httpserver.HttpServer;
-import de.hpi.tdgt.test.story.activity.Data_Generation;
+import de.hpi.tdgt.test.story.atom.Data_Generation;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
