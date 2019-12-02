@@ -14,6 +14,7 @@ public class ContentNotEmpty extends Assertion {
         if(restResult.getResponse().length == 0){
             log.error("Failed content not empty assertion\""+getName()+"\": response was empty!");
             AssertionStorage.getInstance().addFailure(this.getName());
+            AssertionStorage.getInstance().addActual(this.getName(),"");
         }
     }
 }

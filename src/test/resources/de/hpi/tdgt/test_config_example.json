@@ -126,7 +126,7 @@
           "id": 6,
           "repeat": 1,
           "successors": [
-            8
+            7
           ],
           "type": "DELAY",
           "delayMs": 1000

@@ -20,6 +20,7 @@ public class ContentType extends Assertion {
         if(!contentType.equals(restResult.getContentType())){
             log.error("Failed content type assertion\""+getName()+"\": expected \""+contentType+"\" but is actually \""+restResult.getContentType()+"\"!");
             AssertionStorage.getInstance().addFailure(this.getName());
+            AssertionStorage.getInstance().addActual(this.getName(),restResult.getContentType());
         }
     }
 }

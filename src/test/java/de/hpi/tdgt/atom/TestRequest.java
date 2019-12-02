@@ -1,6 +1,8 @@
 package de.hpi.tdgt.atom;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 
@@ -96,6 +98,19 @@ public class TestRequest extends RequestHandlingFramework {
         assertThat(AssertionStorage.getInstance().getFails("postWithBody returns JSON"), Matchers.is(1));
     }
 
+
+    @Test
+    public void ContentTypeAssertHasCorrectContentType() throws InterruptedException {
+        val params = new HashMap<String, String>();
+        params.put("key","something");
+        params.put("value","somethingElse");
+        ContentType assertion = (ContentType) postWithBodyAndAssertion.getAssertions()[0];
+        //simulate failure
+        assertion.setContentType("application/xml");
+        postWithBodyAndAssertion.run(params);
+        assertThat(AssertionStorage.getInstance().getActual("postWithBody returns JSON"), contains("application/json"));
+    }
+
     @Test
     public void ContentNotEmptyAssertNotFailingIfCorrect() throws InterruptedException {
         val params = new HashMap<String, String>();
@@ -110,6 +125,15 @@ public class TestRequest extends RequestHandlingFramework {
         getJsonObjectWithAssertion.setAddr("http://localhost:9000/empty");
         getJsonObjectWithAssertion.run(params);
         assertThat(AssertionStorage.getInstance().getFails("jsonObject returns something"), Matchers.is(1));
+    }
+
+    @Test
+    public void ContentNotEmptyAssertHasCorrectContent() throws InterruptedException {
+        val params = new HashMap<String, String>();
+        //simulate failure
+        getJsonObjectWithAssertion.setAddr("http://localhost:9000/empty");
+        getJsonObjectWithAssertion.run(params);
+        assertThat(AssertionStorage.getInstance().getActual("jsonObject returns something"), contains(""));
     }
 
     @Test
@@ -129,4 +153,34 @@ public class TestRequest extends RequestHandlingFramework {
         getWithAuth.run(params);
         assertThat(AssertionStorage.getInstance().getFails("auth does not return 401"), Matchers.is(1));
     }
+
+    @Test
+    public void ResponseAssertHasCorrectResponseCode() throws InterruptedException {
+        val params = new HashMap<String, String>();
+        params.put("key", "wrong");
+        params.put("value", "wrong");
+        getWithAuth.run(params);
+        assertThat(AssertionStorage.getInstance().getActual("auth does not return 401"), contains("401"));
+    }
+    @Test
+    public void ResponseAssertHasCorrectResponseCodeForDelete() throws InterruptedException {
+        val params = new HashMap<String, String>();
+        params.put("key", "wrong");
+        params.put("value", "wrong");
+        getWithAuth.setVerb("DELETE");
+        getWithAuth.run(params);
+        assertThat(AssertionStorage.getInstance().getActual("auth does not return 401"), contains("401"));
+    }
+
+    @Test
+    public void resetOfAssertWorks() throws InterruptedException {
+        val params = new HashMap<String, String>();
+        params.put("key", "wrong");
+        params.put("value", "wrong");
+        getWithAuth.run(params);
+        AssertionStorage.getInstance().reset();
+        assertThat(AssertionStorage.getInstance().getActual("auth does not return 401"), empty());
+    }
+
+
 }
