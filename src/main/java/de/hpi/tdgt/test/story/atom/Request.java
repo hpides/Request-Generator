@@ -317,7 +317,7 @@ public class Request extends Atom {
         
         if (basicAuth == null) {
             try {
-                rc.deleteFromEndpoint(new URL(this.addr), params);
+                extractResponseParams(rc.deleteFromEndpoint(new URL(this.addr), params));
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
@@ -327,8 +327,8 @@ public class Request extends Atom {
             }
         } else {
             try {
-                rc.deleteFromEndpointWithAuth(new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
-                    getKnownParams().get(basicAuth.getPassword()));
+               extractResponseParams(rc.deleteFromEndpointWithAuth(new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
+                    getKnownParams().get(basicAuth.getPassword())));
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
                 log.error(e);

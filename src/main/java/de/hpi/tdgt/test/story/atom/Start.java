@@ -9,6 +9,6 @@ public class Start extends Atom {
     @Override
     protected Atom performClone() {
         //stateless
-        return this;
+        return new Start();
     }
 }
