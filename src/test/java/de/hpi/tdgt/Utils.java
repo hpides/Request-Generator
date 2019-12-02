@@ -26,7 +26,7 @@ public class Utils {
         return writer.toString();
     }
     public static void assertInstanceOf(Object o, Class c){
-        Assertions.assertTrue(c.isInstance(o), "First activity of first story should be a data generation activity and not a "+o.getClass().getName());
+        Assertions.assertTrue(c.isInstance(o), "First atom of first story should be a data generation atom and not a "+o.getClass().getName());
     }
     public InputStream getUsersCSV() throws IOException {
         return getClass().getResourceAsStream("users.csv");

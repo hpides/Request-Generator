@@ -6,7 +6,7 @@
     {
       "scalePercentage": 0.7,
       "name": "User und Post erstellen",
-      "activities": [
+      "atoms": [
         {
           "name": "Nutzerdaten generieren",
           "id": 0,
@@ -173,7 +173,7 @@
     {
       "scalePercentage": 0.3,
       "name": "Nach Posts suchen",
-      "activities": [
+      "atoms": [
         {
           "name": "Nutzerdaten generieren",
           "id": 0,

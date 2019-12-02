@@ -1,4 +1,4 @@
-package de.hpi.tdgt.test.story.activity;
+package de.hpi.tdgt.test.story.atom;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -18,8 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.hpi.tdgt.requesthandling.RestClient;
 import de.hpi.tdgt.requesthandling.RestResult;
-import de.hpi.tdgt.test.Test;
-import de.hpi.tdgt.test.story.activity.assertion.Assertion;
+import de.hpi.tdgt.test.story.atom.assertion.Assertion;
 import lombok.*;
 import lombok.extern.log4j.Log4j2;
 
@@ -28,7 +27,7 @@ import lombok.extern.log4j.Log4j2;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Log4j2
-public class Request extends Activity {
+public class Request extends Atom {
     private String verb;
     private String addr;
     /**
@@ -81,7 +80,7 @@ public class Request extends Activity {
     }
 
     @Override
-    public Activity performClone() {
+    public Atom performClone() {
         val ret = new Request();
         ret.setAddr(this.getAddr());
         ret.setVerb(this.getVerb());

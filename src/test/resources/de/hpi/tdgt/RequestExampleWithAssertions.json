@@ -5,7 +5,7 @@
     {
       "scalePercentage": 0.7,
       "name": "Send some requests with and without data",
-      "activities": [
+      "atoms": [
         {
           "name": "Generate key and value",
           "id": 0,
@@ -101,7 +101,7 @@
     {
       "scalePercentage": 0.3,
       "name": "Send some requests with and without data",
-      "activities": [
+      "atoms": [
         {
           "name": "Generate key and value",
           "id": 0,

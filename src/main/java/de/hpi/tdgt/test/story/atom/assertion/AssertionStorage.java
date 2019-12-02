@@ -1,4 +1,4 @@
-package de.hpi.tdgt.test.story.activity.assertion;
+package de.hpi.tdgt.test.story.atom.assertion;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;

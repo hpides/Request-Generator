@@ -1,4 +1,4 @@
-package de.hpi.tdgt.activities;
+package de.hpi.tdgt.atom;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -8,46 +8,46 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import de.hpi.tdgt.test.story.activity.Delay;
+import de.hpi.tdgt.test.story.atom.Delay;
 
 import lombok.val;
 
 public class TestDelay {
 
-    private Delay delayActivity;
+    private Delay delayAtom;
 
     @BeforeEach
     public void prepareTest() {
-        delayActivity = new Delay();
+        delayAtom = new Delay();
     }
 
     @Test
     public void delay100ms() {
-        delayActivity.setDelayMs(100);
+        delayAtom.setDelayMs(100);
         val startTime = System.currentTimeMillis();
-        delayActivity.perform();
+        delayAtom.perform();
         val endTime = System.currentTimeMillis();
         assertTrue((endTime - startTime) > 90);
     }
 
     @Test
     public void delay1000ms() {
-        delayActivity.setDelayMs(1000);
+        delayAtom.setDelayMs(1000);
         val startTime = System.currentTimeMillis();
-        delayActivity.perform();
+        delayAtom.perform();
         val endTime = System.currentTimeMillis();
         assertTrue((endTime - startTime) > 990);
     }
 
     @Test
     public void cloneCreatesEquivalentObject() {
-        val clone = delayActivity.clone();
-        assertThat(clone, equalTo(delayActivity));
+        val clone = delayAtom.clone();
+        assertThat(clone, equalTo(delayAtom));
     }
 
     @Test
     public void cloneCreatesOtherObject() {
-        val clone = delayActivity.clone();
-        assertNotSame(clone, delayActivity);
+        val clone = delayAtom.clone();
+        assertNotSame(clone, delayAtom);
     }
 }
