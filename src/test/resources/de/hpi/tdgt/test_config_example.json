@@ -8,11 +8,20 @@
       "name": "User und Post erstellen",
       "atoms": [
         {
-          "name": "Nutzerdaten generieren",
+          "name": "Start",
           "id": 0,
           "repeat": 1,
+          "type": "START",
           "successors": [
             1
+          ]
+        },
+        {
+          "name": "Nutzerdaten generieren",
+          "id": 1,
+          "repeat": 1,
+          "successors": [
+            2
           ],
           "type": "DATA_GENERATION",
           "data": [
@@ -47,10 +56,10 @@
         },
         {
           "name": "Posts generieren",
-          "id": 2,
+          "id": 3,
           "repeat": 1,
           "successors": [
-            3
+            4
           ],
           "type": "DATA_GENERATION",
           "data": [
@@ -90,10 +99,10 @@
         },
         {
           "name": "Posts lesen",
-          "id": 4,
+          "id": 5,
           "repeat": 10,
           "successors": [
-            5
+            6
           ],
           "type": "REQUEST",
           "verb": "GET",
@@ -114,20 +123,20 @@
         },
         {
           "name": "Warte 1 Sekunde",
-          "id": 5,
+          "id": 6,
           "repeat": 1,
           "successors": [
-            7
+            8
           ],
           "type": "DELAY",
           "delayMs": 1000
         },
         {
           "name": "Post löschen",
-          "id": 6,
+          "id": 7,
           "repeat": 1,
           "successors": [
-            7
+            8
           ],
           "requestParams": [
             "id"
@@ -149,7 +158,7 @@
         },
         {
           "name": "User löschen story 1",
-          "id": 7,
+          "id": 8,
           "repeat": 1,
           "successors": [
           ],

@@ -4,16 +4,13 @@ package de.hpi.tdgt.deserialisation;
 
 
 import de.hpi.tdgt.requesthandling.HttpConstants;
-import de.hpi.tdgt.test.story.atom.Atom;
+import de.hpi.tdgt.test.story.atom.*;
 import de.hpi.tdgt.test.story.atom.assertion.ContentNotEmpty;
 import de.hpi.tdgt.test.story.atom.assertion.ContentType;
 import de.hpi.tdgt.test.story.atom.assertion.ResponseCode;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import de.hpi.tdgt.test.story.atom.Data_Generation;
-import de.hpi.tdgt.test.story.atom.Request;
-import de.hpi.tdgt.test.story.atom.Delay;
 import de.hpi.tdgt.Utils;
 
 import java.io.IOException;
@@ -31,10 +28,10 @@ public class DeserializeAtom {
     private String getExampleJSON() throws IOException {
         return new Utils().getExampleJSON();
     }
-
     private Atom firstAtomOfFirstStory;
     private Atom secondAtomOfFirstStory;
-    private Atom sixthAtomOfFirstStory;
+    private Atom thirdAtomOfFirstStory;
+    private Atom seventhAtomOfFirstStory;
     private Atom secondAtomOfSecondStory;
     private Request postWithBodyAndAssertion;
     private Request getJSONObject;
@@ -44,7 +41,8 @@ public class DeserializeAtom {
     public void prepareTest() throws IOException {
         firstAtomOfFirstStory = Deserializer.deserialize(getExampleJSON()).getStories()[0].getAtoms()[0];
         secondAtomOfFirstStory = Deserializer.deserialize(getExampleJSON()).getStories()[0].getAtoms()[1];
-        sixthAtomOfFirstStory = Deserializer.deserialize(getExampleJSON()).getStories()[0].getAtoms()[5];
+        thirdAtomOfFirstStory = Deserializer.deserialize(getExampleJSON()).getStories()[0].getAtoms()[2];
+        seventhAtomOfFirstStory = Deserializer.deserialize(getExampleJSON()).getStories()[0].getAtoms()[6];
         secondAtomOfSecondStory = Deserializer.deserialize(getExampleJSON()).getStories()[1].getAtoms()[3];
         postWithBodyAndAssertion = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getAtoms()[1];
         getJSONObject = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getAtoms()[2];
@@ -53,12 +51,12 @@ public class DeserializeAtom {
 
     @Test
     public void firstAtomOfFirstStoryIsDataGeneration() {
-        assertInstanceOf(firstAtomOfFirstStory, Data_Generation.class);
+        assertInstanceOf(secondAtomOfFirstStory, Data_Generation.class);
     }
 
     @Test
     public void sixthAtomOfFirstStoryIsDelay() {
-        assertInstanceOf(sixthAtomOfFirstStory, Delay.class);
+        assertInstanceOf(seventhAtomOfFirstStory, Delay.class);
     }
 
     @Test
@@ -68,14 +66,14 @@ public class DeserializeAtom {
 
     @Test
     public void firstAtomOfFirstStoryGetsUsernameAndPasswordFromUsers() throws IOException {
-        val firstAtomOfFirstStory = (Data_Generation) this.firstAtomOfFirstStory;
+        val firstAtomOfFirstStory = (Data_Generation) this.secondAtomOfFirstStory;
         assertArrayEquals(new String[]{"username","password"},firstAtomOfFirstStory.getData());
         assertEquals("users", firstAtomOfFirstStory.getTable());
     }
 
     @Test
     public void sixthAtomOfFirstStoryWaitsOneSecond() {
-        val sixthAtomOfFirstStory = (Delay) this.sixthAtomOfFirstStory;
+        val sixthAtomOfFirstStory = (Delay) this.seventhAtomOfFirstStory;
         assertEquals(1000, sixthAtomOfFirstStory.getDelayMs());
     }
 
@@ -108,20 +106,20 @@ public class DeserializeAtom {
     }
     @Test
     public void firstAtomOfFirstStoryHasOneSuccessor(){
-        assertEquals(1, firstAtomOfFirstStory.getSuccessors().length);
+        assertEquals(1, secondAtomOfFirstStory.getSuccessors().length);
     }
     @Test
     public void firstAtomOfFirstStoryHasCorrectSuccessor(){
-        assertEquals(1, firstAtomOfFirstStory.getSuccessors()[0].getId());
+        assertEquals(2, secondAtomOfFirstStory.getSuccessors()[0].getId());
     }
     @Test
     public void secondAtomOfFirstStoryHasCorrectSuccessors(){
         val successors = new Vector<Integer>();
         //no implicit parallelism here, we need the exact order for the assert
-        for(Atom successor : secondAtomOfFirstStory.getSuccessors()){
+        for(Atom successor : thirdAtomOfFirstStory.getSuccessors()){
             successors.add(successor.getId());
         }
-        assertArrayEquals(new Integer[]{2,4}, successors.toArray(new Integer[0]));
+        assertArrayEquals(new Integer[]{3,5}, successors.toArray(new Integer[0]));
     }
     @Test
     public void postWithBodyAndAssertionAssertsContentType(){
@@ -145,6 +143,9 @@ public class DeserializeAtom {
         ResponseCode code = (ResponseCode)  getWithAuth.getAssertions()[0];
         assertThat(code.getResponseCode(), is(200));
     }
-
+    @Test
+    public void setFirstAtomOfFirstStoryIsStart(){
+        assertThat(firstAtomOfFirstStory, instanceOf(Start.class));
+    }
 
 }

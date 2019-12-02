@@ -25,7 +25,7 @@ public class TimeStorageTest extends RequestHandlingFramework {
         test.setStories(new UserStory[]{test.getStories()[0]});
         test.start();
         val storage = TimeStorage.getInstance();
-        Request firstRequest = (Request) test.getStories()[0].getAtoms()[1];
+        Request firstRequest = (Request) test.getStories()[0].getAtoms()[2];
         assertThat(storage.getTimes(firstRequest.getVerb(), firstRequest.getAddr()).length, greaterThan(0));
     }
 
@@ -36,7 +36,7 @@ public class TimeStorageTest extends RequestHandlingFramework {
         test.setStories(new UserStory[]{test.getStories()[0]});
         test.start();
         val storage = TimeStorage.getInstance();
-        Request firstRequest = (Request) test.getStories()[0].getAtoms()[1];
+        Request firstRequest = (Request) test.getStories()[0].getAtoms()[2];
         assertThat(storage.getMax(firstRequest.getVerb(), firstRequest.getAddr()), greaterThan(0L));
     }
     @Test
@@ -46,7 +46,7 @@ public class TimeStorageTest extends RequestHandlingFramework {
         test.setStories(new UserStory[]{test.getStories()[0]});
         test.start();
         val storage = TimeStorage.getInstance();
-        Request firstRequest = (Request) test.getStories()[0].getAtoms()[1];
+        Request firstRequest = (Request) test.getStories()[0].getAtoms()[2];
         assertThat(storage.getMin(firstRequest.getVerb(), firstRequest.getAddr()), greaterThan(0L));
     }
     @Test
@@ -56,7 +56,7 @@ public class TimeStorageTest extends RequestHandlingFramework {
         test.setStories(new UserStory[]{test.getStories()[0]});
         test.start();
         val storage = TimeStorage.getInstance();
-        Request firstRequest = (Request) test.getStories()[0].getAtoms()[1];
+        Request firstRequest = (Request) test.getStories()[0].getAtoms()[2];
         assertThat(storage.getAvg(firstRequest.getVerb(), firstRequest.getAddr()), greaterThan(0d));
     }
 }

@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
         @JsonSubTypes.Type(value = Request.class, name = "REQUEST"),
         @JsonSubTypes.Type(value = Data_Generation.class, name = "DATA_GENERATION"),
         @JsonSubTypes.Type(value = Delay.class, name = "DELAY"),
+        @JsonSubTypes.Type(value = Start.class, name = "START"),
 })
 @EqualsAndHashCode
 @Log4j2

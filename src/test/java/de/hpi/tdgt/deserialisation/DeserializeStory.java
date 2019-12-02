@@ -34,7 +34,7 @@ public class DeserializeStory {
 
     @Test
     public void firstStoryHasEightAtoms() throws IOException {
-        assertEquals(deserializedTest.getStories()[0].getAtoms().length, 8);
+        assertEquals(deserializedTest.getStories()[0].getAtoms().length, 9);
     }
 
     @Test
@@ -47,13 +47,13 @@ public class DeserializeStory {
         val story = deserializedTest.getStories()[0];
         val clone = story.clone();
         val firstAtom = clone.getAtoms()[0];
-        assertThat(firstAtom.getSuccessors()[0].getName(), equalTo("User anlegen"));
+        assertThat(firstAtom.getSuccessors()[0].getSuccessors()[0].getName(), equalTo("User anlegen"));
     }
 
     @Test
     public void cloneCreatesNewObject(){
         val story = deserializedTest.getStories()[0];
-        val firstAtom = story.getAtoms()[0];
+        val firstAtom = story.getAtoms()[1];
         val clone = firstAtom.clone();
         assertNotSame(clone, firstAtom);
     }
@@ -68,6 +68,6 @@ public class DeserializeStory {
     public void cloneCreatesNewSuccessorObjects(){
         val story = deserializedTest.getStories()[0];
         val clone = story.clone();
-        assertNotSame( clone.getAtoms()[0], story.getAtoms()[0]);
+        assertNotSame( clone.getAtoms()[1], story.getAtoms()[1]);
     }
 }
