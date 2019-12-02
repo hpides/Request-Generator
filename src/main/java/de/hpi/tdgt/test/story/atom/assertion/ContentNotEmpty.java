@@ -1,4 +1,4 @@
-package de.hpi.tdgt.test.story.activity.assertion;
+package de.hpi.tdgt.test.story.atom.assertion;
 
 import de.hpi.tdgt.requesthandling.RestResult;
 import lombok.EqualsAndHashCode;

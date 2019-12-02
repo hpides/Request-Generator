@@ -1,4 +1,4 @@
-package de.hpi.tdgt.test.story.activity;
+package de.hpi.tdgt.test.story.atom;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 })
 @EqualsAndHashCode
 @Log4j2
-public abstract class Activity implements Cloneable {
+public abstract class Atom implements Cloneable {
     private String name;
     private int id;
     private int repeat;
@@ -50,17 +50,17 @@ public abstract class Activity implements Cloneable {
     @JsonIgnore
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
-    private Activity[] successorLinks = new Activity[0];
+    private Atom[] successorLinks = new Atom[0];
 
     public abstract void perform() throws InterruptedException;
     
-    //use this method to get successors of this activity
-    public Activity[] getSuccessors() {
+    //use this method to get successors of this atom
+    public Atom[] getSuccessors() {
         return successorLinks;
     }
 
     public void run(Map<String,String> dataMap) throws InterruptedException {
-        log.info("Running Activity "+getName()+" in Thread "+Thread.currentThread().getId());
+        log.info("Running Atom "+getName()+" in Thread "+Thread.currentThread().getId());
         this.setPredecessorsReady(this.getPredecessorsReady() + 1);
         getKnownParams().putAll(dataMap);
         if (this.getPredecessorsReady() >= predecessorCount) {
@@ -77,13 +77,13 @@ public abstract class Activity implements Cloneable {
     }
 
     public void initSuccessors(UserStory parent) {
-        val successorList = new Vector<Activity>();
+        val successorList = new Vector<Atom>();
         Arrays.stream(successors).forEach(successor -> {
-            successorList.add(parent.getActivities()[successor]);
-            parent.getActivities()[successor].incrementPredecessorCount();
+            successorList.add(parent.getAtoms()[successor]);
+            parent.getAtoms()[successor].incrementPredecessorCount();
         });
         //boilerplate
-        this.successorLinks = successorList.toArray(new Activity[0]);
+        this.successorLinks = successorList.toArray(new Atom[0]);
     }
 
     private void runSuccessors() throws InterruptedException {
@@ -102,24 +102,24 @@ public abstract class Activity implements Cloneable {
     }
 
     /**
-     * This is used to make sure that not 2 copies are created of an activity with 2 predecessors. See Test.
+     * This is used to make sure that not 2 copies are created of an atom with 2 predecessors. See Test.
      * @return
      */
-    protected abstract Activity performClone();
+    protected abstract Atom performClone();
     private boolean alreadyCloned = false;
     /**
-     * My original thought was to clone the activities of every story per Thread, while every Thread represents a user. This should guarantee that every user has an own state (knownParams, predecessorsReady, ...).
+     * My original thought was to clone the atom of every story per Thread, while every Thread represents a user. This should guarantee that every user has an own state (knownParams, predecessorsReady, ...).
      * Using ThreadLocalStorage we should be able to avoid this problem, and keep our structure reentrant.
      * @return
      */
     @Override
-    public Activity clone(){
-        val activity = performClone();
+    public Atom clone(){
+        val atom = performClone();
         //do NOT clone predecessorsReady or knownParams
-        activity.setId(this.getId());
-        activity.setName(this.getName());
-        activity.setRepeat(this.getRepeat());
-        activity.successors = successors;
-        return activity;
+        atom.setId(this.getId());
+        atom.setName(this.getName());
+        atom.setRepeat(this.getRepeat());
+        atom.successors = successors;
+        return atom;
     }
 }

@@ -33,41 +33,41 @@ public class DeserializeStory {
     }
 
     @Test
-    public void firstStoryHasEightActivities() throws IOException {
-        assertEquals(deserializedTest.getStories()[0].getActivities().length, 8);
+    public void firstStoryHasEightAtoms() throws IOException {
+        assertEquals(deserializedTest.getStories()[0].getAtoms().length, 8);
     }
 
     @Test
-    public void secondStoryHasFiveActivities() throws IOException {
-        assertEquals(deserializedTest.getStories()[1].getActivities().length, 5);
+    public void secondStoryHasFiveAtoms() throws IOException {
+        assertEquals(deserializedTest.getStories()[1].getAtoms().length, 5);
     }
 
     @Test
     public void cloneCreatesEquivalentStory(){
         val story = deserializedTest.getStories()[0];
         val clone = story.clone();
-        val firstActivity = clone.getActivities()[0];
-        assertThat(firstActivity.getSuccessors()[0].getName(), equalTo("User anlegen"));
+        val firstAtom = clone.getAtoms()[0];
+        assertThat(firstAtom.getSuccessors()[0].getName(), equalTo("User anlegen"));
     }
 
     @Test
     public void cloneCreatesNewObject(){
         val story = deserializedTest.getStories()[0];
-        val firstActivity = story.getActivities()[0];
-        val clone = firstActivity.clone();
-        assertNotSame(clone, firstActivity);
+        val firstAtom = story.getAtoms()[0];
+        val clone = firstAtom.clone();
+        assertNotSame(clone, firstAtom);
     }
 
     @Test
     public void cloneCreatesEqualObject(){
         val story = deserializedTest.getStories()[0];
         val clone = story.clone();
-        assertThat(clone.getActivities()[0], equalTo(story.getActivities()[0]));
+        assertThat(clone.getAtoms()[0], equalTo(story.getAtoms()[0]));
     }
     @Test
     public void cloneCreatesNewSuccessorObjects(){
         val story = deserializedTest.getStories()[0];
         val clone = story.clone();
-        assertNotSame( clone.getActivities()[0], story.getActivities()[0]);
+        assertNotSame( clone.getAtoms()[0], story.getAtoms()[0]);
     }
 }

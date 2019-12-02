@@ -1,4 +1,4 @@
-package de.hpi.tdgt.test.story.activity;
+package de.hpi.tdgt.test.story.atom;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,7 +17,7 @@ import lombok.extern.log4j.Log4j2;
 @Setter
 @EqualsAndHashCode(callSuper = true)
 @Log4j2
-public class Data_Generation extends Activity {
+public class Data_Generation extends Atom {
     private String[] data;
     private String table;
 
@@ -56,7 +56,7 @@ public class Data_Generation extends Activity {
     }
 
     @Override
-    public Activity performClone() {
+    public Atom performClone() {
         val ret = new Data_Generation();
         ret.setTable(this.table);
         ret.setData(this.data);
@@ -74,9 +74,9 @@ public class Data_Generation extends Activity {
         synchronized (sc) {
             if (sc.hasNextLine()) {
                 line = sc.nextLine();
-                log.info("Retrieved "+line+"from table"+" in Thread "+Thread.currentThread().getId()+ "for activity "+this.getName());
+                log.info("Retrieved "+line+"from table"+" in Thread "+Thread.currentThread().getId()+ "for atom "+this.getName());
             } else {
-                log.error("No data remains for activity "+this.getName());
+                log.error("No data remains for atom "+this.getName());
                 sc.close();
                 return buffer;
             }

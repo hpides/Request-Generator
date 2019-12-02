@@ -13,7 +13,6 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -91,7 +90,7 @@ public class TestRequestHandling extends RequestHandlingFramework {
     //Regression test
     @Test
     public void testJSONWithInteger() throws IOException, InterruptedException {
-        val rq = new de.hpi.tdgt.test.story.activity.Request();
+        val rq = new de.hpi.tdgt.test.story.atom.Request();
         rq.setAddr("http://localhost:9000/jsonObject");
         rq.setRequestParams(new String[] {"param"});
         rq.setVerb("POST");
