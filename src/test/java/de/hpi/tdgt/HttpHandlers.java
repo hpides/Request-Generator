@@ -61,14 +61,24 @@ public class HttpHandlers {
             }
         }
     }
-    public static class GetHandler implements HttpHandler {
-        @Getter
+    @Getter
+    @Setter
+    public static abstract class HttpHandlerBase implements com.sun.net.httpserver.HttpHandler{
+        int requests_total;
+        @Override
+        public void handle(HttpExchange he) throws IOException {
+            requests_total ++;
+        }
+    }
+
+    @Getter
+    public static class GetHandler extends HttpHandlerBase implements HttpHandler {
+        
         private Map<String,Object> lastParameters = null;
-        @Getter
         private String request = "";
         @Override
         public void handle(HttpExchange he) throws IOException {
-
+            super.handle(he);
             // parse request
             Map<String, Object> parameters = new HashMap<String, Object>();
             URI requestedUri = he.getRequestURI();
@@ -94,13 +104,13 @@ public class HttpHandlers {
             os.close();
         }
     }
-
-    public static class GetWithBodyHandler implements HttpHandler {
-        @Getter
+    @Getter
+    public static class GetWithBodyHandler  extends HttpHandlerBase implements HttpHandler {
         private Map<String, Object> lastParameters = null;
-
+        
         @Override
         public void handle(HttpExchange he) throws IOException {
+            super.handle(he);
             // parse request
             lastParameters = new HashMap<String, Object>();
             var headers = he.getRequestHeaders();
@@ -143,14 +153,15 @@ public class HttpHandlers {
     /**
      * Makes request URL Parameters to a JSON Object with the Request keys as keys and their values as values.
      */
-    public static class JSONObjectGetHandler implements HttpHandler{
-        @Getter
+    @Getter
+    public static class JSONObjectGetHandler  extends HttpHandlerBase implements HttpHandler{
         private Set<Pair> allParams = new HashSet<>();
         @Setter
-        @Getter
         private int requestsTotal = 0;
+        
         @Override
         public void handle(HttpExchange he) throws IOException {
+            super.handle(he);
             //count requests
             requestsTotal ++;
             // parse request
@@ -190,10 +201,12 @@ public class HttpHandlers {
     /**
      * Makes request URL Parameters to a JSON Array of Objects with the Request keys as key for an object and their values as values.
      */
-    public static class JSONArrayGetHandler implements HttpHandler{
-
+    @Getter
+    public static class JSONArrayGetHandler   extends HttpHandlerBase implements HttpHandler{
+        
         @Override
         public void handle(HttpExchange he) throws IOException {
+            super.handle(he);
             // parse request
             Map<String, Object> parameters = new HashMap<String, Object>();
             URI requestedUri = he.getRequestURI();
@@ -216,7 +229,7 @@ public class HttpHandlers {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                log.error(e);
             }
             val headers = he.getResponseHeaders();
             headers.put(HttpConstants.HEADER_CONTENT_TYPE,Collections.singletonList(HttpConstants.CONTENT_TYPE_APPLICATION_JSON));
@@ -231,11 +244,11 @@ public class HttpHandlers {
     /**
      * Expects post.
      */
-    public static class PostHandler implements HttpHandler {
+    public static class PostHandler  extends HttpHandlerBase implements HttpHandler {
 
         @Override
-
         public void handle(HttpExchange he) throws IOException {
+            super.handle(he);
             // parse request
             Map<String, Object> parameters = new HashMap<String, Object>();
             InputStreamReader isr = new InputStreamReader(he.getRequestBody(), "utf-8");
@@ -272,12 +285,13 @@ public class HttpHandlers {
     /**
      * Expects request in body.
      */
-    public static class PostBodyHandler implements HttpHandler {
-        @Getter
+    @Getter
+    public static class PostBodyHandler  extends HttpHandlerBase implements HttpHandler {
         private Set<Map> allParameters = new HashSet<>();
-
+        
         @Override
         public void handle(HttpExchange he) throws IOException {
+            super.handle(he);
             // parse request
             var headers = he.getRequestHeaders();
             val contentType = headers.getFirst(HttpConstants.HEADER_CONTENT_TYPE);
@@ -315,19 +329,19 @@ public class HttpHandlers {
      * Expects requests to be authorized with username (hardcoded "user") and password (hardcoded "password").
      * Saves in the field "lastLoginWasOK" if the last login used the correct username and password.
      */
-    public static class AuthHandler implements HttpHandler {
+    @Getter
+    public static class AuthHandler  extends HttpHandlerBase implements HttpHandler {
         public static final String username = "user";
         public static final String password = "pw";
-        @Getter
         private boolean lastLoginWasOK = false;
         @Setter
-        @Getter
         private int numberFailedLogins = 0;
         @Setter
-        @Getter
         private int totalRequests = 0;
+        
         @Override
         public void handle(HttpExchange he) throws IOException {
+            super.handle(he);
             synchronized (this) {
                 totalRequests++;
             }
@@ -361,15 +375,15 @@ public class HttpHandlers {
             }
         }
     }
-
     /**
      * Returns nothing.
      */
-    public static class EmptyResponseHandler implements HttpHandler {
-
+    @Getter
+    public static class EmptyResponseHandler  extends HttpHandlerBase implements HttpHandler {
+        
         @Override
         public void handle(HttpExchange he) throws IOException {
-
+                super.handle(he);
                 String response = "";
                 val headers = he.getResponseHeaders();
                 headers.put(HttpConstants.HEADER_CONTENT_TYPE, Collections.singletonList(HttpConstants.CONTENT_TYPE_TEXT_PLAIN));

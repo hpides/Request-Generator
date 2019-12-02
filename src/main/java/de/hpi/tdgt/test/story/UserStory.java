@@ -50,14 +50,14 @@ public class UserStory implements Runnable, Cloneable{
                 log.info("Running story "+clone.getName()+" in thread "+Thread.currentThread().getId());
                 clone.getActivities()[0].run(new HashMap<>());
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                log.error(e);
             }
         });
         storyThread.start();
         try {
             storyThread.join();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.error(e);
         }
 
     }

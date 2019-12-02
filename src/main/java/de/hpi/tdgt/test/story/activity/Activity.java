@@ -52,7 +52,7 @@ public abstract class Activity implements Cloneable {
     @Setter(AccessLevel.NONE)
     private Activity[] successorLinks = new Activity[0];
 
-    public abstract void perform();
+    public abstract void perform() throws InterruptedException;
     
     //use this method to get successors of this activity
     public Activity[] getSuccessors() {
@@ -92,7 +92,7 @@ public abstract class Activity implements Cloneable {
                 val clonedMap = new HashMap<String, String>(this.getKnownParams());
                 successorLink.run(clonedMap);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                log.error(e);
             }
         })).collect(Collectors.toUnmodifiableList());
         threads.forEach(Thread::start);
