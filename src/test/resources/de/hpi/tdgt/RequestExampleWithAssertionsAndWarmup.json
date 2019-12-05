@@ -1,0 +1,149 @@
+{
+  "repeat": 1,
+  "scaleFactor": 10,
+  "requests_per_second": 10,
+  "stories": [
+    {
+      "scalePercentage": 0.7,
+      "name": "Send some requests with and without data (1)",
+      "atoms": [
+        {
+          "name": "Generate key and value",
+          "id": 0,
+          "repeat": 1,
+          "successors": [
+            1
+          ],
+          "type": "DATA_GENERATION",
+          "data": [
+            "key",
+            "value"
+          ],
+          "table": "values"
+        },
+        {
+          "name": "POST JSON",
+          "id": 1,
+          "repeat": 1,
+          "successors": [
+            2
+          ],
+          "type": "REQUEST",
+          "verb": "POST",
+          "addr": "http://localhost:9000/postWithBody",
+          "requestJSONObject": "{\"key\":$key, \"value\":$value}",
+          "responseJSONObject": [
+            "key",
+            "value"
+          ],
+          "assertions": [
+            {
+              "type": "CONTENT_TYPE",
+              "name": "postWithBody returns JSON",
+              "contentType": "application/json"
+            }
+
+          ]
+        },
+        {
+          "name": "Warmup end story 1",
+          "id": 2,
+          "repeat": 1,
+          "successors": [
+            3,4
+          ],
+          "type": "WARMUP_END"
+        },
+        {
+          "name": "Get JSON Object",
+          "id": 3,
+          "repeat": 1,
+          "successors": [
+          ],
+          "type": "REQUEST",
+          "verb": "GET",
+          "addr": "http://localhost:9000/jsonObject",
+          "requestParams": [
+            "key",
+            "value"
+          ],
+          "responseJSONObject": [
+            "key",
+            "value"
+          ],
+          "assertions": [
+            {
+              "type": "CONTENT_NOT_EMPTY",
+              "name": "jsonObject returns something"
+            }
+
+          ]
+        },
+        {
+          "name": "GET with auth",
+          "id": 4,
+          "repeat": 1,
+          "successors": [
+          ],
+          "type": "REQUEST",
+          "verb": "GET",
+          "addr": "http://localhost:9000/auth",
+          "requestParams": [
+          ],
+          "basicAuth": {
+            "user": "key",
+            "password": "value"
+          },
+          "responseParams": [
+          ],
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "auth does not return 401",
+              "responseCode": 200
+            }
+
+          ]
+        }
+      ]
+    },
+    {
+      "scalePercentage": 0.3,
+      "name": "Send some requests with and without data (2)",
+      "atoms": [
+        {
+          "name": "Generate key and value",
+          "id": 0,
+          "repeat": 1,
+          "successors": [
+            1
+          ],
+          "type": "DATA_GENERATION",
+          "data": [
+            "key",
+            "value"
+          ],
+          "table": "values"
+        },
+        {
+          "name": "GET with auth",
+          "id": 3,
+          "repeat": 10,
+          "successors": [
+          ],
+          "type": "REQUEST",
+          "verb": "GET",
+          "addr": "http://localhost:9000/auth",
+          "requestParams": [
+          ],
+          "basicAuth": {
+            "user": "key",
+            "password": "value"
+          },
+          "responseParams": [
+          ]
+        }
+      ]
+    }
+  ]
+}
