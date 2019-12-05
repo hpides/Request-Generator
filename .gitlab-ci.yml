@@ -4,13 +4,18 @@ stages:
 junit:
   stage: test
   image: "maven:3"
+  # save mosquitto log to debug errors
+  artifacts:
+      when: on_failure
+      paths:
+        - mosquitto.log
   tags: 
     - BP-TDGT-CI
   script:
     - apt update && apt install -y mosquitto
+    - $(which mosquitto) -p 1883 > mosquitto.log 2>&1 &
+    # mosquitto url per default is users
     - echo "127.0.0.1 users" >> /etc/hosts
-    - cat /etc/hosts
-    - wget users
     - mvn test
 
 spotbugs:
