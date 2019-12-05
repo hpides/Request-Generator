@@ -351,8 +351,8 @@ public class HttpHandlers {
             if(auth != null && auth.startsWith("Basic ")){
                 auth = auth.substring(auth.indexOf("Basic ")+"Basic ".length());
             }
-            log.info("Auth handler called with params "+ new String(Base64.getDecoder().decode(auth)));
-            if(auth != null && Base64.getDecoder().decode(auth) != null && new String(Base64.getDecoder().decode(auth)).equals(username+":"+password)) {
+            log.info("Auth handler called with params "+ new String(Base64.getDecoder().decode(auth != null ? auth : "")));
+            if(auth != null && Base64.getDecoder().decode(auth) != null && new String(Base64.getDecoder().decode(auth)).equals(username + ":" + password)) {
                 lastLoginWasOK = true;
                 String response = "{\"message\":\"OK\"}";
                 val headers = he.getResponseHeaders();

@@ -1,6 +1,8 @@
 package de.hpi.tdgt.test.story;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.hpi.tdgt.test.story.atom.Atom;
+import de.hpi.tdgt.test.story.atom.WarmupEnd;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -49,6 +51,7 @@ public class UserStory implements Runnable, Cloneable{
                 }
                 log.info("Running story "+clone.getName()+" in thread "+Thread.currentThread().getId());
                 clone.getAtoms()[0].run(new HashMap<>());
+                log.info("Finished story "+clone.getName()+" in thread "+Thread.currentThread().getId());
             } catch (InterruptedException e) {
                 log.error(e);
             }
@@ -60,5 +63,34 @@ public class UserStory implements Runnable, Cloneable{
             log.error(e);
         }
 
+    }
+
+    public boolean hasWarmup(){
+        for(val atom : atoms){
+            if(atom instanceof WarmupEnd){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * True if there are threads that run the activities of this story, false otherwise. Has to be set by Test.
+     */
+    @JsonIgnore
+    private boolean isStarted;
+
+    /**
+     * Returns number of times a warmup in this story is waiting for a mutex.
+     * @return int
+     */
+    public int numberOfWarmupEnds(){
+        int warmupEnds = 0;
+        for(val atom : atoms){
+            if(atom instanceof WarmupEnd){
+                warmupEnds+=atom.getRepeat();
+            }
+        }
+        return warmupEnds;
     }
 }

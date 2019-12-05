@@ -38,7 +38,9 @@ public class Main {
                 log.info("Successfully deserialized input json including " + deserializedTest.getStories().length + " stories.");
                 log.info("Running test...");
                 Data_Generation.outputDirectory = args[2];
-                deserializedTest.start();
+                //in case warmup is added
+                val threads = deserializedTest.warmup();
+                deserializedTest.start(threads);
                 log.info("---Test finished---");
                 log.info("---Times---");
                 TimeStorage.getInstance().printSummary();
