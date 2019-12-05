@@ -19,8 +19,7 @@ public class ResponseCode extends Assertion{
     public void check(RestResult restResult) {
         if(responseCode!=restResult.getReturnCode()){
             log.error("Failed response code assertion\""+getName()+"\": expected \""+responseCode+"\" but is actually \""+restResult.getReturnCode()+"\"!");
-            AssertionStorage.getInstance().addFailure(this.getName());
-            AssertionStorage.getInstance().addActual(this.getName(),""+restResult.getReturnCode());
+            AssertionStorage.getInstance().addFailure(this.getName(), ""+restResult.getReturnCode());
         }
     }
 }

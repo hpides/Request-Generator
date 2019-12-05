@@ -58,7 +58,11 @@
             <artifactId>log4j-core</artifactId>
             <version>2.12.1</version>
         </dependency>
-        <!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
+        <dependency>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+            <version>1.2.2</version>
+        </dependency>
 
     </dependencies>
     <reporting>
