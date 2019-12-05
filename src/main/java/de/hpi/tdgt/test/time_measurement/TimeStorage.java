@@ -1,5 +1,7 @@
 package de.hpi.tdgt.test.time_measurement;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.hpi.tdgt.util.PropertiesReader;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
@@ -30,34 +32,80 @@ public class TimeStorage {
         } catch (MqttException e) {
             log.error("Could not connect to mqtt broker in TimeStorage: ",e);
         }
+        Runnable mqttReporter = () -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                if (client != null && client.isConnected()) {
+                    byte[] message = new byte[0];
+                    try {
+                        synchronized (registeredTimesLastSecond) {
+                            message = mapper.writeValueAsString(toMQTTSummaryMap(registeredTimesLastSecond)).getBytes();
+                            registeredTimesLastSecond.clear();
+                        }
+                    } catch (JsonProcessingException e) {
+                        log.error(e);
+                    }
+                    MqttMessage mqttMessage = new MqttMessage(message);
+                    //we want to receive every packet EXACTLY Once
+                    mqttMessage.setQos(2);
+                    mqttMessage.setRetained(true);
+                    try {
+                        client.publish(MQTT_TOPIC, mqttMessage);
+                        log.info(String.format("Transferred %d bytes via mqtt!", message.length));
+                    } catch (MqttException e) {
+                        log.error("Error sending mqtt message in Time_Storage: ", e);
+                    }
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log.error(e);
+                }
+            }
+            //to clean files
+            try {
+                client.disconnect();
+                client.close();
+            } catch (MqttException e) {
+                e.printStackTrace();
+            }
+        };
+        new Thread(mqttReporter).start();
     }
 
     private final Map<String, Map<String, List<Long>>> registeredTimes = new ConcurrentHashMap<>();
+    private final Map<String, ConcurrentHashMap<String, List<Long>>> registeredTimesLastSecond = new ConcurrentHashMap<>();
 
     private static final TimeStorage storage = new TimeStorage();
 
     public static TimeStorage getInstance(){
         return storage;
     }
+    private Map<String, Map<String, Double>> toMQTTSummaryMap(Map<String, ConcurrentHashMap<String, List<Long>>> currentValues){
+        log.info("Is empty: "+currentValues.isEmpty());
+        Map<String, Map<String, Double>> ret = new HashMap<>();
+        //re-create the structure, but using average of the innermost values
+        for(val entry : currentValues.entrySet()){
+            ret.put(entry.getKey(), new HashMap<>());
+            for(val innerEntry : entry.getValue().entrySet()){
+                val sum = innerEntry.getValue().stream().mapToLong(Long::longValue).sum();
+                double avg = sum / innerEntry.getValue().size();
+                ret.get(entry.getKey()).put(innerEntry.getKey(),avg);
+            }
+        }
+        return ret;
+    }
 
+    private ObjectMapper mapper = new ObjectMapper();
     public void registerTime(String verb, String addr, long latency){
         registeredTimes.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
         registeredTimes.get(addr).computeIfAbsent(verb, k-> new Vector<>());
         registeredTimes.get(addr).get(verb).add(latency);
-        if(client != null && client.isConnected()){
-            val message = String.format("{\"Time\":%d,\"addr\":\"%s\",\"verb\":\"%s\"}", latency, addr, verb).getBytes();
-            MqttMessage mqttMessage = new MqttMessage(message);
-            //we want to receive every packet EXACTLY Once
-            mqttMessage.setQos(2);
-            mqttMessage.setRetained(true);
-            try {
-                client.publish(MQTT_TOPIC, mqttMessage);
-                log.info(String.format("Transferred %d bytes via mqtt!",message.length));
-            } catch (MqttException e) {
-                log.error("Error sending mqtt message in Time_Storage: ", e);
-            }
+        synchronized (registeredTimesLastSecond) {
+            registeredTimesLastSecond.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
+            registeredTimesLastSecond.get(addr).computeIfAbsent(verb, k -> new Vector<>());
+            registeredTimesLastSecond.get(addr).get(verb).add(latency);
+            log.info("Added val: "+registeredTimesLastSecond.isEmpty());
         }
-
     }
 
     public Long[] getTimes(String verb, String addr){
