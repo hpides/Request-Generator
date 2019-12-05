@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Vector;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 
@@ -32,7 +34,7 @@ public class Test {
      * @return threads in which the stories run to join later
      * @throws InterruptedException if interrupted in Thread.sleep
      */
-    public Collection<Thread> warmup() throws InterruptedException {
+    public Collection<Future<?>> warmup() throws InterruptedException {
         RequestThrottler.setInstance(this.requests_per_second);
         Thread watchdog = new Thread(RequestThrottler.getInstance());
         watchdog.setPriority(Thread.MAX_PRIORITY);
@@ -56,7 +58,7 @@ public class Test {
      * Use this if you do not have threads from warmup.
      * @throws InterruptedException if interrupted joining threads
      */
-    public void start() throws InterruptedException {
+    public void start() throws InterruptedException, ExecutionException {
         start(new Vector<>());
     }
 
@@ -65,7 +67,7 @@ public class Test {
      * @param threadsFromWarmup Collection of threads to wait for
      * @throws InterruptedException if interrupted joining threads
      */
-    public void start(Collection<Thread> threadsFromWarmup) throws InterruptedException {
+    public void start(Collection<Future<?>> threadsFromWarmup) throws InterruptedException, ExecutionException {
         //start all warmup tasks
         WarmupEnd.startTest();
         //this thread makes sure that requests per second get limited
@@ -77,25 +79,26 @@ public class Test {
         //can wait for these threads also
         threads.addAll(threadsFromWarmup);
         for(val thread : threads){
-            thread.join();
+            //join thread
+            if(!thread.isCancelled())
+                thread.get();
         }
         watchdog.interrupt();
         //remove global state
         RequestThrottler.reset();
     }
 
-    private Collection<Thread> runTest(UserStory[] stories) throws InterruptedException {
-        val threads = new Vector<Thread>();
+    private Collection<Future<?>> runTest(UserStory[] stories) throws InterruptedException {
+        val futures = new Vector<Future<?>>();
         for(int i=0; i < stories.length; i++){
             //repeat stories as often as wished
             for(int j = 0; j < scaleFactor * stories[i].getScalePercentage(); j++) {
                 stories[i].setStarted(true);
-                val thread = new Thread(stories[i]);
-                thread.start();
-                threads.add(thread);
+                val future = ThreadRecycler.getInstance().getExecutorService().submit(stories[i]);
+                futures.add(future);
             }
         }
-        return threads;
+        return futures;
     }
 
     /**
