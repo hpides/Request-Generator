@@ -7,6 +7,9 @@ import de.hpi.tdgt.deserialisation.Deserializer;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import de.hpi.tdgt.test.Test;
+import lombok.val;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.io.IOException;
 
@@ -16,12 +19,12 @@ import static org.hamcrest.Matchers.is;
 
 public class TestWarmup extends RequestHandlingFramework {
 
-    private de.hpi.tdgt.test.Test warmupTest;
+    private Test warmupTest;
+
     @BeforeEach
     public void prepare() throws IOException {
         warmupTest = Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsAndWarmupJSON());
     }
-
     @Test
     public void testWarmupCallsPreparationActivities() throws InterruptedException {
         val threads = warmupTest.warmup();
@@ -56,7 +59,6 @@ public class TestWarmup extends RequestHandlingFramework {
     public void testSecondStoryHasNoWarmup(){
         assertThat(warmupTest.getStories()[1].hasWarmup(), is(false));
     }
-
     @Test
     public void testSecondStoryHasNoWarmupInNumbers(){
         assertThat(warmupTest.getStories()[1].numberOfWarmupEnds(), is(0));
