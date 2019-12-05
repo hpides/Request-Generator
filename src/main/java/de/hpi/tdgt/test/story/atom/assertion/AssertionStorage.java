@@ -14,6 +14,7 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -44,7 +45,7 @@ public class AssertionStorage {
                     byte[] message = new byte[0];
                     try {
                         synchronized (actualsLastSecond) {
-                            message = AssertionStorage.this.mapper.writeValueAsString(actualsLastSecond).getBytes();
+                            message = AssertionStorage.this.mapper.writeValueAsString(actualsLastSecond).getBytes(StandardCharsets.UTF_8);
                             AssertionStorage.this.actualsLastSecond.clear();
                         }
                     } catch (JsonProcessingException e) {

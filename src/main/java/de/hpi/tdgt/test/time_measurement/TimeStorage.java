@@ -10,6 +10,7 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 @Log4j2
@@ -38,7 +39,7 @@ public class TimeStorage {
                     byte[] message = new byte[0];
                     try {
                         synchronized (registeredTimesLastSecond) {
-                            message = mapper.writeValueAsString(toMQTTSummaryMap(registeredTimesLastSecond)).getBytes();
+                            message = mapper.writeValueAsString(toMQTTSummaryMap(registeredTimesLastSecond)).getBytes(StandardCharsets.UTF_8);
                             registeredTimesLastSecond.clear();
                         }
                     } catch (JsonProcessingException e) {
