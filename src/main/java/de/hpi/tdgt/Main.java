@@ -41,9 +41,11 @@ public class Main {
                 log.info("Running test...");
                 Data_Generation.outputDirectory = args[2];
                 //in case warmup is added
+                long starttime = System.currentTimeMillis();
                 val threads = deserializedTest.warmup();
                 deserializedTest.start(threads);
-                log.info("---Test finished---");
+                long endtime = System.currentTimeMillis();
+                log.info("---Test finished in "+(endtime - starttime)+" ms.---");
                 log.info("---Times---");
                 TimeStorage.getInstance().printSummary();
                 log.info("---Assertions---");
