@@ -7,6 +7,10 @@ junit:
   tags: 
     - BP-TDGT-CI
   script:
+    - apt update && apt install mosquitto
+    - echo "127.0.0.1 users" >> /etc/hosts
+    - cat /etc/hosts
+    - wget users
     - mvn test
 
 spotbugs:
