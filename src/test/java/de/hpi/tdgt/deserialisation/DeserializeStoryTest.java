@@ -15,7 +15,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 
-public class DeserializeStory {
+public class DeserializeStoryTest {
     private String getExampleJSON() throws IOException {
         return new Utils().getExampleJSON();
     }

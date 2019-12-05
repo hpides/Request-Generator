@@ -24,7 +24,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class DeserializeAtom {
+public class DeserializeAtomTest {
     private String getExampleJSON() throws IOException {
         return new Utils().getExampleJSON();
     }
