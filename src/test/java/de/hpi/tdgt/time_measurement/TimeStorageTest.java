@@ -11,6 +11,7 @@ import lombok.val;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
@@ -19,7 +20,7 @@ public class TimeStorageTest extends RequestHandlingFramework {
 
 
     @Test
-    public void testFirstRequestOfFirstStoryTakesTime() throws IOException, InterruptedException {
+    public void testFirstRequestOfFirstStoryTakesTime() throws IOException, InterruptedException, ExecutionException {
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
         //do not run second story for this time around; messes with results
         test.setStories(new UserStory[]{test.getStories()[0]});
@@ -30,7 +31,7 @@ public class TimeStorageTest extends RequestHandlingFramework {
     }
 
     @Test
-    public void testFirstRequestOfFirstStoryHasMaxTimeOverNull() throws IOException, InterruptedException {
+    public void testFirstRequestOfFirstStoryHasMaxTimeOverNull() throws IOException, InterruptedException, ExecutionException {
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
         //do not run second story for this time around; messes with results
         test.setStories(new UserStory[]{test.getStories()[0]});
@@ -40,7 +41,7 @@ public class TimeStorageTest extends RequestHandlingFramework {
         assertThat(storage.getMax(firstRequest.getVerb(), firstRequest.getAddr()), greaterThan(0L));
     }
     @Test
-    public void testFirstRequestOfFirstStoryHasMinTimeOverNull() throws IOException, InterruptedException {
+    public void testFirstRequestOfFirstStoryHasMinTimeOverNull() throws IOException, InterruptedException, ExecutionException {
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
         //do not run second story for this time around; messes with results
         test.setStories(new UserStory[]{test.getStories()[0]});
@@ -50,7 +51,7 @@ public class TimeStorageTest extends RequestHandlingFramework {
         assertThat(storage.getMin(firstRequest.getVerb(), firstRequest.getAddr()), greaterThan(0L));
     }
     @Test
-    public void testFirstRequestOfFirstStoryHasAvgTimeOverNull() throws IOException, InterruptedException {
+    public void testFirstRequestOfFirstStoryHasAvgTimeOverNull() throws IOException, InterruptedException, ExecutionException {
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
         //do not run second story for this time around; messes with results
         test.setStories(new UserStory[]{test.getStories()[0]});

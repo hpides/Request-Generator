@@ -95,9 +95,7 @@
                     <effort>Max</effort>
                     <threshold>High</threshold>
                     <xmlOutput>true</xmlOutput>
-                    <configuration>
-                        <excludeBugsFile>${project.basedir}/findbugs-exclude.xml</excludeBugsFile>
-                    </configuration>
+                    <!-- Use this to exclude false positives: <excludeBugsFile>${project.basedir}/findbugs-exclude.xml</excludeBugsFile> -->
                 </configuration>
                 <executions>
                     <execution>

@@ -24,6 +24,7 @@ import lombok.val;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
 
 public class TestRequest extends RequestHandlingFramework {
 
@@ -78,7 +79,7 @@ public class TestRequest extends RequestHandlingFramework {
         assertNotSame(clone, requestAtom);
     }
     @Test
-    public void ContentTypeAssertNotFailingIfCorrect() throws InterruptedException {
+    public void ContentTypeAssertNotFailingIfCorrect() throws InterruptedException, ExecutionException {
         val params = new HashMap<String, String>();
         params.put("key","something");
         params.put("value","somethingElse");
@@ -87,7 +88,7 @@ public class TestRequest extends RequestHandlingFramework {
     }
 
     @Test
-    public void ContentTypeAssertFailingIfFalse() throws InterruptedException {
+    public void ContentTypeAssertFailingIfFalse() throws InterruptedException, ExecutionException {
         val params = new HashMap<String, String>();
         params.put("key","something");
         params.put("value","somethingElse");
@@ -100,7 +101,7 @@ public class TestRequest extends RequestHandlingFramework {
 
 
     @Test
-    public void ContentTypeAssertHasCorrectContentType() throws InterruptedException {
+    public void ContentTypeAssertHasCorrectContentType() throws InterruptedException, ExecutionException {
         val params = new HashMap<String, String>();
         params.put("key","something");
         params.put("value","somethingElse");
@@ -112,14 +113,14 @@ public class TestRequest extends RequestHandlingFramework {
     }
 
     @Test
-    public void ContentNotEmptyAssertNotFailingIfCorrect() throws InterruptedException {
+    public void ContentNotEmptyAssertNotFailingIfCorrect() throws InterruptedException, ExecutionException {
         val params = new HashMap<String, String>();
         getJsonObjectWithAssertion.run(params);
         assertThat(AssertionStorage.getInstance().getFails("jsonObject returns something"), Matchers.is(0));
     }
 
     @Test
-    public void ContentNotEmptyAssertFailingIfFalse() throws InterruptedException {
+    public void ContentNotEmptyAssertFailingIfFalse() throws InterruptedException, ExecutionException {
         val params = new HashMap<String, String>();
         //simulate failure
         getJsonObjectWithAssertion.setAddr("http://localhost:9000/empty");
@@ -128,7 +129,7 @@ public class TestRequest extends RequestHandlingFramework {
     }
 
     @Test
-    public void ContentNotEmptyAssertHasCorrectContent() throws InterruptedException {
+    public void ContentNotEmptyAssertHasCorrectContent() throws InterruptedException, ExecutionException {
         val params = new HashMap<String, String>();
         //simulate failure
         getJsonObjectWithAssertion.setAddr("http://localhost:9000/empty");
@@ -137,7 +138,7 @@ public class TestRequest extends RequestHandlingFramework {
     }
 
     @Test
-    public void ResponseAssertNotFailingIfCorrect() throws InterruptedException {
+    public void ResponseAssertNotFailingIfCorrect() throws InterruptedException, ExecutionException {
         val params = new HashMap<String, String>();
         params.put("key", HttpHandlers.AuthHandler.username);
         params.put("value", HttpHandlers.AuthHandler.password);
@@ -146,7 +147,7 @@ public class TestRequest extends RequestHandlingFramework {
     }
 
     @Test
-    public void ResponseAssertFailingIfFalse() throws InterruptedException {
+    public void ResponseAssertFailingIfFalse() throws InterruptedException, ExecutionException {
         val params = new HashMap<String, String>();
         params.put("key", "wrong");
         params.put("value", "wrong");
@@ -155,7 +156,7 @@ public class TestRequest extends RequestHandlingFramework {
     }
 
     @Test
-    public void ResponseAssertHasCorrectResponseCode() throws InterruptedException {
+    public void ResponseAssertHasCorrectResponseCode() throws InterruptedException, ExecutionException {
         val params = new HashMap<String, String>();
         params.put("key", "wrong");
         params.put("value", "wrong");
@@ -163,7 +164,7 @@ public class TestRequest extends RequestHandlingFramework {
         assertThat(AssertionStorage.getInstance().getActual("auth does not return 401"), contains("401"));
     }
     @Test
-    public void ResponseAssertHasCorrectResponseCodeForDelete() throws InterruptedException {
+    public void ResponseAssertHasCorrectResponseCodeForDelete() throws InterruptedException, ExecutionException {
         val params = new HashMap<String, String>();
         params.put("key", "wrong");
         params.put("value", "wrong");
@@ -173,7 +174,7 @@ public class TestRequest extends RequestHandlingFramework {
     }
 
     @Test
-    public void resetOfAssertWorks() throws InterruptedException {
+    public void resetOfAssertWorks() throws InterruptedException, ExecutionException {
         val params = new HashMap<String, String>();
         params.put("key", "wrong");
         params.put("value", "wrong");

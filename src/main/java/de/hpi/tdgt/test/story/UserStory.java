@@ -1,6 +1,7 @@
 package de.hpi.tdgt.test.story;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.hpi.tdgt.test.ThreadRecycler;
 import de.hpi.tdgt.test.story.atom.Atom;
 import de.hpi.tdgt.test.story.atom.WarmupEnd;
 import lombok.Getter;
@@ -11,6 +12,7 @@ import lombok.val;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
 
 @Getter
 @Setter
@@ -43,27 +45,34 @@ public class UserStory implements Runnable, Cloneable{
     
     @Override
     public void run() {
-        Thread storyThread = new Thread(() -> {
-            try {
-                UserStory clone;
-                synchronized (this) {
-                    clone = this.clone();
+        Runnable storyRunnable = new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+                    UserStory clone;
+                    synchronized (this) {
+                        clone = UserStory.this.clone();
+                    }
+                    log.info("Running story " + clone.getName() + " in thread " + Thread.currentThread().getId());
+                    try {
+                        clone.getAtoms()[0].run(new HashMap<>());
+                    } catch (ExecutionException e) {
+                        log.error(e);
+                    }
+                    log.info("Finished story " + clone.getName() + " in thread " + Thread.currentThread().getId());
+                } catch (InterruptedException e) {
+                    log.error(e);
                 }
-                log.info("Running story "+clone.getName()+" in thread "+Thread.currentThread().getId());
-                clone.getAtoms()[0].run(new HashMap<>());
-                log.info("Finished story "+clone.getName()+" in thread "+Thread.currentThread().getId());
-            } catch (InterruptedException e) {
-                log.error(e);
             }
-        });
-        storyThread.start();
+        };
         try {
-            storyThread.join();
-        } catch (InterruptedException e) {
+            ThreadRecycler.getInstance().getExecutorService().submit(storyRunnable).get();
+        } catch (InterruptedException | ExecutionException e) {
             log.error(e);
         }
-
     }
+
 
     public boolean hasWarmup(){
         for(val atom : atoms){

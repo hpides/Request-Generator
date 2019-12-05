@@ -3,6 +3,7 @@ package de.hpi.tdgt.test.story.atom;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import de.hpi.tdgt.test.ThreadRecycler;
 import lombok.*;
 import de.hpi.tdgt.test.story.UserStory;
 import lombok.extern.log4j.Log4j2;
@@ -11,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Getter
@@ -61,7 +63,7 @@ public abstract class Atom implements Cloneable {
         return successorLinks;
     }
 
-    public void run(Map<String,String> dataMap) throws InterruptedException {
+    public void run(Map<String,String> dataMap) throws InterruptedException, ExecutionException {
         log.info("Running Atom "+getName()+" in Thread "+Thread.currentThread().getId());
         this.setPredecessorsReady(this.getPredecessorsReady() + 1);
         getKnownParams().putAll(dataMap);
@@ -88,18 +90,27 @@ public abstract class Atom implements Cloneable {
         this.successorLinks = successorList.toArray(new Atom[0]);
     }
 
-    private void runSuccessors() throws InterruptedException {
-        val threads = Arrays.stream(successorLinks).map(successorLink -> new Thread( () -> {
-            try {
-                val clonedMap = new HashMap<String, String>(this.getKnownParams());
-                successorLink.run(clonedMap);
-            } catch (InterruptedException e) {
-                log.error(e);
+    private void runSuccessors() throws InterruptedException, ExecutionException {
+        val threads = Arrays.stream(successorLinks).map(successorLink -> new Runnable(){
+            @Override
+            public void run() {
+                try {
+                    val clonedMap = new HashMap<String, String>(Atom.this.getKnownParams());
+                    try {
+                        successorLink.run(clonedMap);
+                    } catch (ExecutionException e) {
+                        log.error(e);
+                    }
+                } catch (InterruptedException e) {
+                    log.error(e);
+                }
             }
-        })).collect(Collectors.toUnmodifiableList());
-        threads.forEach(Thread::start);
-        for(val thread : threads){
-            thread.join();
+        }).collect(Collectors.toUnmodifiableList());
+        val futures = threads.stream().map(runnable -> ThreadRecycler.getInstance().getExecutorService().submit(runnable)).collect(Collectors.toList());
+        for(val thread : futures){
+            if(!thread.isCancelled()) {
+                thread.get();
+            }
         }
     }
 

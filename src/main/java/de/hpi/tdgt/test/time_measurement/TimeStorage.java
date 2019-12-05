@@ -67,11 +67,11 @@ public class TimeStorage {
         }
         return sum / values.length;
     }
-
+    private static final double MS_IN_NS = 1000000d;
     public void printSummary(){
         for(val entry : registeredTimes.entrySet()){
             for(val verbMap : entry.getValue().entrySet()) {
-                log.info("Endpoint " +verbMap.getKey()+ " " +entry.getKey()+ " min: " + getMin(verbMap.getKey(), entry.getKey())+" ns, max: "+getMax(verbMap.getKey(), entry.getKey())+" ns, avg: "+getAvg(verbMap.getKey(), entry.getKey())+" ns.");
+                log.info("Endpoint " +verbMap.getKey()+ " " +entry.getKey()+ " min: " + getMin(verbMap.getKey(), entry.getKey()) / MS_IN_NS+" ms, max: "+getMax(verbMap.getKey(), entry.getKey())/MS_IN_NS+" ms, avg: "+getAvg(verbMap.getKey(), entry.getKey())/MS_IN_NS+" ms.");
             }
         }
     }
