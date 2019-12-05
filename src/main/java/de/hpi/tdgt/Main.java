@@ -15,6 +15,8 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
+
 @Log4j2
 public class Main {
     public static final String USERNAME="superuser";
@@ -46,7 +48,7 @@ public class Main {
                 TimeStorage.getInstance().printSummary();
                 log.info("---Assertions---");
                 AssertionStorage.getInstance().printSummary();
-            } catch (IOException e) {
+            } catch (IOException | ExecutionException e) {
                 log.error(e);
             }
         } else{

@@ -13,6 +13,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -89,7 +90,7 @@ public class TestRequestHandling extends RequestHandlingFramework {
     }
     //Regression test
     @Test
-    public void testJSONWithInteger() throws IOException, InterruptedException {
+    public void testJSONWithInteger() throws IOException, InterruptedException, ExecutionException {
         val rq = new de.hpi.tdgt.test.story.atom.Request();
         rq.setAddr("http://localhost:9000/jsonObject");
         rq.setRequestParams(new String[] {"param"});
@@ -195,7 +196,7 @@ public class TestRequestHandling extends RequestHandlingFramework {
         assertThat(result.getReturnCode(), equalTo(200));
     }
     @Test
-    public void testFirstUserStory() throws IOException, InterruptedException {
+    public void testFirstUserStory() throws IOException, InterruptedException, ExecutionException {
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
         //do not run second story for this time around; messes with results
         test.setStories(new UserStory[]{test.getStories()[0]});
@@ -218,7 +219,7 @@ public class TestRequestHandling extends RequestHandlingFramework {
     }
 
     @Test
-    public void testUserStoryAgainstTestServer() throws IOException, InterruptedException {
+    public void testUserStoryAgainstTestServer() throws IOException, InterruptedException, ExecutionException {
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
         test.start();
         //repeated 7 times in first, 3 times 10 times in second story; only first value in corresponding table is correct
@@ -228,14 +229,14 @@ public class TestRequestHandling extends RequestHandlingFramework {
     }
 
     @Test
-    public void testUserStoryAgainstTestServerWithScaleFactor() throws IOException, InterruptedException {
+    public void testUserStoryAgainstTestServerWithScaleFactor() throws IOException, InterruptedException, ExecutionException {
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
         test.start();
         assertThat(jsonObjectGetHandler.getRequestsTotal(), is(7));
     }
 
     @Test
-    public void testUserStoryAgainstTestServerWithScaleFactorAndRepeat() throws IOException, InterruptedException {
+    public void testUserStoryAgainstTestServerWithScaleFactorAndRepeat() throws IOException, InterruptedException, ExecutionException {
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
         test.start();
         //10*0.7 times first story executed, calls this once
@@ -243,7 +244,7 @@ public class TestRequestHandling extends RequestHandlingFramework {
         assertThat(authHandler.getTotalRequests(), is(7 + 3 * 10));
     }
     @Test
-    public void testNoMoreRequestsPerSecondThanSetAreFired() throws InterruptedException, IOException {
+    public void testNoMoreRequestsPerSecondThanSetAreFired() throws InterruptedException, IOException, ExecutionException {
         long start = System.currentTimeMillis();
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
         //should not take forever

@@ -7,11 +7,11 @@ import de.hpi.tdgt.deserialisation.Deserializer;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import de.hpi.tdgt.test.Test;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -19,21 +19,21 @@ import static org.hamcrest.Matchers.is;
 
 public class TestWarmup extends RequestHandlingFramework {
 
-    private Test warmupTest;
+    private de.hpi.tdgt.test.Test warmupTest;
 
     @BeforeEach
     public void prepare() throws IOException {
         warmupTest = Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsAndWarmupJSON());
     }
     @Test
-    public void testWarmupCallsPreparationActivities() throws InterruptedException {
+    public void testWarmupCallsPreparationActivities() throws InterruptedException, ExecutionException {
         val threads = warmupTest.warmup();
         assertThat(postBodyHandler.getRequests_total(), is(7));
         warmupTest.start(threads);
     }
 
     @Test
-    public void testWarmupCallsNoOtherActivities() throws InterruptedException {
+    public void testWarmupCallsNoOtherActivities() throws InterruptedException, ExecutionException {
         val threads = warmupTest.warmup();
         for(val handler : handlers) {
             if(!(handler instanceof HttpHandlers.PostBodyHandler)) {
@@ -43,7 +43,7 @@ public class TestWarmup extends RequestHandlingFramework {
         warmupTest.start(threads);
     }
     @Test
-    public void testStoriesAreCompletedAfterWarmup() throws InterruptedException {
+    public void testStoriesAreCompletedAfterWarmup() throws InterruptedException, ExecutionException {
 
         val threads = warmupTest.warmup();
         warmupTest.start(threads);
