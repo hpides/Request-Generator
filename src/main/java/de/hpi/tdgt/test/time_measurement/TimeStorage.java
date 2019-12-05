@@ -160,7 +160,7 @@ public class TimeStorage {
         }
     }
 
-    public static final String MQTT_TOPIC = "de.hpi.tdgt.time";
+    public static final String MQTT_TOPIC = "de.hpi.tdgt.times";
 
 
 }
