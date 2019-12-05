@@ -45,12 +45,14 @@ public class TimeStorage {
         registeredTimes.get(addr).computeIfAbsent(verb, k-> new Vector<>());
         registeredTimes.get(addr).get(verb).add(latency);
         if(client != null && client.isConnected()){
-            MqttMessage mqttMessage = new MqttMessage(String.format("{\"Time\":%d,\"addr\":\"%s\",\"verb\":\"%s\"}", latency, addr, verb).getBytes());
+            val message = String.format("{\"Time\":%d,\"addr\":\"%s\",\"verb\":\"%s\"}", latency, addr, verb).getBytes();
+            MqttMessage mqttMessage = new MqttMessage(message);
             //we want to receive every packet EXACTLY Once
             mqttMessage.setQos(2);
             mqttMessage.setRetained(true);
             try {
                 client.publish(MQTT_TOPIC, mqttMessage);
+                log.info(String.format("Transferred %d bytes via mqtt!",message.length));
             } catch (MqttException e) {
                 log.error("Error sending mqtt message in Time_Storage: ", e);
             }

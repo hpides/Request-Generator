@@ -52,12 +52,14 @@ public class AssertionStorage {
         }
         addActual(assertionName, actual);
         if(client != null && client.isConnected()){
-            MqttMessage mqttMessage = new MqttMessage(String.format("{\"name\":\"%s\",\"actual\":\"%s\"}", assertionName, actual).getBytes());
+            val message = String.format("{\"name\":\"%s\",\"actual\":\"%s\"}", assertionName, actual).getBytes();
+            MqttMessage mqttMessage = new MqttMessage(message);
             //we want to receive every packet EXACTLY Once
             mqttMessage.setQos(2);
             mqttMessage.setRetained(true);
             try {
                 client.publish(MQTT_TOPIC, mqttMessage);
+                log.info(String.format("Transferred %d bytes via mqtt!",message.length));
             } catch (MqttException e) {
                 log.error("Error sending mqtt message in Time_Storage: ", e);
             }
