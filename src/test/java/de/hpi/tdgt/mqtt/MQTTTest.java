@@ -20,6 +20,7 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -31,7 +32,12 @@ import java.util.concurrent.TimeUnit;
 public class MQTTTest extends RequestHandlingFramework {
     private ObjectMapper mapper = new ObjectMapper();
     private IMqttClient publisher;
-
+    @BeforeEach
+    public void beforeEach(){
+        //this test MUST handle asynch behaviour
+        AssertionStorage.getInstance().setStoreEntriesAsynch(true);
+        TimeStorage.getInstance().setStoreEntriesAsynch(true);
+    }
     @Test
     public void TimeStorageStreamsTimesUsingMQTT() throws MqttException, InterruptedException, IOException {
         val messages = prepareClient(TimeStorage.MQTT_TOPIC);

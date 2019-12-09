@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.hpi.tdgt.test.Test;
 import de.hpi.tdgt.test.ThreadRecycler;
 import de.hpi.tdgt.util.PropertiesReader;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -132,27 +134,42 @@ public class TimeStorage {
     }
 
     private ObjectMapper mapper = new ObjectMapper();
-
+    /**
+     * If true, times are stored asynch. Else times are stored synchronously.
+     */
+    @Getter
+    @Setter
+    private boolean storeEntriesAsynch = true;
     public void registerTime(String verb, String addr, long latency) {
-        //needs quite some synchronization time and might run some time, so run it async if possible
-        ThreadRecycler.getInstance().getExecutorService().submit( () -> {
-            //test was started after reset was called, so restart the thread
-            if (reporter == null) {
-                reporter = new Thread(mqttReporter);
-                log.info("Resumed reporter.");
-                running.set(true);
-                reporter.start();
-            }
-            registeredTimes.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
-            registeredTimes.get(addr).computeIfAbsent(verb, k -> new Vector<>());
-            registeredTimes.get(addr).get(verb).add(latency);
-            synchronized (registeredTimesLastSecond) {
-                registeredTimesLastSecond.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
-                registeredTimesLastSecond.get(addr).computeIfAbsent(verb, k -> new Vector<>());
-                registeredTimesLastSecond.get(addr).get(verb).add(latency);
-                log.info("Added val: " + registeredTimesLastSecond.isEmpty());
-            }
-        });
+        //in certain situations, e.g. tests, we might wish to disable asynch storage for predictable result.
+        if(storeEntriesAsynch) {
+            //needs quite some synchronization time and might run some time, so run it async if possible
+            ThreadRecycler.getInstance().getExecutorService().submit(() -> {
+                doRegisterTime(verb, addr, latency);
+            });
+        }
+        else {
+            doRegisterTime(verb, addr, latency);
+        }
+    }
+
+    private void doRegisterTime(String verb, String addr, long latency) {
+        //test was started after reset was called, so restart the thread
+        if (reporter == null) {
+            reporter = new Thread(mqttReporter);
+            log.info("Resumed reporter.");
+            running.set(true);
+            reporter.start();
+        }
+        registeredTimes.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
+        registeredTimes.get(addr).computeIfAbsent(verb, k -> new Vector<>());
+        registeredTimes.get(addr).get(verb).add(latency);
+        synchronized (registeredTimesLastSecond) {
+            registeredTimesLastSecond.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
+            registeredTimesLastSecond.get(addr).computeIfAbsent(verb, k -> new Vector<>());
+            registeredTimesLastSecond.get(addr).get(verb).add(latency);
+            log.info("Added val: " + registeredTimesLastSecond.isEmpty());
+        }
     }
 
     /**

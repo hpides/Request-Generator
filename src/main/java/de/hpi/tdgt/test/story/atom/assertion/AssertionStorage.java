@@ -8,6 +8,7 @@ import de.hpi.tdgt.test.time_measurement.TimeStorage;
 import de.hpi.tdgt.util.Pair;
 import de.hpi.tdgt.util.PropertiesReader;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -107,29 +108,44 @@ public class AssertionStorage {
 
     @JsonIgnore
     private ObjectMapper mapper = new ObjectMapper();
-
+    /**
+     * If true, times are stored asynch. Else times are stored synchronously.
+     */
+    @Getter
+    @Setter
+    private boolean storeEntriesAsynch = true;
     public void addFailure(String assertionName, String actual) {
-        //needs quite some synchronization time and might run some time, so run it async if possible
-        ThreadRecycler.getInstance().getExecutorService().submit( () -> {
-            //test was started after reset was called, so restart the thread
-            if (reporter == null) {
-                reporter = new Thread(mqttRunnable);
-                log.info("Resumed reporter.");
-                running.set(true);
-                reporter.start();
-            }
-            Pair<Integer, Set<String>> pair;
-            synchronized (this) {
-                pair = actuals.getOrDefault(assertionName, new Pair<>(0, new ConcurrentSkipListSet<>()));
-                int current = pair.getKey();
-                pair.setKey(current + 1);
-                actuals.put(assertionName, pair);
-            }
-            synchronized (actualsLastSecond) {
-                actualsLastSecond.put(assertionName, pair);
-            }
-            addActual(assertionName, actual);
-        });
+        if(storeEntriesAsynch) {
+            //needs quite some synchronization time and might run some time, so run it async if possible
+            ThreadRecycler.getInstance().getExecutorService().submit(() -> {
+                doAddFailure(assertionName, actual);
+
+            });
+        }
+        else {
+            doAddFailure(assertionName, actual);
+        }
+    }
+
+    private void doAddFailure(String assertionName, String actual) {
+        //test was started after reset was called, so restart the thread
+        if (reporter == null) {
+            reporter = new Thread(mqttRunnable);
+            log.info("Resumed reporter.");
+            running.set(true);
+            reporter.start();
+        }
+        Pair<Integer, Set<String>> pair;
+        synchronized (this) {
+            pair = actuals.getOrDefault(assertionName, new Pair<>(0, new ConcurrentSkipListSet<>()));
+            int current = pair.getKey();
+            pair.setKey(current + 1);
+            actuals.put(assertionName, pair);
+        }
+        synchronized (actualsLastSecond) {
+            actualsLastSecond.put(assertionName, pair);
+        }
+        addActual(assertionName, actual);
     }
 
     public void reset() {
