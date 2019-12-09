@@ -172,21 +172,19 @@ public class AssertionStorage {
      * @param value actual value
      */
     private void addActual(String assertionName, String value) {
-
-            this.actuals.putIfAbsent(assertionName, new Pair<>());
-            this.actualsLastSecond.putIfAbsent(assertionName, new Pair<>());
-            var actuals = this.actuals.get(assertionName).getValue();
+        this.actuals.putIfAbsent(assertionName, new Pair<>());
+        this.actualsLastSecond.putIfAbsent(assertionName, new Pair<>());
+        var actuals = this.actuals.get(assertionName).getValue();
+        if (actuals != null) {
+            actuals.add(value);
+        }
+        synchronized (this.actualsLastSecond) {
+            actuals = this.actualsLastSecond.getOrDefault(assertionName, new Pair<>()).getValue();
             if (actuals != null) {
                 actuals.add(value);
             }
-            synchronized (this.actualsLastSecond) {
-                actuals = this.actualsLastSecond.getOrDefault(assertionName, new Pair<>()).getValue();
-                if (actuals != null) {
-                    actuals.add(value);
-                }
-            }
+        }
     }
-
     /**
      * Return all unexpected values during the test.
      * @param assertionName Name of he assertion.
