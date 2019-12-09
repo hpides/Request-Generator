@@ -16,6 +16,7 @@ import lombok.Value;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import org.eclipse.paho.client.mqttv3.*;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
@@ -46,7 +47,7 @@ public class MQTTTest extends RequestHandlingFramework {
 
     private Set<String> prepareClient(final String topic) throws MqttException {
         String publisherId = UUID.randomUUID().toString();
-        publisher = new MqttClient(PropertiesReader.getMqttHost(),publisherId);
+        publisher = new MqttClient(PropertiesReader.getMqttHost(),publisherId, new MemoryPersistence());
         MqttConnectOptions options = new MqttConnectOptions();
         options.setAutomaticReconnect(true);
         options.setCleanSession(true);

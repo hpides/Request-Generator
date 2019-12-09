@@ -13,6 +13,7 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -22,10 +23,12 @@ import java.util.concurrent.ConcurrentSkipListSet;
 @Log4j2
 public class AssertionStorage {
     private MqttClient client = null;
+    private Thread reporter;
+
     private AssertionStorage() {
         String publisherId = UUID.randomUUID().toString();
         try {
-            client = new MqttClient(PropertiesReader.getMqttHost(), publisherId);
+            client = new MqttClient(PropertiesReader.getMqttHost(), publisherId, new MemoryPersistence());
         } catch (MqttException e) {
             log.error("Error creating mqttclient in AssertionStorage: ", e);
             return;
@@ -105,13 +108,14 @@ public class AssertionStorage {
     }
 
     public void reset(){
+        reporter.interrupt();
         actuals.clear();
         actualsLastSecond.clear();
     }
 
     public void printSummary(){
         for(val entry :actuals.entrySet()){
-            log.info("Assertion "+entry.getKey()+" failed "+entry.getValue()+" times.");
+            log.info("Assertion "+entry.getKey()+" failed "+entry.getValue().getKey()+" times.");
             if(entry.getValue().getKey() > 0){
                 StringBuilder actuals = new StringBuilder("Actual values: [");
                 boolean first = true;
