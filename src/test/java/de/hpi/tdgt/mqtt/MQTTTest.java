@@ -141,15 +141,17 @@ public class MQTTTest extends RequestHandlingFramework {
         assertion.setContentType("application/xml");
         postWithBodyAndAssertion.run(params);
         Thread.sleep(3000);
-        message.clear();
         MatcherAssert.assertThat(readResponse(message), Matchers.contains(Matchers.hasKey("postWithBody returns JSON")));
-        assertion.setContentType("application/yml");
+        //remove existing values
+        message.clear();
+        assertion.setContentType("application/json");
         postWithBodyAndAssertion.run(params);
         Thread.sleep(3000);
         //other failure should be removed now
         HashSet<String> actuals = new HashSet<>();
         actuals.add("application/json");
-        MatcherAssert.assertThat(readResponse(message), Matchers.not(Matchers.contains(Matchers.hasEntry("postWithBody returns JSON", new Pair<>(1, actuals)))));
+        //empty values are filtered
+        MatcherAssert.assertThat(readResponse(message), Matchers.emptyIterable());
     }
 
     @Test
