@@ -115,6 +115,8 @@ public class Test {
         private RequestThrottler(int requestsPerSecond){
             requestLimiter =  new Semaphore(requestsPerSecond,true);
         }
+        //only used for measurement, does not have to be synchronized
+        @Getter
         int requestsPerSecond = 0;
         private static void reset(){
             instance = null;

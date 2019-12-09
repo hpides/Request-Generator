@@ -2,6 +2,7 @@ package de.hpi.tdgt.test.time_measurement;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.hpi.tdgt.test.Test;
 import de.hpi.tdgt.util.PropertiesReader;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
@@ -97,17 +98,29 @@ public class TimeStorage {
     public static TimeStorage getInstance() {
         return storage;
     }
-
-    private Map<String, Map<String, Double>> toMQTTSummaryMap(Map<String, ConcurrentHashMap<String, List<Long>>> currentValues) {
+    public static final String THROUGHPUT_STRING="throughput";
+    public static final String MIN_LATENCY_STRING="minLatency";
+    public static final String MAX_LATENCY_STRING="maxLatency";
+    public static final String AVG_LATENCY_STRING="avgLatency";
+    private Map<String, Map<String, Map<String, Double>>> toMQTTSummaryMap(Map<String, ConcurrentHashMap<String, List<Long>>> currentValues) {
         log.trace("Is empty: " + currentValues.isEmpty());
-        Map<String, Map<String, Double>> ret = new HashMap<>();
+        Map<String, Map<String, Map<String, Double>>> ret = new HashMap<>();
         //re-create the structure, but using average of the innermost values
         for (val entry : currentValues.entrySet()) {
             ret.put(entry.getKey(), new HashMap<>());
             for (val innerEntry : entry.getValue().entrySet()) {
                 val sum = innerEntry.getValue().stream().mapToLong(Long::longValue).sum();
                 double avg = sum / innerEntry.getValue().size();
-                ret.get(entry.getKey()).put(innerEntry.getKey(), avg);
+                long min = innerEntry.getValue().stream().mapToLong(Long::longValue).min().orElse(0);
+                long max = innerEntry.getValue().stream().mapToLong(Long::longValue).max().orElse(0);
+                //might not be started, we do not want a Nullpointer
+                long throughput = Test.RequestThrottler.getInstance()==null? 0 : Test.RequestThrottler.getInstance().getRequestsPerSecond();
+                HashMap<String, Double> times = new HashMap<>();
+                times.put(THROUGHPUT_STRING, (double) throughput);
+                times.put(MIN_LATENCY_STRING, (double) min);
+                times.put(MAX_LATENCY_STRING, (double) max);
+                times.put(AVG_LATENCY_STRING, avg);
+                ret.get(entry.getKey()).put(innerEntry.getKey(), times);
             }
         }
         return ret;
