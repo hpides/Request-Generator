@@ -35,7 +35,7 @@ public class AssertionStorage {
             //recommended way to make the thread stop
             while (running.get()) {
                 //will be closed in reset, so might have to be re-created here
-                if (client == null) {
+                if (client == null || ! client.isConnected()) {
                     try {
                         //use memory persistence because it is not important that all packets are transferred and we do not want to spam the file system
                         client = new MqttClient(PropertiesReader.getMqttHost(), publisherId, new MemoryPersistence());
@@ -86,6 +86,7 @@ public class AssertionStorage {
             try {
                 client.disconnect();
                 client.close();
+                client = null;
             } catch (MqttException e) {
                 e.printStackTrace();
             }

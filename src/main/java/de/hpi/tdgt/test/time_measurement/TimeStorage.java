@@ -27,7 +27,7 @@ public class TimeStorage {
         //we want to receive every packet EXACTLY Once
 //to clean files
         mqttReporter = () -> {
-            while (running.get()) {
+            while (running.get() || ! client.isConnected()) {
                 //client is null if reset was called
                 if (client == null) {
                     String publisherId = UUID.randomUUID().toString();
@@ -80,6 +80,7 @@ public class TimeStorage {
             try {
                 client.disconnect();
                 client.close();
+                client = null;
             } catch (MqttException e) {
                 e.printStackTrace();
             }
