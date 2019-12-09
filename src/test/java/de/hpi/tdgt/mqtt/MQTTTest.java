@@ -16,6 +16,7 @@ import lombok.Value;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import org.eclipse.paho.client.mqttv3.*;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
@@ -46,7 +47,7 @@ public class MQTTTest extends RequestHandlingFramework {
 
     private Set<String> prepareClient(final String topic) throws MqttException {
         String publisherId = UUID.randomUUID().toString();
-        publisher = new MqttClient(PropertiesReader.getMqttHost(),publisherId);
+        publisher = new MqttClient(PropertiesReader.getMqttHost(),publisherId, new MemoryPersistence());
         MqttConnectOptions options = new MqttConnectOptions();
         options.setAutomaticReconnect(true);
         options.setCleanSession(true);
@@ -55,7 +56,7 @@ public class MQTTTest extends RequestHandlingFramework {
         val message = new HashSet<String>();
         publisher.subscribe(topic, (s, mqttMessage) -> {
             //hamcrest can't handle empty sets in the list for contains, so filter them out
-            if(s.equals(topic) && !new String(mqttMessage.getPayload()).equals("{}")) {
+            if(s.equals(topic) && !new String(mqttMessage.getPayload()).equals("{}") && !new String(mqttMessage.getPayload()).isEmpty()) {
                 log.info("Received "+new String(mqttMessage.getPayload()));
                 message.add(new String(mqttMessage.getPayload()));
             }
