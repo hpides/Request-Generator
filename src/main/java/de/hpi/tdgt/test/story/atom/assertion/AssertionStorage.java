@@ -51,7 +51,7 @@ public class AssertionStorage {
                         client.connect(options);
                     } catch (MqttException e) {
                         log.error("Could not connect to mqtt broker in AssertionStorage: ", e);
-                        return;
+                        break;
                     }
                 }
                 //client is created and connected
@@ -79,7 +79,7 @@ public class AssertionStorage {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
-                    return;
+                    break;
                 }
             }
             //to clean files
