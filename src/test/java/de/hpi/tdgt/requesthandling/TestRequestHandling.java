@@ -27,7 +27,7 @@ public class TestRequestHandling extends RequestHandlingFramework {
     @Test
     public void testSimpleRequest() throws IOException {
         val rc = new RestClient();
-        val result = rc.getFromEndpoint(new URL("http://localhost:9000/"), new HashMap<>());
+        val result = rc.getFromEndpoint("TestRequestHandling", new URL("http://localhost:9000/"), new HashMap<>());
         String response = new String(result.getResponse(),StandardCharsets.UTF_8);
         assertThat(response, equalTo("Welcome!\n"));
     }
@@ -37,7 +37,7 @@ public class TestRequestHandling extends RequestHandlingFramework {
         val rc = new RestClient();
         val params = new HashMap<String, String>();
         params.put("key","It is what it is...and does what it offers");
-        val result = rc.getFromEndpoint(new URL("http://localhost:9000/"), params);
+        val result = rc.getFromEndpoint("TestRequestHandling", new URL("http://localhost:9000/"), params);
         String response = new String(result.getResponse(),StandardCharsets.UTF_8);
         assertThat(getHandler.getRequest(),equalTo("key=It is what it is...and does what it offers"));
     }
@@ -45,13 +45,13 @@ public class TestRequestHandling extends RequestHandlingFramework {
     @Test
     public void testContentType() throws IOException {
         val rc = new RestClient();
-        val result = rc.getFromEndpoint(new URL("http://localhost:9000/"), new HashMap<>());
+        val result = rc.getFromEndpoint("TestRequestHandling", new URL("http://localhost:9000/"), new HashMap<>());
         assertThat(result.isPlainText(), is(true));
     }
     @Test
     public void testContentDecoding() throws IOException {
         val rc = new RestClient();
-        val result = rc.getFromEndpoint(new URL("http://localhost:9000/"), new HashMap<>());
+        val result = rc.getFromEndpoint("TestRequestHandling", new URL("http://localhost:9000/"), new HashMap<>());
         assertThat(result.toString(), equalTo("Welcome!\n"));
     }
 
@@ -60,7 +60,7 @@ public class TestRequestHandling extends RequestHandlingFramework {
         val rc = new RestClient();
         val params = new HashMap<String,String>();
         params.put("param","value");
-        val result = rc.getFromEndpoint(new URL("http://localhost:9000/"), params);
+        val result = rc.getFromEndpoint("TestRequestHandling", new URL("http://localhost:9000/"), params);
         assertThat(result.toString(), stringContainsInOrder("param","value"));
     }
 
@@ -68,7 +68,7 @@ public class TestRequestHandling extends RequestHandlingFramework {
     public void testGETBodyParams() throws IOException {
         val rc = new RestClient();
         val body = "{\"param\":\"value\"}";
-        val result = rc.getBodyFromEndpoint(new URL("http://localhost:9000/getWithBody"), body);
+        val result = rc.getBodyFromEndpoint("TestRequestHandling", new URL("http://localhost:9000/getWithBody"), body);
         assertThat(result.toString(), equalTo(body));
     }
 
@@ -77,7 +77,7 @@ public class TestRequestHandling extends RequestHandlingFramework {
         val rc = new RestClient();
         val params = new HashMap<String,String>();
         params.put("param","value");
-        val result = rc.deleteFromEndpoint(new URL("http://localhost:9000/"), params);
+        val result = rc.deleteFromEndpoint("TestRequestHandling", new URL("http://localhost:9000/"), params);
         assertThat(result.toString(), stringContainsInOrder("param","value"));
     }
 
@@ -86,7 +86,7 @@ public class TestRequestHandling extends RequestHandlingFramework {
         val rc = new RestClient();
         val params = new HashMap<String,String>();
         params.put("param","value");
-        val result = rc.getFromEndpoint(new URL("http://localhost:9000/jsonObject"), params);
+        val result = rc.getFromEndpoint("TestRequestHandling", new URL("http://localhost:9000/jsonObject"), params);
         assertThat(result.toJson().isObject(),is(true));
     }
     //Regression test
@@ -108,7 +108,7 @@ public class TestRequestHandling extends RequestHandlingFramework {
         val rc = new RestClient();
         val params = new HashMap<String,String>();
         params.put("param","value");
-        val result = rc.getFromEndpoint(new URL("http://localhost:9000/jsonArray"), params);
+        val result = rc.getFromEndpoint("TestRequestHandling", new URL("http://localhost:9000/jsonArray"), params);
         assertThat(result.toJson().isArray(),is(true));
     }
 
@@ -117,7 +117,7 @@ public class TestRequestHandling extends RequestHandlingFramework {
         val rc = new RestClient();
         val params = new HashMap<String,String>();
         params.put("param","value");
-        val result = rc.getFromEndpoint(new URL("http://localhost:9000/jsonArray"), params);
+        val result = rc.getFromEndpoint("TestRequestHandling", new URL("http://localhost:9000/jsonArray"), params);
         assertThat(result.durationMillis(), is(both(greaterThan(0L)).and(lessThan(100000L))));
     }
 
@@ -126,7 +126,7 @@ public class TestRequestHandling extends RequestHandlingFramework {
         val rc = new RestClient();
         val params = new HashMap<String,String>();
         params.put("param","value");
-        val result = rc.postFormToEndpoint(new URL("http://localhost:9000/echoPost"), params);
+        val result = rc.postFormToEndpoint("TestRequestHandling", new URL("http://localhost:9000/echoPost"), params);
         assertThat(result.toString(), stringContainsInOrder("param = value"));
     }
     @Test
@@ -134,7 +134,7 @@ public class TestRequestHandling extends RequestHandlingFramework {
         val rc = new RestClient();
         val params = new HashMap<String,String>();
         params.put("param","value");
-        val result = rc.putFormToEndpoint(new URL("http://localhost:9000/echoPost"), params);
+        val result = rc.putFormToEndpoint("TestRequestHandling", new URL("http://localhost:9000/echoPost"), params);
         assertThat(result.toString(), stringContainsInOrder("param = value"));
     }
 
@@ -142,58 +142,58 @@ public class TestRequestHandling extends RequestHandlingFramework {
     public void testPOSTBodyParams() throws IOException {
         val rc = new RestClient();
         val body = "{\"param\":\"value\"}";
-        val result = rc.postBodyToEndpoint(new URL("http://localhost:9000/postWithBody"), body);
+        val result = rc.postBodyToEndpoint("TestRequestHandling", new URL("http://localhost:9000/postWithBody"), body);
         assertThat(result.toString(), equalTo(body));
     }
     @Test
     public void testPUTBodyParams() throws IOException {
         val rc = new RestClient();
         val body = "{\"param\":\"value\"}";
-        val result = rc.putBodyToEndpoint(new URL("http://localhost:9000/postWithBody"), body);
+        val result = rc.putBodyToEndpoint("TestRequestHandling", new URL("http://localhost:9000/postWithBody"), body);
         assertThat(result.toString(), equalTo(body));
     }
 
     @Test
     public void testGETWithAuth() throws IOException {
         val rc = new RestClient();
-        val result = rc.getFromEndpointWithAuth(new URL("http://localhost:9000/auth"),null,HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
+        val result = rc.getFromEndpointWithAuth("TestRequestHandling", new URL("http://localhost:9000/auth"),null,HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
         assertThat(result.getReturnCode(), equalTo(200));
     }
 
     @Test
     public void testGETBodyWithAuth() throws IOException {
         val rc = new RestClient();
-        val result = rc.getBodyFromEndpointWithAuth(new URL("http://localhost:9000/auth"), "\"Something\"", HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
+        val result = rc.getBodyFromEndpointWithAuth("TestRequestHandling", new URL("http://localhost:9000/auth"), "\"Something\"", HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
     }
 
     @Test
     public void testDELETEWithAuth() throws IOException {
         val rc = new RestClient();
-        val result = rc.deleteFromEndpointWithAuth(new URL("http://localhost:9000/auth"),null,HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
+        val result = rc.deleteFromEndpointWithAuth("TestRequestHandling", new URL("http://localhost:9000/auth"),null,HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
         assertThat(result.getReturnCode(), equalTo(200));
     }
     @Test
     public void testPOSTBodyWithAuth() throws IOException {
         val rc = new RestClient();
-        val result = rc.postBodyToEndpointWithAuth(new URL("http://localhost:9000/auth"),"\"Something\"",HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
+        val result = rc.postBodyToEndpointWithAuth("TestRequestHandling", new URL("http://localhost:9000/auth"),"\"Something\"",HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
         assertThat(result.getReturnCode(), equalTo(200));
     }
     @Test
     public void testPOSTFormWithAuth() throws IOException {
         val rc = new RestClient();
-        val result = rc.postFormToEndpointWithAuth(new URL("http://localhost:9000/auth"),new HashMap<>(),HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
+        val result = rc.postFormToEndpointWithAuth("TestRequestHandling", new URL("http://localhost:9000/auth"),new HashMap<>(),HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
         assertThat(result.getReturnCode(), equalTo(200));
     }
     @Test
     public void testPUTBodyWithAuth() throws IOException {
         val rc = new RestClient();
-        val result = rc.putBodyToEndpointWithAuth(new URL("http://localhost:9000/auth"),"\"Something\"",HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
+        val result = rc.putBodyToEndpointWithAuth("TestRequestHandling", new URL("http://localhost:9000/auth"),"\"Something\"",HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
         assertThat(result.getReturnCode(), equalTo(200));
     }
     @Test
     public void testPUTFormWithAuth() throws IOException {
         val rc = new RestClient();
-        val result = rc.putFormToEndpointWithAuth(new URL("http://localhost:9000/auth"),new HashMap<>(),HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
+        val result = rc.putFormToEndpointWithAuth("TestRequestHandling", new URL("http://localhost:9000/auth"),new HashMap<>(),HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
         assertThat(result.getReturnCode(), equalTo(200));
     }
     @Test

@@ -55,7 +55,12 @@ public abstract class Atom implements Cloneable {
     //should only be set by tests
     @Getter(AccessLevel.NONE)
     private Atom[] successorLinks = new Atom[0];
-
+    //e.g. for request, so it can account time to a story
+    @JsonIgnore
+    @Getter(AccessLevel.PROTECTED)
+    //only use in tests!
+    @Setter
+    private String storyName;
     public abstract void perform() throws InterruptedException;
     
     //use this method to get successors of this atom
@@ -88,6 +93,7 @@ public abstract class Atom implements Cloneable {
         });
         //boilerplate
         this.successorLinks = successorList.toArray(new Atom[0]);
+        this.storyName = parent.getName();
     }
 
     private void runSuccessors() throws InterruptedException, ExecutionException {

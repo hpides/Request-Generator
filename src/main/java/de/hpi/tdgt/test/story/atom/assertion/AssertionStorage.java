@@ -72,7 +72,7 @@ public class AssertionStorage {
                 mqttMessage.setRetained(true);
                 try {
                     client.publish(AssertionStorage.MQTT_TOPIC, mqttMessage);
-                    log.info(String.format("Transferred %d bytes via mqtt!", message.length));
+                    log.info(String.format("Transferred %d bytes via mqtt to "+MQTT_TOPIC, message.length));
                 } catch (MqttException e) {
                     log.error("Error sending mqtt message in Time_Storage: ", e);
                 }

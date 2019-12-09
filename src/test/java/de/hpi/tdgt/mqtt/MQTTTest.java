@@ -41,10 +41,10 @@ public class MQTTTest extends RequestHandlingFramework {
     @Test
     public void TimeStorageStreamsTimesUsingMQTT() throws MqttException, InterruptedException, IOException {
         val messages = prepareClient(TimeStorage.MQTT_TOPIC);
-        TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 10);
+        TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 10, "story");
         Thread.sleep(3000);
-        TypeReference<HashMap<String, HashMap<String, HashMap<String, Double>>>> typeRef = new TypeReference<>() {};
-        val response = new Vector<HashMap<String, HashMap<String, HashMap<String, Double>>>>();
+        TypeReference<HashMap<String, HashMap<String, HashMap<String, String>>>> typeRef = new TypeReference<>() {};
+        val response = new Vector<HashMap<String, HashMap<String, HashMap<String, String>>>>();
         for(val item : messages){
             response.add(mapper.readValue(item, typeRef));
         }
@@ -56,17 +56,61 @@ public class MQTTTest extends RequestHandlingFramework {
     @Test
     public void TimeStorageStreamsAllTimesUsingMQTT() throws MqttException, InterruptedException, IOException {
         val messages = prepareClient(TimeStorage.MQTT_TOPIC);
-        TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 10);
+        TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 10, "story");
         Thread.sleep(3000);
-        TypeReference<HashMap<String, HashMap<String, HashMap<String, Double>>>> typeRef = new TypeReference<>() {};
-        val response = new Vector<HashMap<String, HashMap<String, HashMap<String, Double>>>>();
+        TypeReference<HashMap<String, HashMap<String, HashMap<String, String>>>> typeRef = new TypeReference<>() {};
+        val response = new Vector<HashMap<String, HashMap<String, HashMap<String, String>>>>();
         for(val item : messages){
             response.add(mapper.readValue(item, typeRef));
         }
         val times = response.get(0).get("http://localhost:9000/").get("POST");
         //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
-        MatcherAssert.assertThat(times.keySet(), Matchers.containsInAnyOrder(Matchers.equalTo("minLatency"), Matchers.equalTo("throughput"), Matchers.equalTo("maxLatency"), Matchers.equalTo("avgLatency")));
+        MatcherAssert.assertThat(times.keySet(), Matchers.containsInAnyOrder(Matchers.equalTo("minLatency"), Matchers.equalTo("throughput"), Matchers.equalTo("maxLatency"), Matchers.equalTo("avgLatency"), Matchers.equalTo("story")));
 
+    }
+    @Test
+    public void TimeStorageStreamsAllTimesUsingMQTTWithCorrectStoryName() throws MqttException, InterruptedException, IOException, ExecutionException {
+        val messages = prepareClient(TimeStorage.MQTT_TOPIC);
+        val params = new HashMap<String, String>();
+        params.put("key", "wrong");
+        params.put("value", "wrong");
+        val getWithAuth = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getAtoms()[3];
+        //make sure we do not run successors
+        getWithAuth.setSuccessorLinks(new Atom[0]);
+        val name = "StoryName";
+        getWithAuth.setStoryName(name);
+        getWithAuth.run(params);
+        Thread.sleep(3000);
+        TypeReference<HashMap<String, HashMap<String, HashMap<String, String>>>> typeRef = new TypeReference<>() {};
+        val response = new Vector<HashMap<String, HashMap<String, HashMap<String, String>>>>();
+        for(val item : messages){
+            response.add(mapper.readValue(item, typeRef));
+        }
+        val times = response.get(0).get("http://localhost:9000/auth").get("GET");
+        //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
+        MatcherAssert.assertThat(times, Matchers.hasEntry("story", name));
+    }
+    @Test
+    public void TimeStorageStreamsAllTimesUsingMQTTWithCorrectThroughput() throws MqttException, InterruptedException, IOException, ExecutionException {
+        val messages = prepareClient(TimeStorage.MQTT_TOPIC);
+        val params = new HashMap<String, String>();
+        params.put("key", "wrong");
+        params.put("value", "wrong");
+        val getWithAuth = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getAtoms()[3];
+        //make sure we do not run successors
+        getWithAuth.setSuccessorLinks(new Atom[0]);
+        val name = "StoryName";
+        getWithAuth.setStoryName(name);
+        getWithAuth.run(params);
+        Thread.sleep(3000);
+        TypeReference<HashMap<String, HashMap<String, HashMap<String, String>>>> typeRef = new TypeReference<>() {};
+        val response = new Vector<HashMap<String, HashMap<String, HashMap<String, String>>>>();
+        for(val item : messages){
+            response.add(mapper.readValue(item, typeRef));
+        }
+        val times = response.get(0).get("http://localhost:9000/auth").get("GET");
+        //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
+        MatcherAssert.assertThat(times, Matchers.hasEntry("throughput", "1"));
     }
 
     private Set<String> prepareClient(final String topic) throws MqttException {
