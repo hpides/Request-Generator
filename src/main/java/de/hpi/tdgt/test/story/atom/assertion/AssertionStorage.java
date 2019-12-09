@@ -61,12 +61,13 @@ public class AssertionStorage {
                     } catch (MqttException e) {
                         log.error("Error sending mqtt message in Time_Storage: ", e);
                     }
+
                 }
 
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
-                    log.error(e);
+                    return;
                 }
             }
             //to clean files
@@ -77,7 +78,8 @@ public class AssertionStorage {
                 e.printStackTrace();
             }
         };
-        new Thread(resetLastActualsEverySecond).start();
+        reporter = new Thread(resetLastActualsEverySecond);
+        reporter.start();
     }
     @Getter
     public static final AssertionStorage instance = new AssertionStorage();

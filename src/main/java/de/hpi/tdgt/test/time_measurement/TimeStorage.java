@@ -59,7 +59,7 @@ public class TimeStorage {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
-                    log.error(e);
+                    return;
                 }
             }
             //to clean files
@@ -70,7 +70,8 @@ public class TimeStorage {
                 e.printStackTrace();
             }
         };
-        new Thread(mqttReporter).start();
+        reporter = new Thread(mqttReporter);
+        reporter.start();
     }
 
     private final Map<String, Map<String, List<Long>>> registeredTimes = new ConcurrentHashMap<>();
@@ -162,5 +163,10 @@ public class TimeStorage {
 
     public static final String MQTT_TOPIC = "de.hpi.tdgt.times";
 
+    public void reset(){
+        reporter.interrupt();
+        registeredTimesLastSecond.clear();
+        registeredTimes.clear();
+    }
 
 }
