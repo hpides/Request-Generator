@@ -26,12 +26,12 @@ public class TimeStorage {
     private final AtomicBoolean running = new AtomicBoolean(true);
     protected TimeStorage() {
 
+
 //to clean files
         mqttReporter = () -> {
             while (running.get()) {
                 //client is null if reset was called
                 if (client == null || ! client.isConnected()) {
-
                     String publisherId = UUID.randomUUID().toString();
                     try {
                         //use memory persistence because it is not important that all packets are transferred and we do not want to spam the file system
@@ -48,12 +48,16 @@ public class TimeStorage {
                         client.connect(options);
                     } catch (MqttException e) {
                         log.error("Could not connect to mqtt broker in TimeStorage: ", e);
-                        return;
+                        //clean up
+                        break;
                     }
                 }
                 //client is created and connected
+
+                //prevent error
                 byte[] message = new byte[0];
                 try {
+                    //needs to be synchronized so we do not miss entries
                     synchronized (registeredTimesLastSecond) {
                         message = mapper.writeValueAsString(toMQTTSummaryMap(registeredTimesLastSecond)).getBytes(StandardCharsets.UTF_8);
                         registeredTimesLastSecond.clear();
@@ -62,7 +66,7 @@ public class TimeStorage {
                     log.error(e);
                 }
                 MqttMessage mqttMessage = new MqttMessage(message);
-                //we want to receive every packet EXACTLY Once
+                //we want to receive every packet EXACTLY once
                 mqttMessage.setQos(2);
                 mqttMessage.setRetained(true);
                 try {
@@ -74,7 +78,8 @@ public class TimeStorage {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
-                    return;
+                    //Clean up
+                    break;
                 }
             }
 
@@ -156,42 +161,6 @@ public class TimeStorage {
      * @param addr Endpoint
      * @return Array with all times
      */
-    private Map<String, Map<String, Double>> toMQTTSummaryMap(Map<String, ConcurrentHashMap<String, List<Long>>> currentValues) {
-        log.trace("Is empty: " + currentValues.isEmpty());
-        Map<String, Map<String, Double>> ret = new HashMap<>();
-        //re-create the structure, but using average of the innermost values
-        for (val entry : currentValues.entrySet()) {
-            ret.put(entry.getKey(), new HashMap<>());
-            for (val innerEntry : entry.getValue().entrySet()) {
-                val sum = innerEntry.getValue().stream().mapToLong(Long::longValue).sum();
-                double avg = sum / innerEntry.getValue().size();
-                ret.get(entry.getKey()).put(innerEntry.getKey(), avg);
-            }
-        }
-        return ret;
-    }
-
-    private ObjectMapper mapper = new ObjectMapper();
-
-    public void registerTime(String verb, String addr, long latency) {
-        //test was started after reset was called, so restart the thread
-        if (reporter == null) {
-            reporter = new Thread(mqttReporter);
-            log.info("Resumed reporter.");
-            running.set(true);
-            reporter.start();
-        }
-        registeredTimes.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
-        registeredTimes.get(addr).computeIfAbsent(verb, k -> new Vector<>());
-        registeredTimes.get(addr).get(verb).add(latency);
-        synchronized (registeredTimesLastSecond) {
-            registeredTimesLastSecond.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
-            registeredTimesLastSecond.get(addr).computeIfAbsent(verb, k -> new Vector<>());
-            registeredTimesLastSecond.get(addr).get(verb).add(latency);
-            log.info("Added val: " + registeredTimesLastSecond.isEmpty());
-        }
-    }
-
     public Long[] getTimes(String verb, String addr) {
         //stub
         if (registeredTimes.get(addr) == null) {
