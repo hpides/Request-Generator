@@ -75,18 +75,7 @@ public class TimeStorage {
                     return;
                 }
             }
-
-            //to clean files
-            try {
-                client.disconnect();
-                client.close();
-                client = null;
-            } catch (MqttException e) {
-                e.printStackTrace();
-            }
         };
-        reporter = new Thread(mqttReporter);
-        reporter.start();
     }
 
     private final Map<String, Map<String, List<Long>>> registeredTimes = new ConcurrentHashMap<>();
@@ -194,6 +183,16 @@ public class TimeStorage {
         if (reporter != null) {
             running.set(false);
             reporter.interrupt();
+        }
+        //to clean files
+        try {
+            if(client != null) {
+                client.disconnect();
+                client.close();
+            }
+            client = null;
+        } catch (MqttException e) {
+            e.printStackTrace();
         }
         reporter = null;
         registeredTimesLastSecond.clear();
