@@ -52,8 +52,8 @@ public abstract class Atom implements Cloneable {
 
     //do not try to read this from json, no accessors --> only used internally
     @JsonIgnore
+    //should only be set by tests
     @Getter(AccessLevel.NONE)
-    @Setter(AccessLevel.NONE)
     private Atom[] successorLinks = new Atom[0];
 
     public abstract void perform() throws InterruptedException;
