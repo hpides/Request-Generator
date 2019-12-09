@@ -117,14 +117,15 @@ public class AssertionStorage {
             running.set(true);
             reporter.start();
         }
+        Pair<Integer,Set<String>> pair;
         synchronized (this) {
-            val pair = actuals.getOrDefault(assertionName, new Pair<>(0, new ConcurrentSkipListSet<>()));
+            pair = actuals.getOrDefault(assertionName, new Pair<>(0, new ConcurrentSkipListSet<>()));
             int current = pair.getKey();
             pair.setKey(current + 1);
             actuals.put(assertionName, pair);
-            synchronized (actualsLastSecond) {
-                actualsLastSecond.put(assertionName, pair);
-            }
+        }
+        synchronized (actualsLastSecond) {
+            actualsLastSecond.put(assertionName, pair);
         }
         addActual(assertionName, actual);
     }
@@ -167,9 +168,11 @@ public class AssertionStorage {
         if (actuals != null) {
             actuals.add(value);
         }
-        actuals = this.actualsLastSecond.getOrDefault(assertionName, new Pair<>()).getValue();
-        if (actuals != null) {
-            actuals.add(value);
+        synchronized (this.actualsLastSecond) {
+            actuals = this.actualsLastSecond.getOrDefault(assertionName, new Pair<>()).getValue();
+            if (actuals != null) {
+                actuals.add(value);
+            }
         }
     }
 

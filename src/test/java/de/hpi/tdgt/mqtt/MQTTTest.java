@@ -141,6 +141,7 @@ public class MQTTTest extends RequestHandlingFramework {
         assertion.setContentType("application/xml");
         postWithBodyAndAssertion.run(params);
         Thread.sleep(3000);
+        message.clear();
         MatcherAssert.assertThat(readResponse(message), Matchers.contains(Matchers.hasKey("postWithBody returns JSON")));
         assertion.setContentType("application/yml");
         postWithBodyAndAssertion.run(params);
