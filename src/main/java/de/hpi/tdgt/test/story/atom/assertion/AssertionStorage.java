@@ -91,8 +91,6 @@ public class AssertionStorage {
                 e.printStackTrace();
             }
         };
-        reporter = new Thread(mqttRunnable);
-        reporter.start();
     }
 
     @Getter
