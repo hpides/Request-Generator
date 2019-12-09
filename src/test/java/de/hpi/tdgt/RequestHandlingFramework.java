@@ -3,6 +3,8 @@ package de.hpi.tdgt;
 import com.sun.net.httpserver.HttpServer;
 import de.hpi.tdgt.test.story.atom.Data_Generation;
 import de.hpi.tdgt.test.story.atom.WarmupEnd;
+import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
+import de.hpi.tdgt.test.time_measurement.TimeStorage;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -71,5 +73,7 @@ public class RequestHandlingFramework {
         handlers.forEach(handler -> handler.setRequests_total(0));
         handlers = new ArrayList<>();
         server.stop(0);
+        TimeStorage.getInstance().reset();
+        AssertionStorage.getInstance().reset();
     }
 }

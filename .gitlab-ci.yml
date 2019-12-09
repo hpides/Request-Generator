@@ -4,9 +4,16 @@ stages:
 junit:
   stage: test
   image: "maven:3"
+  # save mosquitto log to debug errors
+  artifacts:
+      when: on_failure
+      paths:
+        - mosquitto.log
   tags: 
     - BP-TDGT-CI
   script:
+    - apt update && apt install -y mosquitto
+    - $(which mosquitto) -p 1883 > mosquitto.log 2>&1 &
     - mvn test
 
 spotbugs:

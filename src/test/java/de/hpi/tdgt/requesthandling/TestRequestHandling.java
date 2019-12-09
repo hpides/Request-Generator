@@ -5,6 +5,7 @@ import de.hpi.tdgt.RequestHandlingFramework;
 import de.hpi.tdgt.Utils;
 import de.hpi.tdgt.deserialisation.Deserializer;
 import de.hpi.tdgt.test.story.UserStory;
+import de.hpi.tdgt.util.Pair;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import org.junit.jupiter.api.*;
@@ -207,10 +208,10 @@ public class TestRequestHandling extends RequestHandlingFramework {
         params2.put("key", "user");
         params2.put("value", "pw");
         //should have seen wrong and wrong as well as user and pw
-        assertThat("GetHandler should have received key=wrong.",jsonObjectGetHandler.getAllParams().contains(new HttpHandlers.Pair("key", "wrong")), is(true));
-        assertThat("GetHandler should have received value=wrong.",jsonObjectGetHandler.getAllParams().contains(new HttpHandlers.Pair("value", "wrong")), is(true));
-        assertThat("GetHandler should have received key=user.",jsonObjectGetHandler.getAllParams().contains(new HttpHandlers.Pair("key", "user")), is(true));
-        assertThat("GetHandler should have received value=pw.",jsonObjectGetHandler.getAllParams().contains(new HttpHandlers.Pair("value", "pw")), is(true));
+        assertThat("GetHandler should have received key=wrong.",jsonObjectGetHandler.getAllParams().contains(new Pair<>("key", "wrong")), is(true));
+        assertThat("GetHandler should have received value=wrong.",jsonObjectGetHandler.getAllParams().contains(new Pair<String, String>("value", "wrong")), is(true));
+        assertThat("GetHandler should have received key=user.",jsonObjectGetHandler.getAllParams().contains(new Pair<String, String>("key", "user")), is(true));
+        assertThat("GetHandler should have received value=pw.",jsonObjectGetHandler.getAllParams().contains(new Pair<String, String>("value", "pw")), is(true));
         //should have seen wrong and wrong as well as user and pw
         assertThat("GetHandler should have received key=wrong and value=wrong.",postBodyHandler.getAllParameters().contains(params1), is(true));
         assertThat("GetHandler should have received key=user and value=pw.",postBodyHandler.getAllParameters().contains(params2), is(true));

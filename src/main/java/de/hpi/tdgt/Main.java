@@ -3,15 +3,17 @@ package de.hpi.tdgt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.hpi.tdgt.deserialisation.Deserializer;
 import de.hpi.tdgt.requesthandling.RestClient;
+import de.hpi.tdgt.test.Test;
 import de.hpi.tdgt.test.story.atom.Data_Generation;
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
 import de.hpi.tdgt.test.time_measurement.TimeStorage;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import org.apache.commons.io.IOUtils;
-import de.hpi.tdgt.test.Test;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
@@ -50,6 +52,10 @@ public class Main {
                 TimeStorage.getInstance().printSummary();
                 log.info("---Assertions---");
                 AssertionStorage.getInstance().printSummary();
+                TimeStorage.getInstance().reset();
+                AssertionStorage.getInstance().reset();
+                //TODO sometimes the program does not terminate here
+                System.exit(0);
             } catch (IOException | ExecutionException e) {
                 log.error(e);
             }

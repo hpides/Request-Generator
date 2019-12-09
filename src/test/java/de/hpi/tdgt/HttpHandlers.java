@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import de.hpi.tdgt.requesthandling.HttpConstants;
+import de.hpi.tdgt.util.Pair;
 import lombok.*;
 import lombok.extern.log4j.Log4j2;
 
@@ -144,18 +145,12 @@ public class HttpHandlers {
             os.close();
         }
     }
-    @AllArgsConstructor
-    @EqualsAndHashCode
-    @Getter
-    public static class Pair{
-        private String key, value;
-    }
     /**
      * Makes request URL Parameters to a JSON Object with the Request keys as keys and their values as values.
      */
     @Getter
     public static class JSONObjectGetHandler  extends HttpHandlerBase implements HttpHandler{
-        private Set<Pair> allParams = new HashSet<>();
+        private Set<Pair<String, String>> allParams = new HashSet<>();
         @Setter
         private int requestsTotal = 0;
         
@@ -170,7 +165,7 @@ public class HttpHandlers {
             String query = requestedUri.getRawQuery();
             parseQuery(query, parameters);
             for(val entry : parameters.entrySet()){
-                allParams.add(new Pair(entry.getKey(), entry.getValue().toString()));
+                allParams.add(new Pair<String, String>(entry.getKey(), entry.getValue().toString()));
             }
             // send response
             StringBuilder responseBuilder = new StringBuilder();
