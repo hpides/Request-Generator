@@ -56,7 +56,7 @@ public class MQTTTest extends RequestHandlingFramework {
         val message = new HashSet<String>();
         publisher.subscribe(topic, (s, mqttMessage) -> {
             //hamcrest can't handle empty sets in the list for contains, so filter them out
-            if(s.equals(topic) && !new String(mqttMessage.getPayload()).equals("{}")) {
+            if(s.equals(topic) && !new String(mqttMessage.getPayload()).equals("{}") && !new String(mqttMessage.getPayload()).isEmpty()) {
                 log.info("Received "+new String(mqttMessage.getPayload()));
                 message.add(new String(mqttMessage.getPayload()));
             }
