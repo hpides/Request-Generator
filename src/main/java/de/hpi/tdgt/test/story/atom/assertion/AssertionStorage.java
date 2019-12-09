@@ -3,10 +3,12 @@ package de.hpi.tdgt.test.story.atom.assertion;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.hpi.tdgt.test.ThreadRecycler;
 import de.hpi.tdgt.test.time_measurement.TimeStorage;
 import de.hpi.tdgt.util.Pair;
 import de.hpi.tdgt.util.PropertiesReader;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -106,8 +108,26 @@ public class AssertionStorage {
 
     @JsonIgnore
     private ObjectMapper mapper = new ObjectMapper();
-
+    /**
+     * If true, times are stored asynch. Else times are stored synchronously.
+     */
+    @Getter
+    @Setter
+    private boolean storeEntriesAsynch = true;
     public void addFailure(String assertionName, String actual) {
+        if(storeEntriesAsynch) {
+            //needs quite some synchronization time and might run some time, so run it async if possible
+            ThreadRecycler.getInstance().getExecutorService().submit(() -> {
+                doAddFailure(assertionName, actual);
+
+            });
+        }
+        else {
+            doAddFailure(assertionName, actual);
+        }
+    }
+
+    private void doAddFailure(String assertionName, String actual) {
         //test was started after reset was called, so restart the thread
         if (reporter == null) {
             reporter = new Thread(mqttRunnable);
@@ -115,7 +135,7 @@ public class AssertionStorage {
             running.set(true);
             reporter.start();
         }
-        Pair<Integer,Set<String>> pair;
+        Pair<Integer, Set<String>> pair;
         synchronized (this) {
             pair = actuals.getOrDefault(assertionName, new Pair<>(0, new ConcurrentSkipListSet<>()));
             int current = pair.getKey();
@@ -139,6 +159,9 @@ public class AssertionStorage {
         actualsLastSecond.clear();
     }
 
+    /**
+     * Prints nice human readable summary to the console
+     */
     public void printSummary() {
         for (val entry : actuals.entrySet()) {
             log.info("Assertion " + entry.getKey() + " failed " + entry.getValue().getKey() + " times.");
@@ -159,21 +182,32 @@ public class AssertionStorage {
         }
     }
 
+    /**
+     * Store unexpected value.
+     * @param assertionName Name of the assertion that failed
+     * @param value actual value
+     */
     private void addActual(String assertionName, String value) {
-        this.actuals.putIfAbsent(assertionName, new Pair<>());
-        this.actualsLastSecond.putIfAbsent(assertionName, new Pair<>());
-        var actuals = this.actuals.get(assertionName).getValue();
-        if (actuals != null) {
-            actuals.add(value);
-        }
-        synchronized (this.actualsLastSecond) {
-            actuals = this.actualsLastSecond.getOrDefault(assertionName, new Pair<>()).getValue();
+
+            this.actuals.putIfAbsent(assertionName, new Pair<>());
+            this.actualsLastSecond.putIfAbsent(assertionName, new Pair<>());
+            var actuals = this.actuals.get(assertionName).getValue();
             if (actuals != null) {
                 actuals.add(value);
             }
-        }
+            synchronized (this.actualsLastSecond) {
+                actuals = this.actualsLastSecond.getOrDefault(assertionName, new Pair<>()).getValue();
+                if (actuals != null) {
+                    actuals.add(value);
+                }
+            }
     }
 
+    /**
+     * Return all unexpected values during the test.
+     * @param assertionName Name of he assertion.
+     * @return Every value exactly once.
+     */
     public Set<String> getActual(String assertionName) {
         return this.actuals.getOrDefault(assertionName, new Pair<>(0, new ConcurrentSkipListSet<>())).getValue();
     }

@@ -2,7 +2,11 @@ package de.hpi.tdgt.test.time_measurement;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.hpi.tdgt.test.Test;
+import de.hpi.tdgt.test.ThreadRecycler;
 import de.hpi.tdgt.util.PropertiesReader;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -24,12 +28,12 @@ public class TimeStorage {
     private final AtomicBoolean running = new AtomicBoolean(true);
     protected TimeStorage() {
 
-        //we want to receive every packet EXACTLY Once
+
 //to clean files
         mqttReporter = () -> {
-            while (running.get() || ! client.isConnected()) {
+            while (running.get()) {
                 //client is null if reset was called
-                if (client == null) {
+                if (client == null || ! client.isConnected()) {
                     String publisherId = UUID.randomUUID().toString();
                     try {
                         //use memory persistence because it is not important that all packets are transferred and we do not want to spam the file system
@@ -46,12 +50,16 @@ public class TimeStorage {
                         client.connect(options);
                     } catch (MqttException e) {
                         log.error("Could not connect to mqtt broker in TimeStorage: ", e);
-                        return;
+                        //clean up
+                        break;
                     }
                 }
                 //client is created and connected
+
+                //prevent error
                 byte[] message = new byte[0];
                 try {
+                    //needs to be synchronized so we do not miss entries
                     synchronized (registeredTimesLastSecond) {
                         message = mapper.writeValueAsString(toMQTTSummaryMap(registeredTimesLastSecond)).getBytes(StandardCharsets.UTF_8);
                         registeredTimesLastSecond.clear();
@@ -60,7 +68,7 @@ public class TimeStorage {
                     log.error(e);
                 }
                 MqttMessage mqttMessage = new MqttMessage(message);
-                //we want to receive every packet EXACTLY Once
+                //we want to receive every packet EXACTLY once
                 mqttMessage.setQos(2);
                 mqttMessage.setRetained(true);
                 try {
@@ -72,7 +80,8 @@ public class TimeStorage {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
-                    return;
+                    //Clean up
+                    break;
                 }
             }
 
@@ -97,25 +106,54 @@ public class TimeStorage {
     public static TimeStorage getInstance() {
         return storage;
     }
-
-    private Map<String, Map<String, Double>> toMQTTSummaryMap(Map<String, ConcurrentHashMap<String, List<Long>>> currentValues) {
+    public static final String THROUGHPUT_STRING="throughput";
+    public static final String MIN_LATENCY_STRING="minLatency";
+    public static final String MAX_LATENCY_STRING="maxLatency";
+    public static final String AVG_LATENCY_STRING="avgLatency";
+    private Map<String, Map<String, Map<String, Double>>> toMQTTSummaryMap(Map<String, ConcurrentHashMap<String, List<Long>>> currentValues) {
         log.trace("Is empty: " + currentValues.isEmpty());
-        Map<String, Map<String, Double>> ret = new HashMap<>();
+        Map<String, Map<String, Map<String, Double>>> ret = new HashMap<>();
         //re-create the structure, but using average of the innermost values
         for (val entry : currentValues.entrySet()) {
             ret.put(entry.getKey(), new HashMap<>());
             for (val innerEntry : entry.getValue().entrySet()) {
-                val sum = innerEntry.getValue().stream().mapToLong(Long::longValue).sum();
-                double avg = sum / innerEntry.getValue().size();
-                ret.get(entry.getKey()).put(innerEntry.getKey(), avg);
+                double avg = innerEntry.getValue().stream().mapToLong(Long::longValue).average().orElse(0);
+                long min = innerEntry.getValue().stream().mapToLong(Long::longValue).min().orElse(0);
+                long max = innerEntry.getValue().stream().mapToLong(Long::longValue).max().orElse(0);
+                //might not be started, we do not want a Nullpointer
+                long throughput = Test.RequestThrottler.getInstance()==null? 0 : Test.RequestThrottler.getInstance().getRequestsPerSecond();
+                HashMap<String, Double> times = new HashMap<>();
+                times.put(THROUGHPUT_STRING, (double) throughput);
+                times.put(MIN_LATENCY_STRING, (double) min);
+                times.put(MAX_LATENCY_STRING, (double) max);
+                times.put(AVG_LATENCY_STRING, avg);
+                ret.get(entry.getKey()).put(innerEntry.getKey(), times);
             }
         }
         return ret;
     }
 
     private ObjectMapper mapper = new ObjectMapper();
-
+    /**
+     * If true, times are stored asynch. Else times are stored synchronously.
+     */
+    @Getter
+    @Setter
+    private boolean storeEntriesAsynch = true;
     public void registerTime(String verb, String addr, long latency) {
+        //in certain situations, e.g. tests, we might wish to disable asynch storage for predictable result.
+        if(storeEntriesAsynch) {
+            //needs quite some synchronization time and might run some time, so run it async if possible
+            ThreadRecycler.getInstance().getExecutorService().submit(() -> {
+                doRegisterTime(verb, addr, latency);
+            });
+        }
+        else {
+            doRegisterTime(verb, addr, latency);
+        }
+    }
+
+    private void doRegisterTime(String verb, String addr, long latency) {
         //test was started after reset was called, so restart the thread
         if (reporter == null) {
             reporter = new Thread(mqttReporter);
@@ -134,6 +172,12 @@ public class TimeStorage {
         }
     }
 
+    /**
+     * Times for a certain endpoint.
+     * @param verb Like POST, GET, ...
+     * @param addr Endpoint
+     * @return Array with all times
+     */
     public Long[] getTimes(String verb, String addr) {
         //stub
         if (registeredTimes.get(addr) == null) {
@@ -145,40 +189,27 @@ public class TimeStorage {
         return registeredTimes.get(addr).get(verb).toArray(new Long[0]);
     }
 
-
+    // min, max, avg over the complete run or 0 if can not be computed
     public Long getMax(String verb, String addr) {
         Long[] values = getTimes(verb, addr);
-        long max = 0;
-        for (long value : values) {
-            if (max < value) {
-                max = value;
-            }
-        }
-        return max;
+        return Arrays.stream(values).mapToLong(Long::longValue).max().orElse(0);
     }
 
     public long getMin(String verb, String addr) {
         Long[] values = getTimes(verb, addr);
-        long min = Long.MAX_VALUE;
-        for (long value : values) {
-            if (min > value) {
-                min = value;
-            }
-        }
-        return min;
+        return Arrays.stream(values).mapToLong(Long::longValue).min().orElse(0);
     }
 
     public double getAvg(String verb, String addr) {
         Long[] values = getTimes(verb, addr);
-        double sum = 0;
-        for (long value : values) {
-            sum += value;
-        }
-        return sum / values.length;
+        return Arrays.stream(values).mapToLong(Long::longValue).average().orElse(0);
     }
 
     private static final double MS_IN_NS = 1000000d;
 
+    /**
+     * Print nice summry to the console
+     */
     public void printSummary() {
         for (val entry : registeredTimes.entrySet()) {
             for (val verbMap : entry.getValue().entrySet()) {
@@ -190,7 +221,7 @@ public class TimeStorage {
     public static final String MQTT_TOPIC = "de.hpi.tdgt.times";
 
     public void reset() {
-        //reset might be called twice
+        //reset might be called twice, so make sure we do not encounter Nullpointer
         if (reporter != null) {
             running.set(false);
             reporter.interrupt();
