@@ -18,6 +18,8 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -129,8 +131,9 @@ public class TimeStorage {
                 times.put(THROUGHPUT_STRING, ""+throughput);
                 times.put(MIN_LATENCY_STRING, ""+min);
                 times.put(MAX_LATENCY_STRING, ""+max);
-                // we do not want to have . as decimal separator on one machine and comma on the other
-                times.put(AVG_LATENCY_STRING, new DecimalFormat("#.0#").format(avg));
+                NumberFormat nf_out = NumberFormat.getNumberInstance(Locale.UK);
+                nf_out.setGroupingUsed(false);
+                times.put(AVG_LATENCY_STRING, nf_out.format(avg));
                 times.put(STORY_STRING, innerEntry.getValue().getValue());
                 ret.get(entry.getKey()).put(innerEntry.getKey(), times);
             }
