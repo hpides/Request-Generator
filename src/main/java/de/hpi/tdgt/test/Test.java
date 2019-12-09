@@ -1,6 +1,8 @@
 package de.hpi.tdgt.test;
 
 import de.hpi.tdgt.test.story.atom.WarmupEnd;
+import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
+import de.hpi.tdgt.test.time_measurement.TimeStorage;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -35,6 +37,10 @@ public class Test {
      * @throws InterruptedException if interrupted in Thread.sleep
      */
     public Collection<Future<?>> warmup() throws InterruptedException {
+        //might have been used by a previous test
+        AssertionStorage.getInstance().reset();
+        TimeStorage.getInstance().reset();
+        
         RequestThrottler.setInstance(this.requests_per_second);
         Thread watchdog = new Thread(RequestThrottler.getInstance());
         watchdog.setPriority(Thread.MAX_PRIORITY);
@@ -115,6 +121,8 @@ public class Test {
         private RequestThrottler(int requestsPerSecond){
             requestLimiter =  new Semaphore(requestsPerSecond,true);
         }
+        //only used for measurement, does not have to be synchronized
+        @Getter
         int requestsPerSecond = 0;
         private static void reset(){
             instance = null;

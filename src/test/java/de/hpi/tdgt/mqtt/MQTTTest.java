@@ -20,6 +20,7 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -31,18 +32,41 @@ import java.util.concurrent.TimeUnit;
 public class MQTTTest extends RequestHandlingFramework {
     private ObjectMapper mapper = new ObjectMapper();
     private IMqttClient publisher;
-
+    @BeforeEach
+    public void beforeEach(){
+        //this test MUST handle asynch behaviour
+        AssertionStorage.getInstance().setStoreEntriesAsynch(true);
+        TimeStorage.getInstance().setStoreEntriesAsynch(true);
+    }
     @Test
     public void TimeStorageStreamsTimesUsingMQTT() throws MqttException, InterruptedException, IOException {
         val messages = prepareClient(TimeStorage.MQTT_TOPIC);
         TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 10);
         Thread.sleep(3000);
-        TypeReference<HashMap<String, HashMap<String, Long>>> typeRef = new TypeReference<>() {};
-        val response = new Vector<HashMap<String, HashMap<String, Double>>>();
+        TypeReference<HashMap<String, HashMap<String, HashMap<String, Double>>>> typeRef = new TypeReference<>() {};
+        val response = new Vector<HashMap<String, HashMap<String, HashMap<String, Double>>>>();
         for(val item : messages){
             response.add(mapper.readValue(item, typeRef));
         }
+
         MatcherAssert.assertThat(response, Matchers.hasItem(Matchers.hasKey("http://localhost:9000/")));
+
+           }
+
+    @Test
+    public void TimeStorageStreamsAllTimesUsingMQTT() throws MqttException, InterruptedException, IOException {
+        val messages = prepareClient(TimeStorage.MQTT_TOPIC);
+        TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 10);
+        Thread.sleep(3000);
+        TypeReference<HashMap<String, HashMap<String, HashMap<String, Double>>>> typeRef = new TypeReference<>() {};
+        val response = new Vector<HashMap<String, HashMap<String, HashMap<String, Double>>>>();
+        for(val item : messages){
+            response.add(mapper.readValue(item, typeRef));
+        }
+        val times = response.get(0).get("http://localhost:9000/").get("POST");
+        //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
+        MatcherAssert.assertThat(times.keySet(), Matchers.containsInAnyOrder(Matchers.equalTo("minLatency"), Matchers.equalTo("throughput"), Matchers.equalTo("maxLatency"), Matchers.equalTo("avgLatency")));
+
     }
 
     private Set<String> prepareClient(final String topic) throws MqttException {
