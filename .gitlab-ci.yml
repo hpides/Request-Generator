@@ -14,8 +14,6 @@ junit:
   script:
     - apt update && apt install -y mosquitto
     - $(which mosquitto) -p 1883 > mosquitto.log 2>&1 &
-    # mosquitto url per default is users
-    - echo "127.0.0.1 users" >> /etc/hosts
     - mvn test
 
 spotbugs:
