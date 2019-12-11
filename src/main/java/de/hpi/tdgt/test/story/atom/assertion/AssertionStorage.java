@@ -36,6 +36,12 @@ public class AssertionStorage {
         mqttRunnable = () -> {
             //recommended way to make the thread stop
             while (running.get()) {
+                //first second starts after start / first entry
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    break;
+                }
                 //will be closed in reset, so might have to be re-created here
                 if (client == null || ! client.isConnected()) {
                     try {
@@ -72,17 +78,13 @@ public class AssertionStorage {
                 mqttMessage.setRetained(true);
                 try {
                     client.publish(AssertionStorage.MQTT_TOPIC, mqttMessage);
-                    log.info(String.format("Transferred %d bytes via mqtt!", message.length));
+                    log.info(String.format("Transferred %d bytes via mqtt to "+MQTT_TOPIC, message.length));
                 } catch (MqttException e) {
                     log.error("Error sending mqtt message in Time_Storage: ", e);
                 }
 
 
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    break;
-                }
+
             }
             //to clean files
             try {

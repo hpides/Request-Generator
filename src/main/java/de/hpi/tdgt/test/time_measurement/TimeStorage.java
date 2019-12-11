@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.hpi.tdgt.test.Test;
 import de.hpi.tdgt.test.ThreadRecycler;
+import de.hpi.tdgt.util.Pair;
 import de.hpi.tdgt.util.PropertiesReader;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,6 +17,9 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 import java.nio.charset.StandardCharsets;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -32,6 +36,13 @@ public class TimeStorage {
 //to clean files
         mqttReporter = () -> {
             while (running.get()) {
+                //first second starts after start / first entry
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    //Clean up
+                    break;
+                }
                 //client is null if reset was called
                 if (client == null || ! client.isConnected()) {
                     String publisherId = UUID.randomUUID().toString();
@@ -77,18 +88,14 @@ public class TimeStorage {
                 } catch (MqttException e) {
                     log.error("Error sending mqtt message in Time_Storage: ", e);
                 }
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    //Clean up
-                    break;
-                }
             }
 
             //to clean files
             try {
-                client.disconnect();
-                client.close();
+                if(client != null) {
+                    client.disconnect();
+                    client.close();
+                }
                 client = null;
             } catch (MqttException e) {
                 e.printStackTrace();
@@ -98,8 +105,18 @@ public class TimeStorage {
         reporter.start();
     }
 
-    private final Map<String, Map<String, List<Long>>> registeredTimes = new ConcurrentHashMap<>();
-    private final Map<String, ConcurrentHashMap<String, List<Long>>> registeredTimesLastSecond = new ConcurrentHashMap<>();
+    /**
+     * Outermost String is the request.
+     * Second string from outside is the method.
+     * Innermost String is story the request belonged to.
+     */
+    private final Map<String, Map<String, Map<String, List<Long>>>> registeredTimes = new ConcurrentHashMap<>();
+    /**
+     * Outermost String is the request.
+     * Second string from outside is the method.
+     * Innermost String is story the request belonged to.
+     */
+    private final Map<String, Map<String, Map<String, List<Long>>>> registeredTimesLastSecond = new ConcurrentHashMap<>();
 
     private static final TimeStorage storage = new TimeStorage();
 
@@ -110,24 +127,30 @@ public class TimeStorage {
     public static final String MIN_LATENCY_STRING="minLatency";
     public static final String MAX_LATENCY_STRING="maxLatency";
     public static final String AVG_LATENCY_STRING="avgLatency";
-    private Map<String, Map<String, Map<String, Double>>> toMQTTSummaryMap(Map<String, ConcurrentHashMap<String, List<Long>>> currentValues) {
+    public static final String STORY_STRING="story";
+    private Map<String, Map<String, Map<String, Map<String, String>>>> toMQTTSummaryMap(Map<String, Map<String, Map<String, List<Long>>>> currentValues) {
         log.trace("Is empty: " + currentValues.isEmpty());
-        Map<String, Map<String, Map<String, Double>>> ret = new HashMap<>();
+        Map<String, Map<String, Map<String, Map<String, String>>>> ret = new HashMap<>();
         //re-create the structure, but using average of the innermost values
         for (val entry : currentValues.entrySet()) {
             ret.put(entry.getKey(), new HashMap<>());
             for (val innerEntry : entry.getValue().entrySet()) {
-                double avg = innerEntry.getValue().stream().mapToLong(Long::longValue).average().orElse(0);
-                long min = innerEntry.getValue().stream().mapToLong(Long::longValue).min().orElse(0);
-                long max = innerEntry.getValue().stream().mapToLong(Long::longValue).max().orElse(0);
-                //might not be started, we do not want a Nullpointer
-                long throughput = Test.RequestThrottler.getInstance()==null? 0 : Test.RequestThrottler.getInstance().getRequestsPerSecond();
-                HashMap<String, Double> times = new HashMap<>();
-                times.put(THROUGHPUT_STRING, (double) throughput);
-                times.put(MIN_LATENCY_STRING, (double) min);
-                times.put(MAX_LATENCY_STRING, (double) max);
-                times.put(AVG_LATENCY_STRING, avg);
-                ret.get(entry.getKey()).put(innerEntry.getKey(), times);
+                ret.get(entry.getKey()).put(innerEntry.getKey(), new HashMap<>());
+                for(val innermostEntry : innerEntry.getValue().entrySet()) {
+                    double avg = innermostEntry.getValue().stream().mapToLong(Long::longValue).average().orElse(0);
+                    long min = innermostEntry.getValue().stream().mapToLong(Long::longValue).min().orElse(0);
+                    long max = innermostEntry.getValue().stream().mapToLong(Long::longValue).max().orElse(0);
+                    //number of times this request was sent this second
+                    long throughput = innermostEntry.getValue().size();
+                    HashMap<String, String> times = new HashMap<>();
+                    times.put(THROUGHPUT_STRING, "" + throughput);
+                    times.put(MIN_LATENCY_STRING, "" + min);
+                    times.put(MAX_LATENCY_STRING, "" + max);
+                    NumberFormat nf_out = NumberFormat.getNumberInstance(Locale.UK);
+                    nf_out.setGroupingUsed(false);
+                    times.put(AVG_LATENCY_STRING, nf_out.format(avg));
+                    ret.get(entry.getKey()).get(innerEntry.getKey()).put(innermostEntry.getKey(), times);
+                }
             }
         }
         return ret;
@@ -140,20 +163,20 @@ public class TimeStorage {
     @Getter
     @Setter
     private boolean storeEntriesAsynch = true;
-    public void registerTime(String verb, String addr, long latency) {
+    public void registerTime(String verb, String addr, long latency, String story) {
         //in certain situations, e.g. tests, we might wish to disable asynch storage for predictable result.
         if(storeEntriesAsynch) {
             //needs quite some synchronization time and might run some time, so run it async if possible
             ThreadRecycler.getInstance().getExecutorService().submit(() -> {
-                doRegisterTime(verb, addr, latency);
+                doRegisterTime(verb, addr, latency, story);
             });
         }
         else {
-            doRegisterTime(verb, addr, latency);
+            doRegisterTime(verb, addr, latency, story);
         }
     }
 
-    private void doRegisterTime(String verb, String addr, long latency) {
+    private void doRegisterTime(String verb, String addr, long latency, String story) {
         //test was started after reset was called, so restart the thread
         if (reporter == null) {
             reporter = new Thread(mqttReporter);
@@ -161,14 +184,17 @@ public class TimeStorage {
             running.set(true);
             reporter.start();
         }
-        registeredTimes.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
-        registeredTimes.get(addr).computeIfAbsent(verb, k -> new Vector<>());
-        registeredTimes.get(addr).get(verb).add(latency);
-        synchronized (registeredTimesLastSecond) {
-            registeredTimesLastSecond.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
-            registeredTimesLastSecond.get(addr).computeIfAbsent(verb, k -> new Vector<>());
-            registeredTimesLastSecond.get(addr).get(verb).add(latency);
-            log.info("Added val: " + registeredTimesLastSecond.isEmpty());
+        //triggers exception
+        if(story != null) {
+            registeredTimes.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
+            registeredTimes.get(addr).computeIfAbsent(verb, k -> new ConcurrentHashMap<>());
+            registeredTimes.get(addr).get(verb).computeIfAbsent(story, k -> new Vector<>()).add(latency);
+            synchronized (registeredTimesLastSecond) {
+                registeredTimesLastSecond.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
+                registeredTimesLastSecond.get(addr).computeIfAbsent(verb, k -> new ConcurrentHashMap<>());
+                registeredTimesLastSecond.get(addr).get(verb).computeIfAbsent(story, k -> new Vector<>()).add(latency);
+                log.info("Added val: " + registeredTimesLastSecond.isEmpty());
+            }
         }
     }
 
@@ -186,7 +212,11 @@ public class TimeStorage {
         if (registeredTimes.get(addr).get(verb) == null) {
             return new Long[0];
         }
-        return registeredTimes.get(addr).get(verb).toArray(new Long[0]);
+        val allTimes = new Vector<Long>();
+        for(val entry : registeredTimes.get(addr).get(verb).entrySet()){
+            allTimes.addAll(entry.getValue());
+        }
+        return allTimes.toArray(new Long[0]);
     }
 
     // min, max, avg over the complete run or 0 if can not be computed
