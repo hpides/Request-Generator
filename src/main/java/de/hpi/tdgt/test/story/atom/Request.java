@@ -113,7 +113,7 @@ public class Request extends Atom {
         
         if (basicAuth == null) {
             try {
-                extractResponseParams(rc.postFormToEndpoint(new URL(this.addr), params));
+                extractResponseParams(rc.postFormToEndpoint(this.getStoryName(), new URL(this.addr), params));
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
@@ -124,7 +124,7 @@ public class Request extends Atom {
         } else {
             try {
                 extractResponseParams(
-                    rc.postFormToEndpointWithAuth(new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
+                    rc.postFormToEndpointWithAuth(this.getStoryName(), new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
                         getKnownParams().get(basicAuth.getPassword()))
                 );
             } catch (MalformedURLException e) {
@@ -202,7 +202,7 @@ public class Request extends Atom {
         
         if (basicAuth == null) {
             try {
-                extractResponseParams(rc.postBodyToEndpoint(new URL(this.addr), jsonParams));
+                extractResponseParams(rc.postBodyToEndpoint(this.getStoryName(), new URL(this.addr), jsonParams));
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
@@ -213,7 +213,7 @@ public class Request extends Atom {
         } else {
             try {
                 extractResponseParams(
-                    rc.postBodyToEndpointWithAuth(new URL(this.addr), jsonParams, getKnownParams().get(basicAuth.getUser()),
+                    rc.postBodyToEndpointWithAuth(this.getStoryName(), new URL(this.addr), jsonParams, getKnownParams().get(basicAuth.getUser()),
                         getKnownParams().get(basicAuth.getPassword()))
                 );
             } catch (MalformedURLException e) {
@@ -244,7 +244,7 @@ public class Request extends Atom {
         
         if (basicAuth == null) {
             try {
-                extractResponseParams(rc.putFormToEndpoint(new URL(this.addr), params));
+                extractResponseParams(rc.putFormToEndpoint(this.getStoryName(), new URL(this.addr), params));
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
@@ -255,7 +255,7 @@ public class Request extends Atom {
         } else {
             try {
                 extractResponseParams(
-                    rc.putFormToEndpointWithAuth(new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
+                    rc.putFormToEndpointWithAuth(this.getStoryName(), new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
                         getKnownParams().get(basicAuth.getPassword()))
                 );
             } catch (MalformedURLException e) {
@@ -283,7 +283,7 @@ public class Request extends Atom {
 
         if (basicAuth == null) {
             try {
-                extractResponseParams(rc.putBodyToEndpoint(new URL(this.addr), jsonParams));
+                extractResponseParams(rc.putBodyToEndpoint(this.getStoryName(), new URL(this.addr), jsonParams));
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
@@ -294,7 +294,7 @@ public class Request extends Atom {
         } else {
             try {
                 extractResponseParams(
-                    rc.putBodyToEndpointWithAuth(new URL(this.addr), jsonParams, getKnownParams().get(basicAuth.getUser()),
+                    rc.putBodyToEndpointWithAuth(this.getStoryName(), new URL(this.addr), jsonParams, getKnownParams().get(basicAuth.getUser()),
                         getKnownParams().get(basicAuth.getPassword()))
                 );
             } catch (MalformedURLException e) {
@@ -317,7 +317,7 @@ public class Request extends Atom {
         
         if (basicAuth == null) {
             try {
-                extractResponseParams(rc.deleteFromEndpoint(new URL(this.addr), params));
+                extractResponseParams(rc.deleteFromEndpoint(this.getStoryName(), new URL(this.addr), params));
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
@@ -327,7 +327,7 @@ public class Request extends Atom {
             }
         } else {
             try {
-               extractResponseParams(rc.deleteFromEndpointWithAuth(new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
+               extractResponseParams(rc.deleteFromEndpointWithAuth(this.getStoryName(),  new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
                     getKnownParams().get(basicAuth.getPassword())));
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
@@ -357,7 +357,7 @@ public class Request extends Atom {
         
         if (basicAuth == null) {
             try {
-                extractResponseParams(rc.getFromEndpoint(new URL(this.addr), params));
+                extractResponseParams(rc.getFromEndpoint(this.getStoryName(), new URL(this.addr), params));
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
@@ -368,7 +368,7 @@ public class Request extends Atom {
         } else {
             try {
                 extractResponseParams(
-                    rc.getFromEndpointWithAuth(new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
+                    rc.getFromEndpointWithAuth(this.getStoryName(), new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
                         getKnownParams().get(basicAuth.getPassword()))
                 );
             } catch (MalformedURLException e) {
@@ -396,7 +396,7 @@ public class Request extends Atom {
 
         if (basicAuth == null) {
             try {
-                extractResponseParams(rc.getBodyFromEndpoint(new URL(this.addr), jsonParams));
+                extractResponseParams(rc.getBodyFromEndpoint(this.getStoryName(), new URL(this.addr), jsonParams));
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
@@ -407,7 +407,7 @@ public class Request extends Atom {
         } else {
             try {
                 extractResponseParams(
-                    rc.getBodyFromEndpointWithAuth(new URL(this.addr), jsonParams, getKnownParams().get(basicAuth.getUser()),
+                    rc.getBodyFromEndpointWithAuth(this.getStoryName(), new URL(this.addr), jsonParams, getKnownParams().get(basicAuth.getUser()),
                         getKnownParams().get(basicAuth.getPassword()))
                 );
             } catch (MalformedURLException e) {

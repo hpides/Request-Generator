@@ -37,4 +37,8 @@ public class Request {
     private boolean form=false;
 
     private String username = null, password = null;
+    /**
+     * To account time to a story.
+     */
+    private String story=null;
 }
