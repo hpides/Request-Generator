@@ -82,6 +82,7 @@ public class MQTTTest extends RequestHandlingFramework {
         for(val item : messages){
             response.add(mapper.readValue(item, typeRef));
         }
+        MatcherAssert.assertThat("We should have 2 story entries for \"story1\" and \"story2\"", response.get(0).get("http://localhost:9000/").get("POST").size(), Matchers.is(2));
         val times1 = response.get(0).get("http://localhost:9000/").get("POST").get(storyName1);
         val times2 = response.get(0).get("http://localhost:9000/").get("POST").get(storyName2);
         //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
