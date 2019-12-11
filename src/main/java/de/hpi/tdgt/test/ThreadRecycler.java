@@ -1,5 +1,6 @@
 package de.hpi.tdgt.test;
 
+import de.hpi.tdgt.util.PropertiesReader;
 import lombok.Getter;
 
 import java.util.concurrent.ExecutorService;
@@ -14,7 +15,8 @@ public class ThreadRecycler {
     }
     @Getter
     private ExecutorService executorService;
-    public static final int THREADS_PER_CPU=10;
+    //so it can be configured easily
+    public final int THREADS_PER_CPU=PropertiesReader.getThreadsPerCPU();
     private ThreadRecycler(){
         int cpus = Runtime.getRuntime().availableProcessors();
         //I/O-heavy program, so threads wait a lot, and we can use more threads that we have CPUs

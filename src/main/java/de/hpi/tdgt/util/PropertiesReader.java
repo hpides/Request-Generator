@@ -20,4 +20,19 @@ public class PropertiesReader {
         }
         return null;
     }
+
+    public static int getThreadsPerCPU(){
+        Properties prop = new Properties();
+        try {
+            //load a properties file from class path, inside static method
+            prop.load(PropertiesReader.class.getClassLoader().getResourceAsStream("application.properties"));
+
+            return Integer.valueOf(prop.getProperty("threads.per.cpu"));
+
+        }
+        catch (IOException ex) {
+            log.error("Could not get threads per cpu: ",ex);
+        }
+        return 1;
+    }
 }
