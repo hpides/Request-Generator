@@ -36,6 +36,13 @@ public class TimeStorage {
 //to clean files
         mqttReporter = () -> {
             while (running.get()) {
+                //first second starts after start / first entry
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    //Clean up
+                    break;
+                }
                 //client is null if reset was called
                 if (client == null || ! client.isConnected()) {
                     String publisherId = UUID.randomUUID().toString();
@@ -80,12 +87,6 @@ public class TimeStorage {
                     log.trace(String.format("Transferred %d bytes via mqtt!", message.length));
                 } catch (MqttException e) {
                     log.error("Error sending mqtt message in Time_Storage: ", e);
-                }
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    //Clean up
-                    break;
                 }
             }
 

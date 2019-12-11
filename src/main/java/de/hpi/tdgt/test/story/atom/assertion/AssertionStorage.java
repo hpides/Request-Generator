@@ -36,6 +36,12 @@ public class AssertionStorage {
         mqttRunnable = () -> {
             //recommended way to make the thread stop
             while (running.get()) {
+                //first second starts after start / first entry
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    break;
+                }
                 //will be closed in reset, so might have to be re-created here
                 if (client == null || ! client.isConnected()) {
                     try {
@@ -78,11 +84,7 @@ public class AssertionStorage {
                 }
 
 
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    break;
-                }
+
             }
             //to clean files
             try {
