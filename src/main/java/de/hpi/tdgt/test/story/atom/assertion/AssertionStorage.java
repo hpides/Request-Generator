@@ -88,8 +88,10 @@ public class AssertionStorage {
             }
             //to clean files
             try {
-                client.disconnect();
-                client.close();
+                if(client != null) {
+                    client.disconnect();
+                    client.close();
+                }
                 client = null;
             } catch (MqttException e) {
                 e.printStackTrace();
