@@ -102,8 +102,18 @@ public class TimeStorage {
         reporter.start();
     }
 
-    private final Map<String, Map<String, Pair<List<Long>, String>>> registeredTimes = new ConcurrentHashMap<>();
-    private final Map<String, ConcurrentHashMap<String, Pair<List<Long>, String>>> registeredTimesLastSecond = new ConcurrentHashMap<>();
+    /**
+     * Outermost String is the request.
+     * Second string from outside is the method.
+     * Innermost String is story the request belonged to.
+     */
+    private final Map<String, Map<String, Map<String, List<Long>>>> registeredTimes = new ConcurrentHashMap<>();
+    /**
+     * Outermost String is the request.
+     * Second string from outside is the method.
+     * Innermost String is story the request belonged to.
+     */
+    private final Map<String, Map<String, Map<String, List<Long>>>> registeredTimesLastSecond = new ConcurrentHashMap<>();
 
     private static final TimeStorage storage = new TimeStorage();
 
@@ -115,27 +125,29 @@ public class TimeStorage {
     public static final String MAX_LATENCY_STRING="maxLatency";
     public static final String AVG_LATENCY_STRING="avgLatency";
     public static final String STORY_STRING="story";
-    private Map<String, Map<String, Map<String, String>>> toMQTTSummaryMap(Map<String, ConcurrentHashMap<String, Pair<List<Long>, String>>> currentValues) {
+    private Map<String, Map<String, Map<String, Map<String, String>>>> toMQTTSummaryMap(Map<String, Map<String, Map<String, List<Long>>>> currentValues) {
         log.trace("Is empty: " + currentValues.isEmpty());
-        Map<String, Map<String, Map<String, String>>> ret = new HashMap<>();
+        Map<String, Map<String, Map<String, Map<String, String>>>> ret = new HashMap<>();
         //re-create the structure, but using average of the innermost values
         for (val entry : currentValues.entrySet()) {
             ret.put(entry.getKey(), new HashMap<>());
             for (val innerEntry : entry.getValue().entrySet()) {
-                double avg = innerEntry.getValue().getKey().stream().mapToLong(Long::longValue).average().orElse(0);
-                long min = innerEntry.getValue().getKey().stream().mapToLong(Long::longValue).min().orElse(0);
-                long max = innerEntry.getValue().getKey().stream().mapToLong(Long::longValue).max().orElse(0);
-                //number of times this request was sent this second
-                long throughput = innerEntry.getValue().getKey().size();
-                HashMap<String, String> times = new HashMap<>();
-                times.put(THROUGHPUT_STRING, ""+throughput);
-                times.put(MIN_LATENCY_STRING, ""+min);
-                times.put(MAX_LATENCY_STRING, ""+max);
-                NumberFormat nf_out = NumberFormat.getNumberInstance(Locale.UK);
-                nf_out.setGroupingUsed(false);
-                times.put(AVG_LATENCY_STRING, nf_out.format(avg));
-                times.put(STORY_STRING, innerEntry.getValue().getValue());
-                ret.get(entry.getKey()).put(innerEntry.getKey(), times);
+                ret.get(entry.getKey()).put(innerEntry.getKey(), new HashMap<>());
+                for(val innermostEntry : innerEntry.getValue().entrySet()) {
+                    double avg = innermostEntry.getValue().stream().mapToLong(Long::longValue).average().orElse(0);
+                    long min = innermostEntry.getValue().stream().mapToLong(Long::longValue).min().orElse(0);
+                    long max = innermostEntry.getValue().stream().mapToLong(Long::longValue).max().orElse(0);
+                    //number of times this request was sent this second
+                    long throughput = innermostEntry.getValue().size();
+                    HashMap<String, String> times = new HashMap<>();
+                    times.put(THROUGHPUT_STRING, "" + throughput);
+                    times.put(MIN_LATENCY_STRING, "" + min);
+                    times.put(MAX_LATENCY_STRING, "" + max);
+                    NumberFormat nf_out = NumberFormat.getNumberInstance(Locale.UK);
+                    nf_out.setGroupingUsed(false);
+                    times.put(AVG_LATENCY_STRING, nf_out.format(avg));
+                    ret.get(entry.getKey()).get(innerEntry.getKey()).put(innermostEntry.getKey(), times);
+                }
             }
         }
         return ret;
@@ -170,13 +182,12 @@ public class TimeStorage {
             reporter.start();
         }
         registeredTimes.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
-        registeredTimes.get(addr).computeIfAbsent(verb, k -> new Pair<>(new Vector<>(), ""));
-        registeredTimes.get(addr).get(verb).getKey().add(latency);
+        registeredTimes.get(addr).computeIfAbsent(verb, k -> new ConcurrentHashMap<>());
+        registeredTimes.get(addr).get(verb).computeIfAbsent(story, k -> new Vector<>()).add(latency);
         synchronized (registeredTimesLastSecond) {
             registeredTimesLastSecond.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
-            registeredTimesLastSecond.get(addr).computeIfAbsent(verb, k -> new Pair<>(new Vector<>(), ""));
-            registeredTimesLastSecond.get(addr).get(verb).getKey().add(latency);
-            registeredTimesLastSecond.get(addr).get(verb).setValue(story);
+            registeredTimesLastSecond.get(addr).computeIfAbsent(verb, k -> new ConcurrentHashMap<>());
+            registeredTimesLastSecond.get(addr).get(verb).computeIfAbsent(story, k -> new Vector<>()).add(latency);
             log.info("Added val: " + registeredTimesLastSecond.isEmpty());
         }
     }
@@ -195,7 +206,11 @@ public class TimeStorage {
         if (registeredTimes.get(addr).get(verb) == null) {
             return new Long[0];
         }
-        return registeredTimes.get(addr).get(verb).getKey().toArray(new Long[0]);
+        val allTimes = new Vector<Long>();
+        for(val entry : registeredTimes.get(addr).get(verb).entrySet()){
+            allTimes.addAll(entry.getValue());
+        }
+        return allTimes.toArray(new Long[0]);
     }
 
     // min, max, avg over the complete run or 0 if can not be computed

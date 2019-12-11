@@ -48,7 +48,7 @@ public abstract class Atom implements Cloneable {
     private int predecessorsReady;
 
     @JsonIgnore
-    private Map<String, String> knownParams = new HashMap<>();
+    private final Map<String, String> knownParams = new HashMap<>();
 
     //do not try to read this from json, no accessors --> only used internally
     @JsonIgnore

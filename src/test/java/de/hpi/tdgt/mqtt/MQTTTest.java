@@ -43,8 +43,8 @@ public class MQTTTest extends RequestHandlingFramework {
         val messages = prepareClient(TimeStorage.MQTT_TOPIC);
         TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 10, "story");
         Thread.sleep(3000);
-        TypeReference<HashMap<String, HashMap<String, HashMap<String, String>>>> typeRef = new TypeReference<>() {};
-        val response = new Vector<HashMap<String, HashMap<String, HashMap<String, String>>>>();
+        TypeReference<Map<String, Map<String, Map<String, Map<String, String>>>>> typeRef = new TypeReference<>() {};
+        val response = new Vector<Map<String, Map<String, Map<String, Map<String, String>>>>>();
         for(val item : messages){
             response.add(mapper.readValue(item, typeRef));
         }
@@ -56,16 +56,39 @@ public class MQTTTest extends RequestHandlingFramework {
     @Test
     public void TimeStorageStreamsAllTimesUsingMQTT() throws MqttException, InterruptedException, IOException {
         val messages = prepareClient(TimeStorage.MQTT_TOPIC);
-        TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 10, "story");
+        String storyName = "story";
+        TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 10, storyName);
         Thread.sleep(3000);
-        TypeReference<HashMap<String, HashMap<String, HashMap<String, String>>>> typeRef = new TypeReference<>() {};
-        val response = new Vector<HashMap<String, HashMap<String, HashMap<String, String>>>>();
+        TypeReference<Map<String, Map<String, Map<String, Map<String, String>>>>> typeRef = new TypeReference<>() {};
+        val response = new Vector<Map<String, Map<String, Map<String, Map<String, String>>>>>();
         for(val item : messages){
             response.add(mapper.readValue(item, typeRef));
         }
-        val times = response.get(0).get("http://localhost:9000/").get("POST");
+        val times = response.get(0).get("http://localhost:9000/").get("POST").get(storyName);
         //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
-        MatcherAssert.assertThat(times.keySet(), Matchers.containsInAnyOrder(Matchers.equalTo("minLatency"), Matchers.equalTo("throughput"), Matchers.equalTo("maxLatency"), Matchers.equalTo("avgLatency"), Matchers.equalTo("story")));
+        MatcherAssert.assertThat(times.keySet(), Matchers.containsInAnyOrder(Matchers.equalTo("minLatency"), Matchers.equalTo("throughput"), Matchers.equalTo("maxLatency"), Matchers.equalTo("avgLatency")));
+
+    }
+    @Test
+    public void TimeStorageStreamsAllTimesOfAllStoriesUsingMQTT() throws MqttException, InterruptedException, IOException {
+        val messages = prepareClient(TimeStorage.MQTT_TOPIC);
+        String storyName1 = "story1";
+        String storyName2 = "story2";
+        TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 10, storyName1);
+        TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 20, storyName2);
+        Thread.sleep(3000);
+        TypeReference<Map<String, Map<String, Map<String, Map<String, String>>>>> typeRef = new TypeReference<>() {};
+        val response = new Vector<Map<String, Map<String, Map<String, Map<String, String>>>>>();
+        for(val item : messages){
+            response.add(mapper.readValue(item, typeRef));
+        }
+        val times1 = response.get(0).get("http://localhost:9000/").get("POST").get(storyName1);
+        val times2 = response.get(0).get("http://localhost:9000/").get("POST").get(storyName2);
+        //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
+        MatcherAssert.assertThat(times1.keySet(), Matchers.containsInAnyOrder(Matchers.equalTo("minLatency"), Matchers.equalTo("throughput"), Matchers.equalTo("maxLatency"), Matchers.equalTo("avgLatency")));
+        MatcherAssert.assertThat(times2.keySet(), Matchers.containsInAnyOrder(Matchers.equalTo("minLatency"), Matchers.equalTo("throughput"), Matchers.equalTo("maxLatency"), Matchers.equalTo("avgLatency")));
+        MatcherAssert.assertThat(times1, Matchers.hasEntry("maxLatency", "10"));
+        MatcherAssert.assertThat(times2, Matchers.hasEntry("maxLatency", "20"));
 
     }
     @Test
@@ -81,14 +104,14 @@ public class MQTTTest extends RequestHandlingFramework {
         getWithAuth.setStoryName(name);
         getWithAuth.run(params);
         Thread.sleep(3000);
-        TypeReference<HashMap<String, HashMap<String, HashMap<String, String>>>> typeRef = new TypeReference<>() {};
-        val response = new Vector<HashMap<String, HashMap<String, HashMap<String, String>>>>();
+        TypeReference<Map<String, Map<String, Map<String, Map<String, String>>>>> typeRef = new TypeReference<>() {};
+        val response = new Vector<Map<String, Map<String, Map<String, Map<String, String>>>>>();
         for(val item : messages){
             response.add(mapper.readValue(item, typeRef));
         }
         val times = response.get(0).get("http://localhost:9000/auth").get("GET");
         //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
-        MatcherAssert.assertThat(times, Matchers.hasEntry("story", name));
+        MatcherAssert.assertThat(times, Matchers.hasKey( name));
     }
     @Test
     public void TimeStorageStreamsAllTimesUsingMQTTWithCorrectThroughput() throws MqttException, InterruptedException, IOException, ExecutionException {
@@ -103,12 +126,12 @@ public class MQTTTest extends RequestHandlingFramework {
         getWithAuth.setStoryName(name);
         getWithAuth.run(params);
         Thread.sleep(3000);
-        TypeReference<HashMap<String, HashMap<String, HashMap<String, String>>>> typeRef = new TypeReference<>() {};
-        val response = new Vector<HashMap<String, HashMap<String, HashMap<String, String>>>>();
+        TypeReference<Map<String, Map<String, Map<String, Map<String, String>>>>> typeRef = new TypeReference<>() {};
+        val response = new Vector<Map<String, Map<String, Map<String, Map<String, String>>>>>();
         for(val item : messages){
             response.add(mapper.readValue(item, typeRef));
         }
-        val times = response.get(0).get("http://localhost:9000/auth").get("GET");
+        val times = response.get(0).get("http://localhost:9000/auth").get("GET").get(name);
         //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
         MatcherAssert.assertThat(times, Matchers.hasEntry("throughput", "1"));
     }
