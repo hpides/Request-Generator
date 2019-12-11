@@ -92,8 +92,10 @@ public class TimeStorage {
 
             //to clean files
             try {
-                client.disconnect();
-                client.close();
+                if(client != null) {
+                    client.disconnect();
+                    client.close();
+                }
                 client = null;
             } catch (MqttException e) {
                 e.printStackTrace();
@@ -182,14 +184,17 @@ public class TimeStorage {
             running.set(true);
             reporter.start();
         }
-        registeredTimes.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
-        registeredTimes.get(addr).computeIfAbsent(verb, k -> new ConcurrentHashMap<>());
-        registeredTimes.get(addr).get(verb).computeIfAbsent(story, k -> new Vector<>()).add(latency);
-        synchronized (registeredTimesLastSecond) {
-            registeredTimesLastSecond.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
-            registeredTimesLastSecond.get(addr).computeIfAbsent(verb, k -> new ConcurrentHashMap<>());
-            registeredTimesLastSecond.get(addr).get(verb).computeIfAbsent(story, k -> new Vector<>()).add(latency);
-            log.info("Added val: " + registeredTimesLastSecond.isEmpty());
+        //triggers exception
+        if(story != null) {
+            registeredTimes.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
+            registeredTimes.get(addr).computeIfAbsent(verb, k -> new ConcurrentHashMap<>());
+            registeredTimes.get(addr).get(verb).computeIfAbsent(story, k -> new Vector<>()).add(latency);
+            synchronized (registeredTimesLastSecond) {
+                registeredTimesLastSecond.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
+                registeredTimesLastSecond.get(addr).computeIfAbsent(verb, k -> new ConcurrentHashMap<>());
+                registeredTimesLastSecond.get(addr).get(verb).computeIfAbsent(story, k -> new Vector<>()).add(latency);
+                log.info("Added val: " + registeredTimesLastSecond.isEmpty());
+            }
         }
     }
 
