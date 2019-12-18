@@ -13,6 +13,7 @@ junit:
     - BP-TDGT-CI
   script:
     - apt update && apt install -y mosquitto
+    - mkdir -p /mosquitto/config/
     - cp ./mosquitto/* /mosquitto/config/
     - $(which mosquitto) -p 1883 > mosquitto.log 2>&1 &
     # config assumes broker is running on same machine as System under Test, so we need this environment for the tests
