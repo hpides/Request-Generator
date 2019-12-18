@@ -14,8 +14,8 @@ junit:
   script:
     - apt update && apt install -y mosquitto
     - mkdir -p /mosquitto/config/
-    - cp ./mosquitto/* /mosquitto/config/
-    - $(which mosquitto) -p 1883 > mosquitto.log 2>&1 &
+    - cp ./mosquitto/mosquitto.conf /mosquitto/config/
+    - $(which mosquitto) -c /mosquitto/config/mosquitto.conf -p 1883 > mosquitto.log 2>&1 &
     # config assumes broker is running on same machine as System under Test, so we need this environment for the tests
     - echo "127.0.0.1 users" >> /etc/hosts
     - mvn test
