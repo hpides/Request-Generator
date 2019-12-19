@@ -158,8 +158,8 @@ public class Request extends Atom {
             }
         }
         else {
-            log.warn("Not JSON! Response is ignored.");
-            log.warn(result);
+            log.trace("Not JSON! Response is ignored.");
+            log.trace(result);
         }
         //check assertions after request
         for(val assertion : assertions){

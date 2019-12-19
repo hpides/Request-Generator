@@ -34,6 +34,7 @@ public class TestWarmup extends RequestHandlingFramework {
 
     @Test
     public void testWarmupCallsNoOtherActivities() throws InterruptedException, ExecutionException {
+
         val threads = warmupTest.warmup();
         for(val handler : handlers) {
             if(!(handler instanceof HttpHandlers.PostBodyHandler)) {

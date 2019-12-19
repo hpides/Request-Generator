@@ -6,7 +6,16 @@ import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CountingInputStream;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.*;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.AbstractHttpMessage;
 
+import javax.annotation.Nullable;
 import java.io.*;
 import java.net.*;
 import java.net.HttpURLConnection;
@@ -28,7 +37,7 @@ public class RestClient {
         request.setParams(getParams);
         request.setMethod(HttpConstants.GET);
         request.setStory(story);
-        return exchangeWithEndpoint(request);
+        return exchangeWithEndpoint(request, new HttpGet(appendGetParametersToUrlIfNecessary(url,getParams,HttpConstants.GET).toString()));
     }
 
     public RestResult getBodyFromEndpoint(String story, URL url, String body) throws IOException {
@@ -38,7 +47,7 @@ public class RestClient {
         request.setBody(body);
         request.setForm(false);
         request.setStory(story);
-        return exchangeWithEndpoint(request);
+        return exchangeWithEndpoint(request, new HttpGet(url.toString()));
     }
 
     public RestResult postFormToEndpoint(String story, URL url, Map<String, String> getParams) throws IOException {
@@ -48,7 +57,7 @@ public class RestClient {
         request.setMethod(HttpConstants.POST);
         request.setForm(true);
         request.setStory(story);
-        return exchangeWithEndpoint(request);
+        return exchangeWithEndpoint(request, new HttpPost(url.toString()));
     }
 
     public RestResult postBodyToEndpoint(String story, URL url, String body) throws IOException {
@@ -58,7 +67,7 @@ public class RestClient {
         request.setForm(false);
         request.setBody(body);
         request.setStory(story);
-        return exchangeWithEndpoint(request);
+        return exchangeWithEndpoint(request, new HttpPost(url.toString()));
     }
 
     public RestResult putFormToEndpoint(String story, URL url, Map<String, String> getParams) throws IOException {
@@ -68,7 +77,7 @@ public class RestClient {
         request.setMethod(HttpConstants.PUT);
         request.setForm(true);
         request.setStory(story);
-        return exchangeWithEndpoint(request);
+        return exchangeWithEndpoint(request, new HttpPut(url.toString()));
     }
 
     public RestResult putBodyToEndpoint(String story, URL url, String body) throws IOException {
@@ -78,7 +87,7 @@ public class RestClient {
         request.setForm(false);
         request.setBody(body);
         request.setStory(story);
-        return exchangeWithEndpoint(request);
+        return exchangeWithEndpoint(request, new HttpPut(url.toString()));
     }
 
     public RestResult getFromEndpointWithAuth(String story, URL url, Map<String, String> getParams, String username, String password) throws IOException {
@@ -89,7 +98,7 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
-        return exchangeWithEndpoint(request);
+        return exchangeWithEndpoint(request, new HttpGet(appendGetParametersToUrlIfNecessary(url, getParams, HttpConstants.GET).toString()));
     }
 
     public RestResult getBodyFromEndpointWithAuth(String story, URL url, String body, String username, String password) throws IOException {
@@ -101,7 +110,7 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
-        return exchangeWithEndpoint(request);
+        return exchangeWithEndpoint(request, new HttpGet(url.toString()));
     }
 
     public RestResult postFormToEndpointWithAuth(String story, URL url, Map<String, String> getParams, String username, String password) throws IOException {
@@ -113,7 +122,7 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
-        return exchangeWithEndpoint(request);
+        return exchangeWithEndpoint(request, new HttpPost(url.toString()));
     }
 
     public RestResult postBodyToEndpointWithAuth(String story, URL url, String body, String username, String password) throws IOException {
@@ -125,7 +134,7 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
-        return exchangeWithEndpoint(request);
+        return exchangeWithEndpoint(request, new HttpPost(url.toString()));
     }
 
     public RestResult putFormToEndpointWithAuth(String story, URL url, Map<String, String> getParams, String username, String password) throws IOException {
@@ -137,7 +146,7 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
-        return exchangeWithEndpoint(request);
+        return exchangeWithEndpoint(request, new HttpPut(url.toString()));
     }
 
     public RestResult putBodyToEndpointWithAuth(String story, URL url, String body, String username, String password) throws IOException {
@@ -149,7 +158,7 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
-        return exchangeWithEndpoint(request);
+        return exchangeWithEndpoint(request, new HttpPut(url.toString()));
     }
 
     public RestResult deleteFromEndpoint(String story, URL url, Map<String, String> getParams) throws IOException {
@@ -157,7 +166,7 @@ public class RestClient {
         request.setUrl(url);
         request.setParams(getParams);
         request.setMethod(HttpConstants.DELETE);
-        return exchangeWithEndpoint(request);
+        return exchangeWithEndpoint(request, new HttpDelete(appendGetParametersToUrlIfNecessary(url,getParams,HttpConstants.DELETE).toString()));
     }
 
     public RestResult deleteFromEndpointWithAuth(String story, URL url, Map<String, String> getParams, String username, String password) throws IOException {
@@ -168,40 +177,36 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
-        return exchangeWithEndpoint(request);
+        return exchangeWithEndpoint(request, new HttpDelete(appendGetParametersToUrlIfNecessary(url,getParams,HttpConstants.DELETE).toString()));
     }
-
+    private final HttpClient client = HttpClients.createDefault();
     //above methods are for user's convenience, this method does the actual request
-    public RestResult exchangeWithEndpoint(Request request) throws IOException {
+    public RestResult exchangeWithEndpoint(Request request, HttpRequestBase message) throws IOException {
         //append GET parameters if necessary
         URL url = appendGetParametersToUrlIfNecessary(request.getUrl(), request.getParams(), request.getMethod());
 
         //set given properties
-        final HttpURLConnection httpURLConnection = prepareHttpUrlConnection(url, request.getMethod(), request.isFollowsRedirects(), request.getConnectTimeout(), request.getResponseTimeout(), request.isSendKeepAlive());
+        val config = prepareHttpUrlConnection(request.isFollowsRedirects(), request.getConnectTimeout(), request.getResponseTimeout(), request.isSendKeepAlive());
         int retry;
-        val start = System.nanoTime();
+        if(request.isSendKeepAlive()){
+            message.setHeader(HttpConstants.HEADER_CONNECTION, HttpConstants.KEEP_ALIVE);
+        }
         //set auth header if required
         if (request.getUsername() != null && request.getPassword() != null) {
-            httpURLConnection.setRequestProperty(HttpConstants.HEADER_AUTHORIZATION, "Basic "+Base64.getEncoder().encodeToString((request.getUsername() + ":" + request.getPassword()).getBytes(StandardCharsets.UTF_8)));
+            message.setHeader(HttpConstants.HEADER_AUTHORIZATION, "Basic "+Base64.getEncoder().encodeToString((request.getUsername() + ":" + request.getPassword()).getBytes(StandardCharsets.UTF_8)));
         }
         //set POST Body to contain formencoded data
-        if (request.isForm() && (request.getMethod().equals(HttpConstants.POST) || request.getMethod().equals(HttpConstants.PUT))) {
-            httpURLConnection.setRequestProperty("Content-Type", HttpConstants.APPLICATION_X_WWW_FORM_URLENCODED);
+        if (request.isForm() && message instanceof HttpEntityEnclosingRequestBase) {
+            message.setHeader("Content-Type", HttpConstants.APPLICATION_X_WWW_FORM_URLENCODED);
             String body = mapToURLEncodedString(request.getParams()).toString();
-            httpURLConnection.setDoOutput(true);
-            OutputStream out = httpURLConnection.getOutputStream();
-            out.write(body.getBytes(StandardCharsets.UTF_8));
-            out.flush();
-            out.close();
+            val messageRepr = (HttpEntityEnclosingRequestBase) message;
+            messageRepr.setEntity(new ByteArrayEntity(body.getBytes(StandardCharsets.UTF_8)));
         }
         //set POST body to what was passed
-        if (!request.isForm() && (request.getMethod().equals(HttpConstants.POST) || request.getMethod().equals(HttpConstants.PUT) || request.getMethod().equals(HttpConstants.GET)) && request.getBody() != null) {
-            httpURLConnection.setRequestProperty("Content-Type", HttpConstants.CONTENT_TYPE_APPLICATION_JSON);
-            httpURLConnection.setDoOutput(true);
-            OutputStream out = httpURLConnection.getOutputStream();
-            out.write(request.getBody().getBytes(StandardCharsets.UTF_8));
-            out.flush();
-            out.close();
+        if (!request.isForm() && message instanceof HttpEntityEnclosingRequestBase && request.getBody() != null) {
+            message.setHeader("Content-Type", HttpConstants.CONTENT_TYPE_APPLICATION_JSON);
+            val messageRepr = (HttpEntityEnclosingRequestBase) message;
+            messageRepr.setEntity(new ByteArrayEntity(request.getBody().getBytes(StandardCharsets.UTF_8)));
         }
         if(Test.RequestThrottler.getInstance() != null) {
             try {
@@ -213,10 +218,12 @@ public class RestClient {
         else {
             log.warn("Internal error: Can not limit requests per second!");
         }
+        HttpResponse response = null;
         //try to connect
+        val start = System.nanoTime();
         for (retry = -1; retry < request.getRetries(); retry++) {
             try {
-                httpURLConnection.connect();
+                response = client.execute(message);
                 break;
             } catch (SocketTimeoutException s) {
                 log.warn("Request timeout for URL " + url.toString() + " (connect timeout was " + request.getConnectTimeout() + ").");
@@ -232,26 +239,21 @@ public class RestClient {
         //got a connection
         val result = new RestResult();
         result.setStartTime(start);
-        readResponse(httpURLConnection, result, request);
+        readResponse(response, result, request);
 
         return result;
     }
 
-    private HttpURLConnection prepareHttpUrlConnection(URL url, String method, boolean followsRedirects, int connectTimeout, int responseTimeout, boolean sendKeepAlive) throws IOException {
-        final HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-        httpURLConnection.setInstanceFollowRedirects(followsRedirects);
+    private RequestConfig prepareHttpUrlConnection(boolean followsRedirects, int connectTimeout, int responseTimeout, boolean sendKeepAlive) throws IOException {
+        final RequestConfig.Builder config = RequestConfig.custom();
+        config.setRedirectsEnabled(followsRedirects);
         if (connectTimeout > 0) {
-            httpURLConnection.setConnectTimeout(connectTimeout);
+            config.setConnectTimeout(connectTimeout);
         }
         if (responseTimeout > 0) {
-            httpURLConnection.setReadTimeout(responseTimeout);
+            config.setSocketTimeout(responseTimeout);
         }
-        if (sendKeepAlive) {
-            httpURLConnection.setRequestProperty(HttpConstants.HEADER_CONNECTION, HttpConstants.KEEP_ALIVE);
-        }
-        //TODO headers like content type
-        httpURLConnection.setRequestMethod(method);
-        return httpURLConnection;
+        return config.build();
     }
 
     private URL appendGetParametersToUrlIfNecessary(URL url, Map<String, String> params, String method) throws MalformedURLException {
@@ -291,92 +293,19 @@ public class RestClient {
      * Taken from jmeter.
      * Reads the response from the URL connection.
      *
-     * @param conn URL from which to read response
+     * @param response http response
      * @param res  {@link RestResult} to read response into
-     * @return response content
      * @throws IOException if an I/O exception occurs
      */
-    private void readResponse(HttpURLConnection conn, RestResult res, Request request) throws IOException {
-        BufferedInputStream in = null;
-
-        //final long contentLength = conn.getContentLength();
-        //might return nullbyte here if we do not need actual content
-
-        // works OK even if ContentEncoding is null
-        boolean gzipped = HttpConstants.ENCODING_GZIP.equals(conn.getContentEncoding());
-        CountingInputStream instream = null;
-        try {
-            instream = new CountingInputStream(conn.getInputStream());
-            if (gzipped) {
-                in = new BufferedInputStream(new GZIPInputStream(instream));
-            } else {
-                in = new BufferedInputStream(instream);
-            }
-        } catch (IOException e) {
-            if (!(e.getCause() instanceof FileNotFoundException)) {
-                Throwable cause = e.getCause();
-                if (cause != null) {
-                    //log.error("Cause: {}", cause.toString());
-                    if (cause instanceof Error) {
-                        throw (Error) cause;
-                    }
-                }
-            }
-            // Normal InputStream is not available
-            InputStream errorStream = conn.getErrorStream();
-            if (errorStream == null) {
-                res.setResponse(NULL_BA);
-                res.setEndTime(System.nanoTime());
-                res.setContentType(conn.getContentType());
-                res.setHeaders(conn.getHeaderFields());
-                res.setReturnCode(conn.getResponseCode());
-            }
-            if (log.isInfoEnabled()) {
-                if(conn.getResponseCode() == 401 || conn.getResponseCode() == 403){
-                    log.info("Error Response Code: " + conn.getResponseCode() + "for "+request.getMethod() +" "+request.getUrl() + " for used authentication "+request.getUsername()+":"+request.getPassword());
-                }
-                else{
-                    log.info("Error Response Code: " + conn.getResponseCode() + "for "+request.getMethod() +" "+request.getUrl());
-                }
-                if(errorStream != null){
-                    log.warn("Error Response Content: ",IOUtils.toString(errorStream, "UTF-8") );
-                }
-            }
-
-            if (gzipped) {
-                if (errorStream != null) {
-                    in = new BufferedInputStream(new GZIPInputStream(errorStream));
-                }
-            } else {
-                if (errorStream != null) {
-                    in = new BufferedInputStream(errorStream);
-                }
-            }
-        } catch (Exception e) {
-            Throwable cause = e.getCause();
-            if (cause != null) {
-                if (cause instanceof Error) {
-                    throw (Error) cause;
-                }
-            }
-            in = new BufferedInputStream(conn.getErrorStream());
-        }
-        // N.B. this closes 'in'
-        var responseData = NULL_BA;
-        if (in != null) {
-            responseData = IOUtils.toByteArray(in);
-            in.close();
-        }
-        if (instream != null) {
-            instream.close();
-        }
+    private void readResponse(@Nullable HttpResponse response, RestResult res, Request request) throws IOException {
         //got results, store them and the time
-        //TODO do we want to measure the time to transfer the data? Currently we are, but we could also take the time after retrieving content length
-        res.setResponse(responseData);
+        if(response!=null) {
+            res.setResponse(response.getEntity().getContent().readAllBytes());
+            res.setContentType(response.getEntity().getContentType().getValue());
+            res.setHeaders(response.getAllHeaders());
+            res.setReturnCode(response.getStatusLine().getStatusCode());
+        }
         res.setEndTime(System.nanoTime());
-        res.setContentType(conn.getContentType());
-        res.setHeaders(conn.getHeaderFields());
-        res.setReturnCode(conn.getResponseCode());
         storage.registerTime(request.getMethod(), request.getUrl().toString(), res.durationNanos(), request.getStory());
         log.info("Request took "+res.durationMillis()+" ms.");
     }
