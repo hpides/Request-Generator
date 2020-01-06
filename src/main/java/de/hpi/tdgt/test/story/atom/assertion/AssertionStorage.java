@@ -57,6 +57,8 @@ public class AssertionStorage {
                     options.setConnectionTimeout(10);
                     try {
                         client.connect(options);
+                        //clear retained messages from last test
+                        client.publish(MQTT_TOPIC, new byte[0],0,true);
                     } catch (MqttException e) {
                         log.error("Could not connect to mqtt broker in AssertionStorage: ", e);
                         break;
@@ -89,6 +91,8 @@ public class AssertionStorage {
             //to clean files
             try {
                 if(client != null) {
+                    //clear retained messages for next test
+                    client.publish(MQTT_TOPIC, new byte[0],0,true);
                     client.disconnect();
                     client.close();
                 }

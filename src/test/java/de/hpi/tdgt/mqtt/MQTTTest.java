@@ -264,4 +264,22 @@ public class MQTTTest extends RequestHandlingFramework {
         actuals.add("");
         MatcherAssert.assertThat(readResponse(message), Matchers.contains(Matchers.hasEntry("jsonObject returns something", new Pair<>(1, actuals))));
     }
+
+    @Test
+    public void ATestStartMessageIsSent() throws MqttException, InterruptedException, ExecutionException, IOException {
+        val message = prepareClient(de.hpi.tdgt.test.Test.MQTT_TOPIC);
+        //test that does not do anything is sufficient, no need to waste resources here
+        de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getNoopJson());
+        test.start(test.warmup());
+        MatcherAssert.assertThat("control topic should have received a \"testStart\"!",message.contains("testStart"));
+    }
+
+    @Test
+    public void ATestEndMessageIsSent() throws MqttException, InterruptedException, ExecutionException, IOException {
+        val message = prepareClient(de.hpi.tdgt.test.Test.MQTT_TOPIC);
+        //test that does not do anything is sufficient, no need to waste resources here
+        de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getNoopJson());
+        test.start(test.warmup());
+        MatcherAssert.assertThat("control topic should have received a \"testEnd\"!",message.contains("testEnd"));
+    }
 }
