@@ -16,7 +16,7 @@ public class ThreadRecycler {
     @Getter
     private ExecutorService executorService;
     //so it can be configured easily
-    public final int THREADS_PER_CPU=PropertiesReader.getThreadsPerCPU();
+    public final Integer THREADS_PER_CPU=PropertiesReader.getThreadsPerCPU();
     private ThreadRecycler(){
         int cpus = Runtime.getRuntime().availableProcessors();
         //I/O-heavy program, so threads wait a lot, and we can use more threads that we have CPUs

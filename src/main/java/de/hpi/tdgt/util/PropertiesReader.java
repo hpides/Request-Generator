@@ -21,7 +21,7 @@ public class PropertiesReader {
         return null;
     }
 
-    public static int getThreadsPerCPU(){
+    public static Integer getThreadsPerCPU(){
         Properties prop = new Properties();
         try {
             //load a properties file from class path, inside static method

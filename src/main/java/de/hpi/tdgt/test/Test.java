@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -83,7 +84,7 @@ public class Test {
     public void start(Collection<Future<?>> threadsFromWarmup) throws InterruptedException, ExecutionException {
         prepareMqttClient();
         try {
-            client.publish(MQTT_TOPIC, "testStart".getBytes(),2,true);
+            client.publish(MQTT_TOPIC, "testStart".getBytes(StandardCharsets.UTF_8),2,true);
         } catch (MqttException e) {
             log.error("Could not send control start message: ", e);
         }
@@ -106,7 +107,7 @@ public class Test {
         //remove global state
         RequestThrottler.reset();
         try {
-            client.publish(MQTT_TOPIC, "testEnd".getBytes(),2,true);
+            client.publish(MQTT_TOPIC, "testEnd".getBytes(StandardCharsets.UTF_8),2,true);
         } catch (MqttException e) {
             log.error("Could not send control end message: ", e);
         }
