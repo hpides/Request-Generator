@@ -1,0 +1,21 @@
+{
+  "repeat": 1,
+  "scaleFactor": 10,
+  "requests_per_second": 10,
+  "stories": [
+    {
+      "scalePercentage": 0.7,
+      "name": "A Story",
+      "atoms": [
+        {
+          "name": "Start",
+          "id": 0,
+          "repeat": 1,
+          "successors": [
+          ],
+          "type": "START"
+        }
+      ]
+    }
+  ]
+}

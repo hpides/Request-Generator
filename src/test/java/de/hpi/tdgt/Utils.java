@@ -13,6 +13,11 @@ public class Utils {
         IOUtils.copy(getClass().getResourceAsStream("test_config_example.json"), writer);
         return writer.toString();
     }
+    public String getNoopJson() throws IOException {
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(getClass().getResourceAsStream("NoopTest.json"), writer);
+        return writer.toString();
+    }
 
     public String getRequestExampleJSON() throws IOException {
         StringWriter writer = new StringWriter();

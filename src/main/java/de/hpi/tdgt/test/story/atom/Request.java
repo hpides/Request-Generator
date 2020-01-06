@@ -153,8 +153,8 @@ public class Request extends Atom {
                 getKnownParams().putAll(toStringMap(map));
             }
             else{
-                log.warn("I can not handle Arrays.");
-                log.warn(result);
+                log.info("I can not handle Arrays.");
+                log.info(result);
             }
         }
         else {
