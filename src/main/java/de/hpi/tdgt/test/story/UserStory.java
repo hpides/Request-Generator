@@ -1,5 +1,6 @@
 package de.hpi.tdgt.test.story;
 
+import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.strands.SuspendableRunnable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.hpi.tdgt.test.ThreadRecycler;
@@ -43,33 +44,23 @@ public class UserStory implements SuspendableRunnable, Cloneable{
         Arrays.stream(story.getAtoms()).forEach(atom -> atom.initSuccessors(story));
         return story;
     }
-    
-    @Override
-    public void run() {
-        Runnable storyRunnable = new Runnable() {
-            @Override
-            public void run() {
 
-                try {
-                    UserStory clone;
-                    synchronized (this) {
-                        clone = UserStory.this.clone();
-                    }
-                    log.info("Running story " + clone.getName() + " in thread " + Thread.currentThread().getId());
-                    try {
-                        clone.getAtoms()[0].run(new HashMap<>());
-                    } catch (ExecutionException e) {
-                        log.error(e);
-                    }
-                    log.info("Finished story " + clone.getName() + " in thread " + Thread.currentThread().getId());
-                } catch (InterruptedException e) {
-                    log.error(e);
-                }
-            }
-        };
+    @Override
+    public @Suspendable
+    void run() {
         try {
-            ThreadRecycler.getInstance().getExecutorService().submit(storyRunnable).get();
-        } catch (InterruptedException | ExecutionException e) {
+            UserStory clone;
+            synchronized (this) {
+                clone = UserStory.this.clone();
+            }
+            log.info("Running story " + clone.getName() + " in thread " + Thread.currentThread().getId());
+            try {
+                clone.getAtoms()[0].run(new HashMap<>());
+            } catch (ExecutionException e) {
+                log.error(e);
+            }
+            log.info("Finished story " + clone.getName() + " in thread " + Thread.currentThread().getId());
+        } catch (InterruptedException e) {
             log.error(e);
         }
     }

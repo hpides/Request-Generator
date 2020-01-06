@@ -1,5 +1,9 @@
 package de.hpi.tdgt.test.story.atom;
 
+import co.paralleluniverse.fibers.Fiber;
+import co.paralleluniverse.fibers.Suspendable;
+import co.paralleluniverse.strands.Strand;
+import co.paralleluniverse.strands.SuspendableRunnable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -96,26 +100,25 @@ public abstract class Atom implements Cloneable {
         this.storyName = parent.getName();
     }
 
-    private void runSuccessors() throws InterruptedException, ExecutionException {
-        val threads = Arrays.stream(successorLinks).map(successorLink -> new Runnable(){
-            @Override
-            public void run() {
+    private @Suspendable
+    void runSuccessors() throws InterruptedException, ExecutionException {
+        val threads = Arrays.stream(successorLinks).map(successorLink -> (SuspendableRunnable) () -> {
+            try {
+                val clonedMap = new HashMap<String, String>(Atom.this.getKnownParams());
                 try {
-                    val clonedMap = new HashMap<String, String>(Atom.this.getKnownParams());
-                    try {
-                        successorLink.run(clonedMap);
-                    } catch (ExecutionException e) {
-                        log.error(e);
-                    }
-                } catch (InterruptedException e) {
+                    successorLink.run(clonedMap);
+                } catch (ExecutionException e) {
                     log.error(e);
                 }
+            } catch (InterruptedException e) {
+                log.error(e);
             }
         }).collect(Collectors.toUnmodifiableList());
-        val futures = threads.stream().map(runnable -> ThreadRecycler.getInstance().getExecutorService().submit(runnable)).collect(Collectors.toList());
-        for(val thread : futures){
-            if(!thread.isCancelled()) {
-                thread.get();
+        val futures = threads.stream().map(runnable -> Strand.of(new Fiber<Void>(runnable))).collect(Collectors.toList());
+        futures.forEach(Strand::start);
+        for(val fiber : futures){
+            if(!fiber.isInterrupted()) {
+                fiber.join();
             }
         }
     }

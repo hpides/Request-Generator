@@ -1,6 +1,8 @@
 package de.hpi.tdgt.test;
 
 import co.paralleluniverse.fibers.Fiber;
+import co.paralleluniverse.fibers.Suspendable;
+import co.paralleluniverse.strands.Strand;
 import de.hpi.tdgt.test.story.atom.WarmupEnd;
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
 import de.hpi.tdgt.test.time_measurement.TimeStorage;
@@ -37,7 +39,7 @@ public class Test {
      * @return threads in which the stories run to join later
      * @throws InterruptedException if interrupted in Thread.sleep
      */
-    public Collection<Fiber<Void>> warmup() throws InterruptedException {
+    public Collection<Strand> warmup() throws InterruptedException {
         //might have been used by a previous test
         AssertionStorage.getInstance().reset();
         TimeStorage.getInstance().reset();
@@ -74,7 +76,8 @@ public class Test {
      * @param threadsFromWarmup Collection of threads to wait for
      * @throws InterruptedException if interrupted joining threads
      */
-    public void start(Collection<Fiber<Void>> threadsFromWarmup) throws InterruptedException, ExecutionException {
+    public @Suspendable
+    void start(Collection<Strand> threadsFromWarmup) throws InterruptedException, ExecutionException {
         //start all warmup tasks
         WarmupEnd.startTest();
         //this thread makes sure that requests per second get limited
@@ -85,24 +88,25 @@ public class Test {
         val threads = runTest(Arrays.stream(stories).filter(story -> !story.isStarted()).toArray(UserStory[]::new));
         //can wait for these threads also
         threads.addAll(threadsFromWarmup);
-        for(Fiber<Void> thread : threads){
-            //join thread
-            if(!thread.isCancelled())
-                thread.get();
+        for(Strand thread : threads){
+            //join strand
+            if(!thread.isInterrupted())
+                thread.join();
         }
         watchdog.interrupt();
         //remove global state
         RequestThrottler.reset();
     }
 
-    private Collection<Fiber<Void>> runTest(UserStory[] stories) throws InterruptedException {
-        val futures = new Vector<Fiber<Void>>();
+    private Collection<Strand> runTest(UserStory[] stories) throws InterruptedException {
+        val futures = new Vector<Strand>();
         for(int i=0; i < stories.length; i++){
             //repeat stories as often as wished
             for(int j = 0; j < scaleFactor * stories[i].getScalePercentage(); j++) {
                 stories[i].setStarted(true);
-                val future = new Fiber<Void>(stories[i]);
+                val future = Strand.of(new Fiber<Void>(stories[i]));
                 futures.add(future);
+                future.start();
             }
         }
         return futures;
