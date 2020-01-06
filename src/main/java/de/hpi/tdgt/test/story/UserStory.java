@@ -1,5 +1,6 @@
 package de.hpi.tdgt.test.story;
 
+import co.paralleluniverse.strands.SuspendableRunnable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.hpi.tdgt.test.ThreadRecycler;
 import de.hpi.tdgt.test.story.atom.Atom;
@@ -18,7 +19,7 @@ import java.util.concurrent.ExecutionException;
 @Setter
 @NoArgsConstructor
 @Log4j2
-public class UserStory implements Runnable, Cloneable{
+public class UserStory implements SuspendableRunnable, Cloneable{
     private double scalePercentage;
     private String name;
     private Atom[] atoms;

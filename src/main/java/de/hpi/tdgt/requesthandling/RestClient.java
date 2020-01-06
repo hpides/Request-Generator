@@ -1,5 +1,6 @@
 package de.hpi.tdgt.requesthandling;
 
+import co.paralleluniverse.fibers.okhttp.FiberOkHttpClient;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.RequestBody;
@@ -177,7 +178,7 @@ public class RestClient {
     //above methods are for user's convenience, this method does the actual request
     public RestResult exchangeWithEndpoint(Request request) throws IOException {
         //need one instance per call, because has to altered (follows redirects)
-        final OkHttpClient client = new OkHttpClient();
+        final OkHttpClient client = new FiberOkHttpClient();
         //append GET parameters if necessary
         URL url = appendGetParametersToUrlIfNecessary(request.getUrl(), request.getParams(), request.getMethod());
 

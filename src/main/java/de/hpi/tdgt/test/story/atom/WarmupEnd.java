@@ -4,7 +4,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.concurrent.Semaphore;
+import co.paralleluniverse.strands.concurrent.Semaphore;
 
 /**
  * This atom signals the end of the warmup phase.
@@ -25,11 +25,15 @@ public class WarmupEnd extends Atom {
     //Test knows how many warmupEnds should be waiting for this semaphore.
     //So when this number is reached, it can release all of them and thus continue processing.
     private static final Semaphore warmupEnd = new Semaphore(0);
+    private static final Semaphore mutex = new Semaphore(1);
     @Getter
     @Setter(AccessLevel.NONE)
     private static int waiting = 0;
-    private static synchronized void addWaiter(){
+    //synchronized not allowed in fiber
+    private static void addWaiter() throws InterruptedException {
+        mutex.acquire();
         waiting ++;
+        mutex.release();
     }
 
     /**
