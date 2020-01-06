@@ -74,7 +74,7 @@
         <!-- Fiber-enabled httpclient-->
         <dependency>
             <groupId>co.paralleluniverse</groupId>
-            <artifactId>comsat-httpclient</artifactId>
+            <artifactId>comsat-okhttp</artifactId>
             <version>0.7.0</version>
         </dependency>
     </dependencies>

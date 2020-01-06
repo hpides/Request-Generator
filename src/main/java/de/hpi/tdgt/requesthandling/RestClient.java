@@ -1,32 +1,27 @@
 package de.hpi.tdgt.requesthandling;
 
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
 import de.hpi.tdgt.test.Test;
 import de.hpi.tdgt.test.time_measurement.TimeStorage;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.CountingInputStream;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.*;
 import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.AbstractHttpMessage;
 
 import javax.annotation.Nullable;
 import java.io.*;
 import java.net.*;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.sql.Time;
 import java.util.Base64;
 import java.util.Map;
-import java.util.zip.GZIPInputStream;
+import java.util.concurrent.TimeUnit;
 
 @Log4j2
 public class RestClient {
@@ -37,7 +32,7 @@ public class RestClient {
         request.setParams(getParams);
         request.setMethod(HttpConstants.GET);
         request.setStory(story);
-        return exchangeWithEndpoint(request, new HttpGet(appendGetParametersToUrlIfNecessary(url,getParams,HttpConstants.GET).toString()));
+        return exchangeWithEndpoint(request);
     }
 
     public RestResult getBodyFromEndpoint(String story, URL url, String body) throws IOException {
@@ -47,7 +42,7 @@ public class RestClient {
         request.setBody(body);
         request.setForm(false);
         request.setStory(story);
-        return exchangeWithEndpoint(request, new HttpGet(url.toString()));
+        return exchangeWithEndpoint(request);
     }
 
     public RestResult postFormToEndpoint(String story, URL url, Map<String, String> getParams) throws IOException {
@@ -57,7 +52,7 @@ public class RestClient {
         request.setMethod(HttpConstants.POST);
         request.setForm(true);
         request.setStory(story);
-        return exchangeWithEndpoint(request, new HttpPost(url.toString()));
+        return exchangeWithEndpoint(request);
     }
 
     public RestResult postBodyToEndpoint(String story, URL url, String body) throws IOException {
@@ -67,7 +62,7 @@ public class RestClient {
         request.setForm(false);
         request.setBody(body);
         request.setStory(story);
-        return exchangeWithEndpoint(request, new HttpPost(url.toString()));
+        return exchangeWithEndpoint(request);
     }
 
     public RestResult putFormToEndpoint(String story, URL url, Map<String, String> getParams) throws IOException {
@@ -77,7 +72,7 @@ public class RestClient {
         request.setMethod(HttpConstants.PUT);
         request.setForm(true);
         request.setStory(story);
-        return exchangeWithEndpoint(request, new HttpPut(url.toString()));
+        return exchangeWithEndpoint(request);
     }
 
     public RestResult putBodyToEndpoint(String story, URL url, String body) throws IOException {
@@ -87,7 +82,7 @@ public class RestClient {
         request.setForm(false);
         request.setBody(body);
         request.setStory(story);
-        return exchangeWithEndpoint(request, new HttpPut(url.toString()));
+        return exchangeWithEndpoint(request);
     }
 
     public RestResult getFromEndpointWithAuth(String story, URL url, Map<String, String> getParams, String username, String password) throws IOException {
@@ -98,7 +93,7 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
-        return exchangeWithEndpoint(request, new HttpGet(appendGetParametersToUrlIfNecessary(url, getParams, HttpConstants.GET).toString()));
+        return exchangeWithEndpoint(request);
     }
 
     public RestResult getBodyFromEndpointWithAuth(String story, URL url, String body, String username, String password) throws IOException {
@@ -110,7 +105,7 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
-        return exchangeWithEndpoint(request, new HttpGet(url.toString()));
+        return exchangeWithEndpoint(request);
     }
 
     public RestResult postFormToEndpointWithAuth(String story, URL url, Map<String, String> getParams, String username, String password) throws IOException {
@@ -122,7 +117,7 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
-        return exchangeWithEndpoint(request, new HttpPost(url.toString()));
+        return exchangeWithEndpoint(request);
     }
 
     public RestResult postBodyToEndpointWithAuth(String story, URL url, String body, String username, String password) throws IOException {
@@ -134,7 +129,7 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
-        return exchangeWithEndpoint(request, new HttpPost(url.toString()));
+        return exchangeWithEndpoint(request);
     }
 
     public RestResult putFormToEndpointWithAuth(String story, URL url, Map<String, String> getParams, String username, String password) throws IOException {
@@ -146,7 +141,7 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
-        return exchangeWithEndpoint(request, new HttpPut(url.toString()));
+        return exchangeWithEndpoint(request);
     }
 
     public RestResult putBodyToEndpointWithAuth(String story, URL url, String body, String username, String password) throws IOException {
@@ -158,7 +153,7 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
-        return exchangeWithEndpoint(request, new HttpPut(url.toString()));
+        return exchangeWithEndpoint(request);
     }
 
     public RestResult deleteFromEndpoint(String story, URL url, Map<String, String> getParams) throws IOException {
@@ -166,7 +161,7 @@ public class RestClient {
         request.setUrl(url);
         request.setParams(getParams);
         request.setMethod(HttpConstants.DELETE);
-        return exchangeWithEndpoint(request, new HttpDelete(appendGetParametersToUrlIfNecessary(url,getParams,HttpConstants.DELETE).toString()));
+        return exchangeWithEndpoint(request);
     }
 
     public RestResult deleteFromEndpointWithAuth(String story, URL url, Map<String, String> getParams, String username, String password) throws IOException {
@@ -177,36 +172,35 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
-        return exchangeWithEndpoint(request, new HttpDelete(appendGetParametersToUrlIfNecessary(url,getParams,HttpConstants.DELETE).toString()));
+        return exchangeWithEndpoint(request);
     }
-    private final HttpClient client = HttpClients.createDefault();
     //above methods are for user's convenience, this method does the actual request
-    public RestResult exchangeWithEndpoint(Request request, HttpRequestBase message) throws IOException {
+    public RestResult exchangeWithEndpoint(Request request) throws IOException {
+        //need one instance per call, because has to altered (follows redirects)
+        final OkHttpClient client = new OkHttpClient();
         //append GET parameters if necessary
         URL url = appendGetParametersToUrlIfNecessary(request.getUrl(), request.getParams(), request.getMethod());
 
         //set given properties
-        val config = prepareHttpUrlConnection(request.isFollowsRedirects(), request.getConnectTimeout(), request.getResponseTimeout(), request.isSendKeepAlive());
+        prepareHttpClient(client, request.isFollowsRedirects(), request.getConnectTimeout(), request.getResponseTimeout(), request.isSendKeepAlive());
+        val message = new com.squareup.okhttp.Request.Builder();
+        message.url(url);
         int retry;
         if(request.isSendKeepAlive()){
-            message.setHeader(HttpConstants.HEADER_CONNECTION, HttpConstants.KEEP_ALIVE);
+            message.addHeader(HttpConstants.HEADER_CONNECTION, HttpConstants.KEEP_ALIVE);
         }
         //set auth header if required
         if (request.getUsername() != null && request.getPassword() != null) {
-            message.setHeader(HttpConstants.HEADER_AUTHORIZATION, "Basic "+Base64.getEncoder().encodeToString((request.getUsername() + ":" + request.getPassword()).getBytes(StandardCharsets.UTF_8)));
+            message.addHeader(HttpConstants.HEADER_AUTHORIZATION, "Basic "+Base64.getEncoder().encodeToString((request.getUsername() + ":" + request.getPassword()).getBytes(StandardCharsets.UTF_8)));
         }
         //set POST Body to contain formencoded data
-        if (request.isForm() && message instanceof HttpEntityEnclosingRequestBase) {
-            message.setHeader("Content-Type", HttpConstants.APPLICATION_X_WWW_FORM_URLENCODED);
+        if (request.isForm() && request.getBody() == null) {
             String body = mapToURLEncodedString(request.getParams()).toString();
-            val messageRepr = (HttpEntityEnclosingRequestBase) message;
-            messageRepr.setEntity(new ByteArrayEntity(body.getBytes(StandardCharsets.UTF_8)));
+            message.method(request.getMethod(), RequestBody.create(MediaType.parse(HttpConstants.APPLICATION_X_WWW_FORM_URLENCODED), body) );
         }
         //set POST body to what was passed
-        if (!request.isForm() && message instanceof HttpEntityEnclosingRequestBase && request.getBody() != null) {
-            message.setHeader("Content-Type", HttpConstants.CONTENT_TYPE_APPLICATION_JSON);
-            val messageRepr = (HttpEntityEnclosingRequestBase) message;
-            messageRepr.setEntity(new ByteArrayEntity(request.getBody().getBytes(StandardCharsets.UTF_8)));
+        if (!request.isForm() && request.getBody() != null) {
+            message.method(request.getMethod(), RequestBody.create(MediaType.parse(HttpConstants.CONTENT_TYPE_APPLICATION_JSON), request.getBody()) );
         }
         if(Test.RequestThrottler.getInstance() != null) {
             try {
@@ -218,12 +212,12 @@ public class RestClient {
         else {
             log.warn("Internal error: Can not limit requests per second!");
         }
-        HttpResponse response = null;
+        Response response = null;
         //try to connect
         val start = System.nanoTime();
         for (retry = -1; retry < request.getRetries(); retry++) {
             try {
-                response = client.execute(message);
+                response = client.newCall(message.build()).execute();
                 break;
             } catch (SocketTimeoutException s) {
                 log.warn("Request timeout for URL " + url.toString() + " (connect timeout was " + request.getConnectTimeout() + ").");
@@ -240,20 +234,19 @@ public class RestClient {
         val result = new RestResult();
         result.setStartTime(start);
         readResponse(response, result, request);
-
         return result;
     }
 
-    private RequestConfig prepareHttpUrlConnection(boolean followsRedirects, int connectTimeout, int responseTimeout, boolean sendKeepAlive) throws IOException {
-        final RequestConfig.Builder config = RequestConfig.custom();
-        config.setRedirectsEnabled(followsRedirects);
+    private void prepareHttpClient(OkHttpClient client, boolean followsRedirects, int connectTimeout, int responseTimeout, boolean sendKeepAlive) throws IOException {
+
+        client.setFollowRedirects(followsRedirects);
+        client.setFollowSslRedirects(followsRedirects);
         if (connectTimeout > 0) {
-            config.setConnectTimeout(connectTimeout);
+            client.setConnectTimeout(connectTimeout, TimeUnit.MILLISECONDS);
         }
         if (responseTimeout > 0) {
-            config.setSocketTimeout(responseTimeout);
+            client.setReadTimeout(connectTimeout, TimeUnit.MILLISECONDS);
         }
-        return config.build();
     }
 
     private URL appendGetParametersToUrlIfNecessary(URL url, Map<String, String> params, String method) throws MalformedURLException {
@@ -297,13 +290,13 @@ public class RestClient {
      * @param res  {@link RestResult} to read response into
      * @throws IOException if an I/O exception occurs
      */
-    private void readResponse(@Nullable HttpResponse response, RestResult res, Request request) throws IOException {
+    private void readResponse(@Nullable Response response, RestResult res, Request request) throws IOException {
         //got results, store them and the time
         if(response!=null) {
-            res.setResponse(response.getEntity().getContent().readAllBytes());
-            res.setContentType(response.getEntity().getContentType().getValue());
-            res.setHeaders(response.getAllHeaders());
-            res.setReturnCode(response.getStatusLine().getStatusCode());
+            res.setResponse(response.body().bytes());
+            res.setContentType(response.body().contentType().toString());
+            res.setHeaders(response.headers());
+            res.setReturnCode(response.code());
         }
         res.setEndTime(System.nanoTime());
         storage.registerTime(request.getMethod(), request.getUrl().toString(), res.durationNanos(), request.getStory());

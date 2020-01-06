@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.hpi.tdgt.RequestHandlingFramework;
 import de.hpi.tdgt.Utils;
 import de.hpi.tdgt.deserialisation.Deserializer;
+import de.hpi.tdgt.requesthandling.HttpConstants;
 import de.hpi.tdgt.test.story.atom.Atom;
 import de.hpi.tdgt.test.story.atom.Request;
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
@@ -217,7 +218,7 @@ public class MQTTTest extends RequestHandlingFramework {
 
         MatcherAssert.assertThat(readResponse(message), Matchers.contains(Matchers.hasKey("postWithBody returns JSON")));
         HashSet<String> actuals = new HashSet<>();
-        actuals.add("application/json");
+        actuals.add(HttpConstants.CONTENT_TYPE_APPLICATION_JSON);
         MatcherAssert.assertThat(readResponse(message), Matchers.contains(Matchers.hasEntry("postWithBody returns JSON", new Pair<>(1, actuals))));
     }
 
@@ -238,12 +239,10 @@ public class MQTTTest extends RequestHandlingFramework {
         MatcherAssert.assertThat(readResponse(message), Matchers.contains(Matchers.hasKey("postWithBody returns JSON")));
         //remove existing values
         message.clear();
-        assertion.setContentType("application/json");
+        assertion.setContentType(HttpConstants.CONTENT_TYPE_APPLICATION_JSON);
         postWithBodyAndAssertion.run(params);
         Thread.sleep(3000);
         //other failure should be removed now
-        HashSet<String> actuals = new HashSet<>();
-        actuals.add("application/json");
         //empty values are filtered
         MatcherAssert.assertThat(readResponse(message), Matchers.emptyIterable());
     }

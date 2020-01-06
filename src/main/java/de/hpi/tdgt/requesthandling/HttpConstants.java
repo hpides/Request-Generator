@@ -52,12 +52,12 @@ public class HttpConstants {
     public static final String ENCODING_GZIP = "gzip"; // $NON-NLS-1$
 
     public static final String HEADER_CONTENT_DISPOSITION = "Content-Disposition"; // $NON-NLS-1$
-    public static final String HEADER_CONTENT_TYPE = "Content-Type"; // $NON-NLS-1$
+    public static final String HEADER_CONTENT_TYPE = "Content-type"; // $NON-NLS-1$
     public static final String HEADER_CONTENT_LENGTH = "Content-Length"; // $NON-NLS-1$
     public static final String HEADER_HOST = "Host"; // $NON-NLS-1$
     public static final String HEADER_LOCAL_ADDRESS = "X-LocalAddress"; // $NON-NLS-1$ pseudo-header for reporting Local Address
     public static final String HEADER_LOCATION = "Location"; // $NON-NLS-1$
-    public static final String APPLICATION_X_WWW_FORM_URLENCODED = "application/x-www-form-urlencoded"; // $NON-NLS-1$
+    public static final String APPLICATION_X_WWW_FORM_URLENCODED = "application/x-www-form-urlencoded; charset=utf-8"; // $NON-NLS-1$
     public static final String MULTIPART_FORM_DATA = "multipart/form-data"; // $NON-NLS-1$
     // For handling caching
     public static final String IF_NONE_MATCH = "If-None-Match"; // $NON-NLS-1$
@@ -69,6 +69,6 @@ public class HttpConstants {
     public static final String DATE = "Date";  //e.g. Date Header of response
     public static final String VARY = "Vary"; // $NON-NLS-1$
     public static final String CONTENT_TYPE_TEXT_PLAIN = "text/plain";
-    public static final String CONTENT_TYPE_APPLICATION_JSON = "application/json";
+    public static final String CONTENT_TYPE_APPLICATION_JSON = "application/json; charset=utf-8";
     public static final String CONTENT_TYPE_TEXT_PLAIN_UTF8 = CONTENT_TYPE_TEXT_PLAIN+ ";charset=utf-8";
 }

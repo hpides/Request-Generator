@@ -40,7 +40,7 @@
             {
               "type": "CONTENT_TYPE",
               "name": "postWithBody returns JSON",
-              "contentType": "application/json"
+              "contentType": "application/json; charset=utf-8"
             }
 
           ]

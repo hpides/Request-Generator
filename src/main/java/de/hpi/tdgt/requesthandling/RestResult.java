@@ -2,6 +2,7 @@ package de.hpi.tdgt.requesthandling;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.squareup.okhttp.Headers;
 import lombok.*;
 import org.apache.http.Header;
 
@@ -20,7 +21,7 @@ public class RestResult {
     @Setter(AccessLevel.PACKAGE)
     private byte[] response;
     private String contentType;
-    private Header[] headers;
+    private Headers headers;
     private int returnCode;
 
     //check content encoding
@@ -28,7 +29,8 @@ public class RestResult {
         return contentType != null && contentType.replaceAll("\\s+","").toLowerCase().startsWith(HttpConstants.CONTENT_TYPE_TEXT_PLAIN);
     }
     public boolean isJSON(){
-        return  contentType != null && contentType.replaceAll("\\s+","").toLowerCase().startsWith(HttpConstants.CONTENT_TYPE_APPLICATION_JSON);
+        //correct json content type requires a space ("application/json; charset=...")
+        return  contentType != null &&contentType.toLowerCase().startsWith(HttpConstants.CONTENT_TYPE_APPLICATION_JSON);
     }
     //use directly or deserialize
     @Override
@@ -43,7 +45,7 @@ public class RestResult {
     }
     //parse contenttype header
     private Charset getCharset() {
-        val contentTypeHeader = contentType.toLowerCase().split(";charset=");
+        val contentTypeHeader = contentType.toLowerCase().split(";\\s?charset=");
         if(contentTypeHeader.length == 2){
             return Charset.forName(contentTypeHeader[1]);
         }

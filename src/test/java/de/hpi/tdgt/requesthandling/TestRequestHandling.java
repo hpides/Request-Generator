@@ -8,6 +8,7 @@ import de.hpi.tdgt.test.story.UserStory;
 import de.hpi.tdgt.util.Pair;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
 
 import java.io.*;
@@ -159,11 +160,11 @@ public class TestRequestHandling extends RequestHandlingFramework {
         val result = rc.getFromEndpointWithAuth("TestRequestHandling", new URL("http://localhost:9000/auth"),null,HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
         assertThat(result.getReturnCode(), equalTo(200));
     }
-
+    // this should throw an exception, because the library does not support this
     @Test
     public void testGETBodyWithAuth() throws IOException {
         val rc = new RestClient();
-        val result = rc.getBodyFromEndpointWithAuth("TestRequestHandling", new URL("http://localhost:9000/auth"), "\"Something\"", HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
+        Assertions.assertThrows(IllegalArgumentException.class, () ->rc.getBodyFromEndpointWithAuth("TestRequestHandling", new URL("http://localhost:9000/auth"), "\"Something\"", HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password));
     }
 
     @Test
