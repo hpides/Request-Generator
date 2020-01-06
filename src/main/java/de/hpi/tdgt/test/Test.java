@@ -3,14 +3,12 @@ package de.hpi.tdgt.test;
 import de.hpi.tdgt.test.story.atom.WarmupEnd;
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
 import de.hpi.tdgt.test.time_measurement.TimeStorage;
+import de.hpi.tdgt.util.PropertiesReader;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
@@ -19,17 +17,26 @@ import java.util.stream.Collectors;
 import de.hpi.tdgt.test.story.UserStory;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @Log4j2
 public class Test {
+    /**
+     * Topic on which control messages are broadcasted
+     */
+    public static final String MQTT_TOPIC = "de.hpi.tdgt.control";
+
     private int repeat;
     private int scaleFactor;
     private UserStory[] stories;
     private int requests_per_second;
-
+    private MqttClient client;
     /**
      * Run all stories that have WarmupEnd until reaching WarmupEnd. Other stories are not run.
      * *ALWAYS* run start after running warmup before you run warmup again, even in tests, to get rid of waiting threads.
@@ -74,6 +81,12 @@ public class Test {
      * @throws InterruptedException if interrupted joining threads
      */
     public void start(Collection<Future<?>> threadsFromWarmup) throws InterruptedException, ExecutionException {
+        prepareMqttClient();
+        try {
+            client.publish(MQTT_TOPIC, "testStart".getBytes(),2,true);
+        } catch (MqttException e) {
+            log.error("Could not send control start message: ", e);
+        }
         //start all warmup tasks
         WarmupEnd.startTest();
         //this thread makes sure that requests per second get limited
@@ -92,6 +105,39 @@ public class Test {
         watchdog.interrupt();
         //remove global state
         RequestThrottler.reset();
+        try {
+            client.publish(MQTT_TOPIC, "testEnd".getBytes(),2,true);
+        } catch (MqttException e) {
+            log.error("Could not send control end message: ", e);
+        }
+        try {
+            client.disconnect();
+        } catch (MqttException e) {
+            log.warn("Could not disconnect client: ",e);
+        }
+    }
+
+    private void prepareMqttClient() {
+        if (client == null || ! client.isConnected()) {
+            try {
+                String publisherId = UUID.randomUUID().toString();
+                //use memory persistence because it is not important that all packets are transferred and we do not want to spam the file system
+                client = new MqttClient(PropertiesReader.getMqttHost(), publisherId, new MemoryPersistence());
+            } catch (MqttException e) {
+                log.error("Error creating mqttclient in AssertionStorage: ", e);
+            }
+            MqttConnectOptions options = new MqttConnectOptions();
+            options.setAutomaticReconnect(true);
+            options.setCleanSession(true);
+            options.setConnectionTimeout(10);
+            try {
+                client.connect(options);
+                //clear retained messages from last test
+                client.publish(MQTT_TOPIC, new byte[0],0,true);
+            } catch (MqttException e) {
+                log.error("Could not connect to mqtt broker in AssertionStorage: ", e);
+            }
+        }
     }
 
     private Collection<Future<?>> runTest(UserStory[] stories) throws InterruptedException {
