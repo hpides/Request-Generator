@@ -1,18 +1,17 @@
 package de.hpi.tdgt.test.story.atom;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -60,22 +59,23 @@ public class Request extends Atom {
     private static ObjectMapper om = new ObjectMapper();
 
     private Assertion[] assertions = new Assertion[0];
+
     @Override
-    public void perform() throws InterruptedException {
-        log.info("Sending request "+addr+" in Thread "+Thread.currentThread().getId() + "with attributes: "+getKnownParams());
+    public void perform() {
+        log.info("Sending request " + addr + " in Thread " + Thread.currentThread().getId() + "with attributes: " + getKnownParams());
         switch (verb) {
-        case "POST":
-            handlePost();
-            break;
-        case "PUT":
-            handlePut();
-            break;
-        case "DELETE":
-            handleDelete();
-            break;
-        case "GET":
-            handleGet();
-            break;
+            case "POST":
+                handlePost();
+                break;
+            case "PUT":
+                handlePut();
+                break;
+            case "DELETE":
+                handleDelete();
+                break;
+            case "GET":
+                handleGet();
+                break;
         }
     }
 
@@ -110,86 +110,93 @@ public class Request extends Atom {
                 params.put(key, getKnownParams().get(key));
             }
         }
-        
+
         if (basicAuth == null) {
             try {
-                extractResponseParams(rc.postFormToEndpoint(this.getStoryName(), new URL(this.addr), params));
-            } catch (MalformedURLException e) {
-                // TODO Auto-generated catch block
-                log.error(e);
+                rc.postFormToEndpoint(this.getStoryName(), this, new URL(this.addr), params);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
             }
         } else {
             try {
-                extractResponseParams(
-                    rc.postFormToEndpointWithAuth(this.getStoryName(), new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
-                        getKnownParams().get(basicAuth.getPassword()))
+
+                rc.postFormToEndpointWithAuth(this.getStoryName(), this, new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
+                        getKnownParams().get(basicAuth.getPassword())
                 );
-            } catch (MalformedURLException e) {
-                // TODO Auto-generated catch block
-                log.error(e);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
             }
         }
     }
-    private Map<String, String> toStringMap(Map input){
+
+    private Map<String, String> toStringMap(Map input) {
         val ret = new HashMap<String, String>();
-        for(Object key : input.keySet()){
+        for (Object key : input.keySet()) {
             ret.put(key.toString(), input.get(key).toString());
         }
         return ret;
 
     }
-    private void extractResponseParams(final RestResult result)
+
+    /**
+     * Will be called as soon as a request result is available.
+     *
+     * @param result contains the information from the request
+     * @throws IOException          can not read loaded bytes
+     * @throws JsonParseException   response is not valid json, but is indicated as such by content type
+     * @throws JsonMappingException could not map the json to map
+     */
+    public void extractResponseParams(final RestResult result)
             throws IOException, JsonParseException, JsonMappingException {
-        if(result != null && result.isJSON()) {
-            if(result.toJson().isObject()) {
+        if (result != null && result.isJSON()) {
+            if (result.toJson().isObject()) {
                 String json = new String(result.getResponse(), StandardCharsets.UTF_8);
                 val map = om.readValue(json, Map.class);
                 getKnownParams().putAll(toStringMap(map));
-            }
-            else{
+            } else {
                 log.info("I can not handle Arrays.");
                 log.info(result);
             }
-        }
-        else {
+        } else {
             log.warn("Not JSON! Response is ignored.");
             log.warn(result);
         }
         //check assertions after request
-        for(val assertion : assertions){
+        for (val assertion : assertions) {
             assertion.check(result);
+        }
+        try {
+            runSuccessors();
+        } catch (InterruptedException | ExecutionException e) {
+            log.error(e);
         }
     }
 
-    private String fillEvaluationsInJson(){
+    private String fillEvaluationsInJson() {
         String current = requestJSONObject;
-        for(val entry : getKnownParams().entrySet()){
-            current = current.replaceAll("\\$"+entry.getKey(),'\"'+entry.getValue()+'\"');
+        for (val entry : getKnownParams().entrySet()) {
+            current = current.replaceAll("\\$" + entry.getKey(), '\"' + entry.getValue() + '\"');
         }
         //should show a warning
-        if(Pattern.matches("\\$[a-zA-Z]*", current)){
+        if (Pattern.matches("\\$[a-zA-Z]*", current)) {
             Pattern p = Pattern.compile("\\$[a-zA-Z]*");
             Matcher m = p.matcher(current);
             val allUncompiled = new HashSet<String>();
-            while(m.find()){
+            while (m.find()) {
                 allUncompiled.add(m.group());
             }
             StringBuilder builder = new StringBuilder();
             boolean first = true;
-            for(String unmatched : allUncompiled){
-                if(!first){
+            for (String unmatched : allUncompiled) {
+                if (!first) {
                     builder.append(',');
                 }
                 first = false;
                 builder.append(' ').append(unmatched);
             }
-            log.warn("Request "+getName()+": Could not replace variable(s) "+builder.toString());
+            log.warn("Request " + getName() + ": Could not replace variable(s) " + builder.toString());
         }
         return current;
     }
@@ -199,26 +206,20 @@ public class Request extends Atom {
         if (requestJSONObject != null) {
             jsonParams = fillEvaluationsInJson();
         }
-        
+
         if (basicAuth == null) {
             try {
-                extractResponseParams(rc.postBodyToEndpoint(this.getStoryName(), new URL(this.addr), jsonParams));
-            } catch (MalformedURLException e) {
-                // TODO Auto-generated catch block
-                log.error(e);
+                rc.postBodyToEndpoint(this.getStoryName(), this, new URL(this.addr), jsonParams);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
             }
         } else {
             try {
-                extractResponseParams(
-                    rc.postBodyToEndpointWithAuth(this.getStoryName(), new URL(this.addr), jsonParams, getKnownParams().get(basicAuth.getUser()),
+
+                rc.postBodyToEndpointWithAuth(this.getStoryName(), this, new URL(this.addr), jsonParams, getKnownParams().get(basicAuth.getUser()),
                         getKnownParams().get(basicAuth.getPassword()))
-                );
-            } catch (MalformedURLException e) {
-                // TODO Auto-generated catch block
-                log.error(e);
+                ;
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
@@ -241,26 +242,20 @@ public class Request extends Atom {
                 params.put(key, getKnownParams().get(key));
             }
         }
-        
+
         if (basicAuth == null) {
             try {
-                extractResponseParams(rc.putFormToEndpoint(this.getStoryName(), new URL(this.addr), params));
-            } catch (MalformedURLException e) {
-                // TODO Auto-generated catch block
-                log.error(e);
+                rc.putFormToEndpoint(this.getStoryName(), this, new URL(this.addr), params);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
             }
         } else {
             try {
-                extractResponseParams(
-                    rc.putFormToEndpointWithAuth(this.getStoryName(), new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
+
+                rc.putFormToEndpointWithAuth(this.getStoryName(), this, new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
                         getKnownParams().get(basicAuth.getPassword()))
-                );
-            } catch (MalformedURLException e) {
-                // TODO Auto-generated catch block
-                log.error(e);
+                ;
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
@@ -269,37 +264,24 @@ public class Request extends Atom {
     }
 
     private void handlePutWithBody() {
-        val params = new HashMap<String, String>();
-        if (requestJSONObject != null) {
-            //fill out template
-        }
         var jsonParams = "";
-        try {
-            jsonParams = om.writeValueAsString(params);
-        } catch (JsonProcessingException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
+        if (requestJSONObject != null) {
+            jsonParams = fillEvaluationsInJson();
         }
 
         if (basicAuth == null) {
             try {
-                extractResponseParams(rc.putBodyToEndpoint(this.getStoryName(), new URL(this.addr), jsonParams));
-            } catch (MalformedURLException e) {
-                // TODO Auto-generated catch block
-                log.error(e);
+                rc.putBodyToEndpoint(this.getStoryName(), this, new URL(this.addr), jsonParams);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
             }
         } else {
             try {
-                extractResponseParams(
-                    rc.putBodyToEndpointWithAuth(this.getStoryName(), new URL(this.addr), jsonParams, getKnownParams().get(basicAuth.getUser()),
+
+                rc.putBodyToEndpointWithAuth(this.getStoryName(), this, new URL(this.addr), jsonParams, getKnownParams().get(basicAuth.getUser()),
                         getKnownParams().get(basicAuth.getPassword()))
-                );
-            } catch (MalformedURLException e) {
-                // TODO Auto-generated catch block
-                log.error(e);
+                ;
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
@@ -314,24 +296,18 @@ public class Request extends Atom {
                 params.put(key, getKnownParams().get(key));
             }
         }
-        
+
         if (basicAuth == null) {
             try {
-                extractResponseParams(rc.deleteFromEndpoint(this.getStoryName(), new URL(this.addr), params));
-            } catch (MalformedURLException e) {
-                // TODO Auto-generated catch block
-                log.error(e);
+                rc.deleteFromEndpoint(this.getStoryName(), this, new URL(this.addr), params);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
             }
         } else {
             try {
-               extractResponseParams(rc.deleteFromEndpointWithAuth(this.getStoryName(),  new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
-                    getKnownParams().get(basicAuth.getPassword())));
-            } catch (MalformedURLException e) {
-                // TODO Auto-generated catch block
-                log.error(e);
+                rc.deleteFromEndpointWithAuth(this.getStoryName(), this, new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
+                        getKnownParams().get(basicAuth.getPassword()));
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
@@ -354,26 +330,20 @@ public class Request extends Atom {
                 params.put(key, getKnownParams().get(key));
             }
         }
-        
+
         if (basicAuth == null) {
             try {
-                extractResponseParams(rc.getFromEndpoint(this.getStoryName(), new URL(this.addr), params));
-            } catch (MalformedURLException e) {
-                // TODO Auto-generated catch block
-                log.error(e);
+                rc.getFromEndpoint(this.getStoryName(), this, new URL(this.addr), params);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
             }
         } else {
             try {
-                extractResponseParams(
-                    rc.getFromEndpointWithAuth(this.getStoryName(), new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
+
+                rc.getFromEndpointWithAuth(this.getStoryName(), this, new URL(this.addr), params, getKnownParams().get(basicAuth.getUser()),
                         getKnownParams().get(basicAuth.getPassword()))
-                );
-            } catch (MalformedURLException e) {
-                // TODO Auto-generated catch block
-                log.error(e);
+                ;
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
@@ -382,37 +352,24 @@ public class Request extends Atom {
     }
 
     private void handleGetWithBody() {
-        val params = new HashMap<String, String>();
-        if (requestJSONObject != null) {
-            //fill out template
-        }
         var jsonParams = "";
-        try {
-            jsonParams = om.writeValueAsString(params);
-        } catch (JsonProcessingException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
+        if (requestJSONObject != null) {
+            jsonParams = fillEvaluationsInJson();
         }
 
         if (basicAuth == null) {
             try {
-                extractResponseParams(rc.getBodyFromEndpoint(this.getStoryName(), new URL(this.addr), jsonParams));
-            } catch (MalformedURLException e) {
-                // TODO Auto-generated catch block
-                log.error(e);
+                rc.getBodyFromEndpoint(this.getStoryName(), this, new URL(this.addr), jsonParams);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
             }
         } else {
             try {
-                extractResponseParams(
-                    rc.getBodyFromEndpointWithAuth(this.getStoryName(), new URL(this.addr), jsonParams, getKnownParams().get(basicAuth.getUser()),
+
+                rc.getBodyFromEndpointWithAuth(this.getStoryName(), this, new URL(this.addr), jsonParams, getKnownParams().get(basicAuth.getUser()),
                         getKnownParams().get(basicAuth.getPassword()))
-                );
-            } catch (MalformedURLException e) {
-                // TODO Auto-generated catch block
-                log.error(e);
+                ;
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
@@ -424,7 +381,7 @@ public class Request extends Atom {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class BasicAuth{
+    public static class BasicAuth {
         private String user;
         private String password;
     }

@@ -2,6 +2,7 @@ package de.hpi.tdgt.requesthandling;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.netty.handler.codec.http.HttpHeaders;
 import lombok.*;
 
 import java.io.IOException;
@@ -19,7 +20,7 @@ public class RestResult {
     @Setter(AccessLevel.PACKAGE)
     private byte[] response;
     private String contentType;
-    private Map<String, List<String>> headers;
+    private HttpHeaders headers;
     private int returnCode;
 
     //check content encoding

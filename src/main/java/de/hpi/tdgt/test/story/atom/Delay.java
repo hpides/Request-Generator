@@ -3,6 +3,8 @@ package de.hpi.tdgt.test.story.atom;
 import lombok.*;
 import lombok.extern.log4j.Log4j2;
 
+import java.util.concurrent.ExecutionException;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,6 +20,11 @@ public class Delay extends Atom {
                 Thread.sleep(delayMs);
             }
         } catch (InterruptedException e) {
+            log.error(e);
+        }
+        try {
+            runSuccessors();
+        } catch (InterruptedException | ExecutionException e) {
             log.error(e);
         }
     }

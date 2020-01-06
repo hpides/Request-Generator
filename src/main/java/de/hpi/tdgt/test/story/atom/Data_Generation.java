@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.ExecutionException;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
@@ -53,6 +54,11 @@ public class Data_Generation extends Atom {
     public void perform() {
         val generatedData = readBuffer();
         this.getKnownParams().putAll(generatedData);
+        try {
+            runSuccessors();
+        } catch (InterruptedException | ExecutionException e) {
+            log.error(e);
+        }
     }
 
     @Override

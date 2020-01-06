@@ -58,6 +58,8 @@ public class TimeStorageTest extends RequestHandlingFramework {
         test.start();
         val storage = TimeStorage.getInstance();
         Request firstRequest = (Request) test.getStories()[0].getAtoms()[2];
+        //runs asynch
+        Thread.sleep(1000);
         assertThat(storage.getAvg(firstRequest.getVerb(), firstRequest.getAddr()), greaterThan(0d));
     }
 }

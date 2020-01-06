@@ -3,18 +3,26 @@ package de.hpi.tdgt.test.story.atom;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 
 /**
  * This atom signals the end of the warmup phase.
  * There can be multiple in a test suite, but they have to be in parallel branches.
  */
+@Log4j2
 public class WarmupEnd extends Atom {
     @Override
     public void perform() throws InterruptedException {
         addWaiter();
         warmupEnd.acquire();
+        try {
+            runSuccessors();
+        } catch (InterruptedException | ExecutionException e) {
+            log.error(e);
+        }
     }
 
     @Override

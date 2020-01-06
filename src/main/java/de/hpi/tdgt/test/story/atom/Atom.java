@@ -77,7 +77,6 @@ public abstract class Atom implements Cloneable {
             for(int i = 0; i < repeat; i++) {
                 perform();
             }
-            runSuccessors();
         }
     }
 
@@ -96,7 +95,7 @@ public abstract class Atom implements Cloneable {
         this.storyName = parent.getName();
     }
 
-    private void runSuccessors() throws InterruptedException, ExecutionException {
+    protected void runSuccessors() throws InterruptedException, ExecutionException {
         val threads = Arrays.stream(successorLinks).map(successorLink -> new Runnable(){
             @Override
             public void run() {

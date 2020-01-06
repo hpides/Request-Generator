@@ -84,6 +84,7 @@ public class TestRequest extends RequestHandlingFramework {
         params.put("key","something");
         params.put("value","somethingElse");
         postWithBodyAndAssertion.run(params);
+        Thread.sleep(1000);
         assertThat(AssertionStorage.getInstance().getFails("postWithBody returns JSON"), Matchers.is(0));
     }
 
@@ -96,6 +97,8 @@ public class TestRequest extends RequestHandlingFramework {
         //simulate failure
         assertion.setContentType("application/xml");
         postWithBodyAndAssertion.run(params);
+        //it is asynch, so we need to wait for it
+        Thread.sleep(1000);
         assertThat(AssertionStorage.getInstance().getFails("postWithBody returns JSON"), Matchers.is(1));
     }
 
@@ -109,6 +112,8 @@ public class TestRequest extends RequestHandlingFramework {
         //simulate failure
         assertion.setContentType("application/xml");
         postWithBodyAndAssertion.run(params);
+        //it is asynch, so we need to wait for it
+        Thread.sleep(1000);
         assertThat(AssertionStorage.getInstance().getActual("postWithBody returns JSON"), contains("application/json"));
     }
 
@@ -116,6 +121,8 @@ public class TestRequest extends RequestHandlingFramework {
     public void ContentNotEmptyAssertNotFailingIfCorrect() throws InterruptedException, ExecutionException {
         val params = new HashMap<String, String>();
         getJsonObjectWithAssertion.run(params);
+        //it is asynch, so we need to wait for it
+        Thread.sleep(400);
         assertThat(AssertionStorage.getInstance().getFails("jsonObject returns something"), Matchers.is(0));
     }
 
@@ -125,6 +132,8 @@ public class TestRequest extends RequestHandlingFramework {
         //simulate failure
         getJsonObjectWithAssertion.setAddr("http://localhost:9000/empty");
         getJsonObjectWithAssertion.run(params);
+        //it is asynch, so we need to wait for it
+        Thread.sleep(1000);
         assertThat(AssertionStorage.getInstance().getFails("jsonObject returns something"), Matchers.is(1));
     }
 
@@ -134,6 +143,8 @@ public class TestRequest extends RequestHandlingFramework {
         //simulate failure
         getJsonObjectWithAssertion.setAddr("http://localhost:9000/empty");
         getJsonObjectWithAssertion.run(params);
+        //it is asynch, so we need to wait for it
+        Thread.sleep(1000);
         assertThat(AssertionStorage.getInstance().getActual("jsonObject returns something"), contains(""));
     }
 
@@ -143,6 +154,8 @@ public class TestRequest extends RequestHandlingFramework {
         params.put("key", HttpHandlers.AuthHandler.username);
         params.put("value", HttpHandlers.AuthHandler.password);
         getWithAuth.run(params);
+        //it is asynch, so we need to wait for it
+        Thread.sleep(1000);
         assertThat(AssertionStorage.getInstance().getFails("auth does not return 401"), Matchers.is(0));
     }
 
@@ -152,6 +165,8 @@ public class TestRequest extends RequestHandlingFramework {
         params.put("key", "wrong");
         params.put("value", "wrong");
         getWithAuth.run(params);
+        //it is asynch, so we need to wait for it
+        Thread.sleep(1000);
         assertThat(AssertionStorage.getInstance().getFails("auth does not return 401"), Matchers.is(1));
     }
 
@@ -161,6 +176,8 @@ public class TestRequest extends RequestHandlingFramework {
         params.put("key", "wrong");
         params.put("value", "wrong");
         getWithAuth.run(params);
+        //it is asynch, so we need to wait for it
+        Thread.sleep(1000);
         assertThat(AssertionStorage.getInstance().getActual("auth does not return 401"), contains("401"));
     }
     @Test
@@ -170,6 +187,8 @@ public class TestRequest extends RequestHandlingFramework {
         params.put("value", "wrong");
         getWithAuth.setVerb("DELETE");
         getWithAuth.run(params);
+        //it is asynch, so we need to wait for it
+        Thread.sleep(1000);
         assertThat(AssertionStorage.getInstance().getActual("auth does not return 401"), contains("401"));
     }
 
@@ -179,6 +198,8 @@ public class TestRequest extends RequestHandlingFramework {
         params.put("key", "wrong");
         params.put("value", "wrong");
         getWithAuth.run(params);
+        //it is asynch, so we need to wait for it
+        Thread.sleep(1000);
         AssertionStorage.getInstance().reset();
         assertThat(AssertionStorage.getInstance().getActual("auth does not return 401"), empty());
     }
