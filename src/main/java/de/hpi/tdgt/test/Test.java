@@ -84,6 +84,8 @@ public class Test {
     public void start(Collection<Future<?>> threadsFromWarmup) throws InterruptedException, ExecutionException {
         prepareMqttClient();
         try {
+            //clear retained messages from last test
+            client.publish(MQTT_TOPIC, new byte[0],0,true);
             client.publish(MQTT_TOPIC, "testStart".getBytes(StandardCharsets.UTF_8),2,true);
         } catch (MqttException e) {
             log.error("Could not send control start message: ", e);
@@ -108,6 +110,8 @@ public class Test {
         RequestThrottler.reset();
         try {
             client.publish(MQTT_TOPIC, "testEnd".getBytes(StandardCharsets.UTF_8),2,true);
+            //clear retained messages for next test
+            client.publish(MQTT_TOPIC, new byte[0],0,true);
         } catch (MqttException e) {
             log.error("Could not send control end message: ", e);
         }
