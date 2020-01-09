@@ -3,6 +3,7 @@ package de.hpi.tdgt.webserver;
 import de.hpi.tdgt.RequestHandlingFramework;
 import de.hpi.tdgt.Utils;
 import de.hpi.tdgt.WebApplication;
+import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import static org.hamcrest.Matchers.greaterThan;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = WebApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Log4j2
 public class UploadJSONTest extends RequestHandlingFramework {
     @LocalServerPort
     private int port;
@@ -46,6 +48,14 @@ public class UploadJSONTest extends RequestHandlingFramework {
     public void runsUserStoryAgainstTestServerRunsActualTest() throws Exception {
         RequestEntity<String> requestEntity = RequestEntity .post(new URL("http://localhost:"+port+"/upload").toURI()) .contentType(MediaType.APPLICATION_JSON) .body(exampleStory);
         restTemplate.exchange(requestEntity, String.class);
+        //requests to this handler are sent
+        assertThat(authHandler.getNumberFailedLogins(), greaterThan(0));
+    }
+
+    @Test
+    public void runsUserStoryAgainstTestServerRunsActualTestAlsoInCliMode() throws Exception {
+        val args = new String[]{"cli","load", "/src/test/resources/de/hpi/tdgt/RequestExample.json", "/src/test/resources/de/hpi/tdgt"};
+        WebApplication.main(args);
         //requests to this handler are sent
         assertThat(authHandler.getNumberFailedLogins(), greaterThan(0));
     }
