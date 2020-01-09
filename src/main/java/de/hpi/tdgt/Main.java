@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.hpi.tdgt.deserialisation.Deserializer;
 import de.hpi.tdgt.requesthandling.RestClient;
 import de.hpi.tdgt.test.Test;
+import de.hpi.tdgt.controllers.UploadController;
 import de.hpi.tdgt.test.story.atom.Data_Generation;
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
 import de.hpi.tdgt.test.time_measurement.TimeStorage;
@@ -24,38 +25,26 @@ public class Main {
     public static final String USERNAME="superuser";
     public static final String PASSWORD="somepw";
     public static void main(String[] args) throws IOException, InterruptedException {
-        if(args.length == 0){
+        if(args.length == 1){
             try {
-                log.error("Usage: java -jar "+new java.io.File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getName()+" load <Path to request JSON> <Path to generated Data>");
-                log.error("or: java -jar "+new java.io.File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getName()+" testRest");
+                log.error("Usage: java -jar "+new java.io.File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getName()+" cli load <Path to request JSON> <Path to generated Data>");
+                log.error("or: java -jar "+new java.io.File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getName()+" cli testRest");
                 System.exit(1);
             } catch (URISyntaxException e) {
                 log.error(e);
             }
         }
-        if(args[0].equals("load") ) {
+        if(args[1].equals("load") ) {
             try {
                 StringWriter writer = new StringWriter();
-                IOUtils.copy(new FileInputStream(args[1]), writer);
+                IOUtils.copy(new FileInputStream(args[2]), writer);
                 String json = writer.toString();
                 Test deserializedTest = Deserializer.deserialize(json);
                 log.info("Successfully deserialized input json including " + deserializedTest.getStories().length + " stories.");
                 log.info("Running test...");
-                Data_Generation.outputDirectory = args[2];
+                Data_Generation.outputDirectory = args[3];
                 //in case warmup is added
-                long starttime = System.currentTimeMillis();
-                val threads = deserializedTest.warmup();
-                deserializedTest.start(threads);
-                long endtime = System.currentTimeMillis();
-                log.info("---Test finished in "+(endtime - starttime)+" ms.---");
-                log.info("---Times---");
-                TimeStorage.getInstance().printSummary();
-                log.info("---Assertions---");
-                AssertionStorage.getInstance().printSummary();
-                TimeStorage.getInstance().reset();
-                AssertionStorage.getInstance().reset();
-                //TODO sometimes the program does not terminate here
-                System.exit(0);
+                new UploadController().uploadTestConfig(deserializedTest);
             } catch (IOException | ExecutionException e) {
                 log.error(e);
             }
