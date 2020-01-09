@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.hpi.tdgt.deserialisation.Deserializer;
 import de.hpi.tdgt.requesthandling.RestClient;
 import de.hpi.tdgt.test.Test;
+import de.hpi.tdgt.controllers.UploadController;
 import de.hpi.tdgt.test.story.atom.Data_Generation;
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
 import de.hpi.tdgt.test.time_measurement.TimeStorage;
@@ -33,7 +34,7 @@ public class Main {
                 log.error(e);
             }
         }
-        if(args[0].equals("load") ) {
+        if(args[0].equals("cli") ) {
             try {
                 StringWriter writer = new StringWriter();
                 IOUtils.copy(new FileInputStream(args[1]), writer);
@@ -43,17 +44,7 @@ public class Main {
                 log.info("Running test...");
                 Data_Generation.outputDirectory = args[2];
                 //in case warmup is added
-                long starttime = System.currentTimeMillis();
-                val threads = deserializedTest.warmup();
-                deserializedTest.start(threads);
-                long endtime = System.currentTimeMillis();
-                log.info("---Test finished in "+(endtime - starttime)+" ms.---");
-                log.info("---Times---");
-                TimeStorage.getInstance().printSummary();
-                log.info("---Assertions---");
-                AssertionStorage.getInstance().printSummary();
-                TimeStorage.getInstance().reset();
-                AssertionStorage.getInstance().reset();
+                new UploadController().uploadTestConfig(deserializedTest);
                 //TODO sometimes the program does not terminate here
                 System.exit(0);
             } catch (IOException | ExecutionException e) {
