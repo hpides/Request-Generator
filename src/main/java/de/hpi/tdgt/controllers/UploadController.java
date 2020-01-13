@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 
 @RestController
@@ -49,7 +50,7 @@ public class UploadController {
         try {
             tempFile = File.createTempFile("pdgf", ".xml");
             tempFile.deleteOnExit();
-            val writer = new FileWriter(tempFile);
+            val writer = new FileWriter(tempFile, StandardCharsets.UTF_8);
             writer.write(pdgfConfig);
             writer.close();
         } catch (IOException e) {
@@ -60,7 +61,7 @@ public class UploadController {
             val pdgfProcess = new ProcessBuilder(JAVA_7_DIR, "-jar",PDGF_DIR+ File.separator+"pdgf.jar", "-l", tempFile.getAbsolutePath(),  "-l", PDGF_DIR+File.separator+"config"+File.separator+"customer-output.xml", "-c", "-ns", "-s").start();
             //val pdgfProcess = new ProcessBuilder(JAVA_7_DIR, "-jar",PDGF_DIR+ File.separator+"pdgf.jar", "-l", "config/customer.xml",  "-l", "config\\customer-output.xml", "-c", "-ns", "-s").start();
             log.info(pdgfProcess.info());
-            try(val input = new BufferedReader(new InputStreamReader(pdgfProcess.getInputStream()))) {
+            try(val input = new BufferedReader(new InputStreamReader(pdgfProcess.getInputStream(), StandardCharsets.UTF_8))) {
                 String line;
                 log.info("PDGF Output:");
                 while ((line = input.readLine()) != null) {

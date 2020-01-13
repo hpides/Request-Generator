@@ -1,0 +1,39 @@
+{
+  "repeat": 1,
+  "scaleFactor": 10,
+  "requests_per_second": 10000,
+  "stories": [
+    {
+      "scalePercentage": 1,
+      "name": "Statische Seite anfragen",
+      "atoms": [
+        {
+          "name": "Warten",
+          "id": 0,
+          "repeat": 1,
+          "successors": [
+            1
+          ],
+          "type": "DELAY",
+          "delayMs": 4000
+        },{
+          "name": "Index",
+          "id": 1,
+          "repeat": 1,
+          "successors": [
+          ],
+          "type": "REQUEST",
+          "verb": "GET",
+          "addr": "http://users:5001/",
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "Apache returns 200.",
+              "responseCode": 200
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
