@@ -5,14 +5,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.hpi.tdgt.RequestHandlingFramework;
 import de.hpi.tdgt.Utils;
 import de.hpi.tdgt.deserialisation.Deserializer;
+import de.hpi.tdgt.test.story.UserStory;
 import de.hpi.tdgt.test.story.atom.Atom;
 import de.hpi.tdgt.test.story.atom.Request;
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
 import de.hpi.tdgt.test.story.atom.assertion.ContentType;
+import de.hpi.tdgt.test.time_measurement.MqttTimeMessage;
 import de.hpi.tdgt.test.time_measurement.TimeStorage;
 import de.hpi.tdgt.util.Pair;
 import de.hpi.tdgt.util.PropertiesReader;
-import lombok.Value;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import org.eclipse.paho.client.mqttv3.*;
@@ -25,31 +26,37 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
+
 @Log4j2
 public class MQTTTest extends RequestHandlingFramework {
     private ObjectMapper mapper = new ObjectMapper();
     private IMqttClient publisher;
+    private final UserStory mockParent = new UserStory();
+    private final String mockStoryName = "StoryName";
     @BeforeEach
     public void beforeEach(){
         //this test MUST handle asynch behaviour
         AssertionStorage.getInstance().setStoreEntriesAsynch(true);
         TimeStorage.getInstance().setStoreEntriesAsynch(true);
+        //scenario that a message we want and a message we don't want arrive at the same time is prevented
+        TimeStorage.getInstance().setSendOnlyNonEmpty(true);
+        val mockTest = new de.hpi.tdgt.test.Test();
+        mockParent.setParent(mockTest);
+        mockParent.setName(mockStoryName);
     }
     @Test
     public void TimeStorageStreamsTimesUsingMQTT() throws MqttException, InterruptedException, IOException {
         val messages = prepareClient(TimeStorage.MQTT_TOPIC);
-        TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 10, "story");
+        TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 10, "story",0);
         Thread.sleep(3000);
-        TypeReference<Map<String, Map<String, Map<String, Map<String, String>>>>> typeRef = new TypeReference<>() {};
-        val response = new Vector<Map<String, Map<String, Map<String, Map<String, String>>>>>();
+        TypeReference<MqttTimeMessage> typeRef = new TypeReference<>() {};
+        val response = new Vector<MqttTimeMessage>();
         for(val item : messages){
             response.add(mapper.readValue(item, typeRef));
         }
 
-        MatcherAssert.assertThat(response, Matchers.hasItem(Matchers.hasKey("http://localhost:9000/")));
+        MatcherAssert.assertThat(response.get(0).getTimes(), Matchers.hasKey("http://localhost:9000/"));
 
            }
 
@@ -57,14 +64,14 @@ public class MQTTTest extends RequestHandlingFramework {
     public void TimeStorageStreamsAllTimesUsingMQTT() throws MqttException, InterruptedException, IOException {
         val messages = prepareClient(TimeStorage.MQTT_TOPIC);
         String storyName = "story";
-        TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 10, storyName);
+        TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 10, storyName,0);
         Thread.sleep(3000);
-        TypeReference<Map<String, Map<String, Map<String, Map<String, String>>>>> typeRef = new TypeReference<>() {};
-        val response = new Vector<Map<String, Map<String, Map<String, Map<String, String>>>>>();
+        TypeReference<MqttTimeMessage> typeRef = new TypeReference<>() {};
+        val response = new Vector<MqttTimeMessage>();
         for(val item : messages){
             response.add(mapper.readValue(item, typeRef));
         }
-        val times = response.get(0).get("http://localhost:9000/").get("POST").get(storyName);
+        val times = response.get(0).getTimes().get("http://localhost:9000/").get("POST").get(storyName);
         //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
         MatcherAssert.assertThat(times.keySet(), Matchers.containsInAnyOrder(Matchers.equalTo("minLatency"), Matchers.equalTo("throughput"), Matchers.equalTo("maxLatency"), Matchers.equalTo("avgLatency")));
 
@@ -76,17 +83,17 @@ public class MQTTTest extends RequestHandlingFramework {
         val messages = prepareClient(TimeStorage.MQTT_TOPIC);
         String storyName1 = "story1";
         String storyName2 = "story2";
-        TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 10, storyName1);
-        TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 20, storyName2);
+        TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 10, storyName1,0);
+        TimeStorage.getInstance().registerTime("POST","http://localhost:9000/", 20, storyName2,0);
         Thread.sleep(3000);
-        TypeReference<Map<String, Map<String, Map<String, Map<String, String>>>>> typeRef = new TypeReference<>() {};
-        val response = new Vector<Map<String, Map<String, Map<String, Map<String, String>>>>>();
+        TypeReference<MqttTimeMessage> typeRef = new TypeReference<>() {};
+        val response = new Vector<MqttTimeMessage>();
         for(val item : messages){
             response.add(mapper.readValue(item, typeRef));
         }
-        MatcherAssert.assertThat("We should have 2 story entries for \"story1\" and \"story2\"", response.get(0).get("http://localhost:9000/").get("POST").size(), Matchers.is(2));
-        val times1 = response.get(0).get("http://localhost:9000/").get("POST").get(storyName1);
-        val times2 = response.get(0).get("http://localhost:9000/").get("POST").get(storyName2);
+        MatcherAssert.assertThat("We should have 2 story entries for \"story1\" and \"story2\"", response.get(0).getTimes().get("http://localhost:9000/").get("POST").size(), Matchers.is(2));
+        val times1 = response.get(0).getTimes().get("http://localhost:9000/").get("POST").get(storyName1);
+        val times2 = response.get(0).getTimes().get("http://localhost:9000/").get("POST").get(storyName2);
         //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
         MatcherAssert.assertThat(times1.keySet(), Matchers.containsInAnyOrder(Matchers.equalTo("minLatency"), Matchers.equalTo("throughput"), Matchers.equalTo("maxLatency"), Matchers.equalTo("avgLatency")));
         MatcherAssert.assertThat(times2.keySet(), Matchers.containsInAnyOrder(Matchers.equalTo("minLatency"), Matchers.equalTo("throughput"), Matchers.equalTo("maxLatency"), Matchers.equalTo("avgLatency")));
@@ -103,16 +110,16 @@ public class MQTTTest extends RequestHandlingFramework {
         val getWithAuth = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getAtoms()[3];
         //make sure we do not run successors
         getWithAuth.setSuccessorLinks(new Atom[0]);
-        val name = "StoryName";
-        getWithAuth.setStoryName(name);
+        val name = mockStoryName;
+        getWithAuth.setParent(mockParent);
         getWithAuth.run(params);
         Thread.sleep(3000);
-        TypeReference<Map<String, Map<String, Map<String, Map<String, String>>>>> typeRef = new TypeReference<>() {};
-        val response = new Vector<Map<String, Map<String, Map<String, Map<String, String>>>>>();
+        TypeReference<MqttTimeMessage> typeRef = new TypeReference<>() {};
+        val response = new Vector<MqttTimeMessage>();
         for(val item : messages){
             response.add(mapper.readValue(item, typeRef));
         }
-        val times = response.get(0).get("http://localhost:9000/auth").get("GET");
+        val times = response.get(0).getTimes().get("http://localhost:9000/auth").get("GET");
         //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
         MatcherAssert.assertThat(times, Matchers.hasKey( name));
     }
@@ -125,18 +132,64 @@ public class MQTTTest extends RequestHandlingFramework {
         val getWithAuth = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getAtoms()[3];
         //make sure we do not run successors
         getWithAuth.setSuccessorLinks(new Atom[0]);
-        val name = "StoryName";
-        getWithAuth.setStoryName(name);
+        val name = mockStoryName;
+        getWithAuth.setParent(mockParent);
         getWithAuth.run(params);
         Thread.sleep(3000);
-        TypeReference<Map<String, Map<String, Map<String, Map<String, String>>>>> typeRef = new TypeReference<>() {};
-        val response = new Vector<Map<String, Map<String, Map<String, Map<String, String>>>>>();
+        TypeReference<MqttTimeMessage> typeRef = new TypeReference<>() {};
+        val response = new Vector<MqttTimeMessage>();
         for(val item : messages){
             response.add(mapper.readValue(item, typeRef));
         }
-        val times = response.get(0).get("http://localhost:9000/auth").get("GET").get(name);
+        val times = response.get(0).getTimes().get("http://localhost:9000/auth").get("GET").get(name);
         //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
         MatcherAssert.assertThat(times, Matchers.hasEntry("throughput", "1"));
+    }
+
+    @Test
+    public void TimeStorageStreamsAllTimesUsingMQTTWithATestId() throws MqttException, InterruptedException, IOException, ExecutionException {
+        val messages = prepareClient(TimeStorage.MQTT_TOPIC);
+        val params = new HashMap<String, String>();
+        params.put("key", "wrong");
+        params.put("value", "wrong");
+        val getWithAuth = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getAtoms()[3];
+        //make sure we do not run successors
+        getWithAuth.setSuccessorLinks(new Atom[0]);
+        val name = mockStoryName;
+        getWithAuth.setParent(mockParent);
+        getWithAuth.run(params);
+        Thread.sleep(3000);
+        TypeReference<MqttTimeMessage> typeRef = new TypeReference<>() {};
+        val response = new Vector<MqttTimeMessage>();
+        for(val item : messages){
+            response.add(mapper.readValue(item, typeRef));
+        }
+        val times = response.get(0);
+        //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
+        MatcherAssert.assertThat(times.getTestId(), Matchers.greaterThan(0L));
+    }
+
+    @Test
+    public void TimeStorageStreamsAllTimesUsingMQTTWithACreationTime() throws MqttException, InterruptedException, IOException, ExecutionException {
+        val messages = prepareClient(TimeStorage.MQTT_TOPIC);
+        val params = new HashMap<String, String>();
+        params.put("key", "wrong");
+        params.put("value", "wrong");
+        val getWithAuth = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getAtoms()[3];
+        //make sure we do not run successors
+        getWithAuth.setSuccessorLinks(new Atom[0]);
+        val name = mockStoryName;
+        getWithAuth.setParent(mockParent);
+        getWithAuth.run(params);
+        Thread.sleep(3000);
+        TypeReference<MqttTimeMessage> typeRef = new TypeReference<>() {};
+        val response = new Vector<MqttTimeMessage>();
+        for(val item : messages){
+            response.add(mapper.readValue(item, typeRef));
+        }
+        val times = response.get(0);
+        //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
+        MatcherAssert.assertThat(times.getCreationTime(), Matchers.greaterThan(0L));
     }
 
     private Set<String> prepareClient(final String topic) throws MqttException {
@@ -168,7 +221,7 @@ public class MQTTTest extends RequestHandlingFramework {
         publisher.disconnect();
         publisher.close();
     }
-    private Collection<Map<String, Pair<Integer, Set>>> readResponse(Set<String> messages) throws IOException {
+    private Collection<Map<String, Pair<Integer, Set>>> readAssertion(Set<String> messages) throws IOException {
         LinkedList<Map<String, Pair<Integer, Set>>> response = new LinkedList<>();
 
         //magic to get jackson to serialize to the correct class
@@ -195,10 +248,10 @@ public class MQTTTest extends RequestHandlingFramework {
         getWithAuth.run(params);
         Thread.sleep(3000);
 
-        MatcherAssert.assertThat(readResponse(message), Matchers.hasItem(Matchers.hasKey("auth does not return 401")));
+        MatcherAssert.assertThat(readAssertion(message), Matchers.hasItem(Matchers.hasKey("auth does not return 401")));
         HashSet<String> actuals = new HashSet<>();
         actuals.add("401");
-        MatcherAssert.assertThat(readResponse(message), Matchers.contains(Matchers.hasEntry("auth does not return 401", new Pair<>(1, actuals))));
+        MatcherAssert.assertThat(readAssertion(message), Matchers.contains(Matchers.hasEntry("auth does not return 401", new Pair<>(1, actuals))));
     }
     @Test
     public void ContentTypeAssertionStreamsFailedAssertions() throws MqttException, InterruptedException, ExecutionException, IOException {
@@ -215,10 +268,10 @@ public class MQTTTest extends RequestHandlingFramework {
         postWithBodyAndAssertion.run(params);
         Thread.sleep(3000);
 
-        MatcherAssert.assertThat(readResponse(message), Matchers.contains(Matchers.hasKey("postWithBody returns JSON")));
+        MatcherAssert.assertThat(readAssertion(message), Matchers.contains(Matchers.hasKey("postWithBody returns JSON")));
         HashSet<String> actuals = new HashSet<>();
         actuals.add("application/json");
-        MatcherAssert.assertThat(readResponse(message), Matchers.contains(Matchers.hasEntry("postWithBody returns JSON", new Pair<>(1, actuals))));
+        MatcherAssert.assertThat(readAssertion(message), Matchers.contains(Matchers.hasEntry("postWithBody returns JSON", new Pair<>(1, actuals))));
     }
 
     @Test
@@ -235,7 +288,7 @@ public class MQTTTest extends RequestHandlingFramework {
         assertion.setContentType("application/xml");
         postWithBodyAndAssertion.run(params);
         Thread.sleep(3000);
-        MatcherAssert.assertThat(readResponse(message), Matchers.contains(Matchers.hasKey("postWithBody returns JSON")));
+        MatcherAssert.assertThat(readAssertion(message), Matchers.contains(Matchers.hasKey("postWithBody returns JSON")));
         //remove existing values
         message.clear();
         assertion.setContentType("application/json");
@@ -245,7 +298,7 @@ public class MQTTTest extends RequestHandlingFramework {
         HashSet<String> actuals = new HashSet<>();
         actuals.add("application/json");
         //empty values are filtered
-        MatcherAssert.assertThat(readResponse(message), Matchers.emptyIterable());
+        MatcherAssert.assertThat(readAssertion(message), Matchers.emptyIterable());
     }
 
     @Test
@@ -259,10 +312,10 @@ public class MQTTTest extends RequestHandlingFramework {
         getJsonObjectWithAssertion.run(params);
         Thread.sleep(3000);
 
-        MatcherAssert.assertThat(readResponse(message), Matchers.hasItem(Matchers.hasKey("jsonObject returns something")));
+        MatcherAssert.assertThat(readAssertion(message), Matchers.hasItem(Matchers.hasKey("jsonObject returns something")));
         HashSet<String> actuals = new HashSet<>();
         actuals.add("");
-        MatcherAssert.assertThat(readResponse(message), Matchers.contains(Matchers.hasEntry("jsonObject returns something", new Pair<>(1, actuals))));
+        MatcherAssert.assertThat(readAssertion(message), Matchers.contains(Matchers.hasEntry("jsonObject returns something", new Pair<>(1, actuals))));
     }
 
     @Test

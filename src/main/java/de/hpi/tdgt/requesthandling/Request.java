@@ -41,4 +41,8 @@ public class Request {
      * To account time to a story.
      */
     private String story=null;
+    /**
+     * To match MQTT messages to a test.
+     */
+    private long testId;
 }

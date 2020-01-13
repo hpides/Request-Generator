@@ -24,6 +24,7 @@ public class UserStory implements Runnable, Cloneable{
     private String name;
     private Atom[] atoms;
     @JsonIgnore
+    @Getter
     private Test parent;
     public void setAtoms(Atom[] atoms){
         this.atoms = atoms;

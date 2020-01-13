@@ -7,6 +7,7 @@ import de.hpi.tdgt.test.ThreadRecycler;
 import de.hpi.tdgt.util.Pair;
 import de.hpi.tdgt.util.PropertiesReader;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
@@ -30,7 +31,14 @@ public class TimeStorage {
     private Thread reporter = null;
     private Runnable mqttReporter;
     private final AtomicBoolean running = new AtomicBoolean(true);
+    private long testID = 0;
+    /**
+     * Flag for tests. If true, only messages that contain times are sent.
+     */
+    @Setter
+    private boolean sendOnlyNonEmpty = false;
     protected TimeStorage() {
+
 
 
 //to clean files
@@ -74,7 +82,11 @@ public class TimeStorage {
                 try {
                     //needs to be synchronized so we do not miss entries
                     synchronized (registeredTimesLastSecond) {
-                        message = mapper.writeValueAsString(toMQTTSummaryMap(registeredTimesLastSecond)).getBytes(StandardCharsets.UTF_8);
+                        val entry = toMQTTSummaryMap(registeredTimesLastSecond);
+                        // tests only want actual times
+                        if(!sendOnlyNonEmpty || (entry.getTimes() != null && !entry.getTimes().isEmpty())){
+                            message = mapper.writeValueAsString(entry).getBytes(StandardCharsets.UTF_8);
+                        }
                         registeredTimesLastSecond.clear();
                     }
                 } catch (JsonProcessingException e) {
@@ -132,7 +144,7 @@ public class TimeStorage {
     public static final String MAX_LATENCY_STRING="maxLatency";
     public static final String AVG_LATENCY_STRING="avgLatency";
     public static final String STORY_STRING="story";
-    private Map<String, Map<String, Map<String, Map<String, String>>>> toMQTTSummaryMap(Map<String, Map<String, Map<String, List<Long>>>> currentValues) {
+    private MqttTimeMessage toMQTTSummaryMap(Map<String, Map<String, Map<String, List<Long>>>> currentValues) {
         log.trace("Is empty: " + currentValues.isEmpty());
         Map<String, Map<String, Map<String, Map<String, String>>>> ret = new HashMap<>();
         //re-create the structure, but using average of the innermost values
@@ -157,7 +169,11 @@ public class TimeStorage {
                 }
             }
         }
-        return ret;
+        val entry = new MqttTimeMessage();
+        entry.setTestId(testID);
+        entry.setCreationTime(System.currentTimeMillis());
+        entry.setTimes(ret);
+        return entry;
     }
 
     private ObjectMapper mapper = new ObjectMapper();
@@ -167,20 +183,21 @@ public class TimeStorage {
     @Getter
     @Setter
     private boolean storeEntriesAsynch = true;
-    public void registerTime(String verb, String addr, long latency, String story) {
+    public void registerTime(String verb, String addr, long latency, String story, long testid) {
         //in certain situations, e.g. tests, we might wish to disable asynch storage for predictable result.
         if(storeEntriesAsynch) {
             //needs quite some synchronization time and might run some time, so run it async if possible
             ThreadRecycler.getInstance().getExecutorService().submit(() -> {
-                doRegisterTime(verb, addr, latency, story);
+                doRegisterTime(verb, addr, latency, story, testid);
             });
         }
         else {
-            doRegisterTime(verb, addr, latency, story);
+            doRegisterTime(verb, addr, latency, story, testid);
         }
     }
 
-    private void doRegisterTime(String verb, String addr, long latency, String story) {
+    private void doRegisterTime(String verb, String addr, long latency, String story, long testid) {
+        testID = testid;
         //test was started after reset was called, so restart the thread
         if (reporter == null) {
             reporter = new Thread(mqttReporter);
@@ -264,5 +281,6 @@ public class TimeStorage {
         registeredTimesLastSecond.clear();
         registeredTimes.clear();
     }
+
 
 }

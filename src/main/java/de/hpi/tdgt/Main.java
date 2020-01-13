@@ -57,31 +57,31 @@ public class Main {
             params.put("password", PASSWORD);
 
             log.info("--- Testing user creation and update ---");
-            var result = rc.postBodyToEndpoint("REST Test", new URL("http://users/users/new"),new ObjectMapper().writeValueAsString(params));
+            var result = rc.postBodyToEndpoint("REST Test", 0,  new URL("http://users/users/new"),new ObjectMapper().writeValueAsString(params));
             log.info("Create user: "+result.toString()+" and code: "+result.getReturnCode()+" in: "+result.durationMillis()+" ms.");
-            result = rc.getFromEndpointWithAuth("REST Test", new URL("http://users/users/all"),null, USERNAME, PASSWORD);
+            result = rc.getFromEndpointWithAuth("REST Test", 0,  new URL("http://users/users/all"),null, USERNAME, PASSWORD);
             log.info("Get all users: "+result.toString()+" and code: "+result.getReturnCode()+" in: "+result.durationMillis()+" ms.");
-            result = rc.putFormToEndpointWithAuth("REST Test", new URL("http://users/users/update"),params, USERNAME, PASSWORD);
+            result = rc.putFormToEndpointWithAuth("REST Test", 0,  new URL("http://users/users/update"),params, USERNAME, PASSWORD);
             log.info("Update user: "+result.toString()+" and code: "+result.getReturnCode()+" in: "+result.durationMillis()+" ms.");
 
             log.info("--- Testing post creation ---");
             params.clear();
             params.put("title","A very good post");
             params.put("text", "because it is rather short.");
-            result = rc.postFormToEndpointWithAuth("REST Test", new URL("http://posts/posts/new"),params, USERNAME, PASSWORD);
+            result = rc.postFormToEndpointWithAuth("REST Test", 0,  new URL("http://posts/posts/new"),params, USERNAME, PASSWORD);
             log.info("Create post: "+result.toString()+" and code: "+result.getReturnCode()+" in: "+result.durationMillis()+" ms.");
-            result = rc.getFromEndpointWithAuth("REST Test", new URL("http://posts/posts/all"),null, USERNAME, PASSWORD);
+            result = rc.getFromEndpointWithAuth("REST Test", 0,  new URL("http://posts/posts/all"),null, USERNAME, PASSWORD);
             log.info("Get all posts: "+result.toString()+" and code: "+result.getReturnCode()+" in: "+result.durationMillis()+" ms.");
 
 
             log.info("--- Testing search ---");
             params.clear();
             params.put("key","short");
-            result = rc.getFromEndpointWithAuth("REST Test", new URL("http://search/posts/search"),params,USERNAME,PASSWORD);
+            result = rc.getFromEndpointWithAuth("REST Test", 0,  new URL("http://search/posts/search"),params,USERNAME,PASSWORD);
             log.info("Search: "+result.toString()+" and code: "+result.getReturnCode()+" in: "+result.durationMillis()+" ms.");
 
             log.info("--- Deleting user ---");
-            result = rc.deleteFromEndpointWithAuth("REST Test", new URL("http://users/users/delete"),null, USERNAME, PASSWORD);
+            result = rc.deleteFromEndpointWithAuth("REST Test", 0,  new URL("http://users/users/delete"),null, USERNAME, PASSWORD);
             log.info("Delete user: "+result.toString()+" and code: "+result.getReturnCode()+" in: "+result.durationMillis()+" ms.");
         }
     }
