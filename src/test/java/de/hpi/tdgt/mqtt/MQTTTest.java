@@ -271,15 +271,29 @@ public class MQTTTest extends RequestHandlingFramework {
         //test that does not do anything is sufficient, no need to waste resources here
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getNoopJson());
         test.start(test.warmup());
-        MatcherAssert.assertThat("control topic should have received a \"testStart\"!",message.contains("testStart"));
+        String messageStart = "testStart";
+        boolean hasTestStart = hasMessageStartingWith(message, messageStart);
+        MatcherAssert.assertThat("control topic should have received a \"testStart\"!",hasTestStart);
     }
 
     @Test
     public void ATestEndMessageIsSent() throws MqttException, InterruptedException, ExecutionException, IOException {
-        val message = prepareClient(de.hpi.tdgt.test.Test.MQTT_TOPIC);
+        val messages = prepareClient(de.hpi.tdgt.test.Test.MQTT_TOPIC);
         //test that does not do anything is sufficient, no need to waste resources here
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getNoopJson());
         test.start(test.warmup());
-        MatcherAssert.assertThat("control topic should have received a \"testEnd\"!",message.contains("testEnd"));
+        String messageEnd = "testEnd";
+        boolean hasTestEnd = hasMessageStartingWith(messages, messageEnd);
+        MatcherAssert.assertThat("control topic should have received a \"testEnd\"!",hasTestEnd);
+    }
+
+    private boolean hasMessageStartingWith(Set<String> messages, String messageStart) {
+        boolean hasTestEnd = false;
+        for(val message : messages){
+            if (message.startsWith(messageStart)){
+                hasTestEnd = true;
+            }
+        }
+        return hasTestEnd;
     }
 }

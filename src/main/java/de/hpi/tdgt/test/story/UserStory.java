@@ -1,6 +1,7 @@
 package de.hpi.tdgt.test.story;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.hpi.tdgt.test.Test;
 import de.hpi.tdgt.test.ThreadRecycler;
 import de.hpi.tdgt.test.story.atom.Atom;
 import de.hpi.tdgt.test.story.atom.WarmupEnd;
@@ -22,7 +23,8 @@ public class UserStory implements Runnable, Cloneable{
     private double scalePercentage;
     private String name;
     private Atom[] atoms;
-
+    @JsonIgnore
+    private Test parent;
     public void setAtoms(Atom[] atoms){
         this.atoms = atoms;
         //set links
