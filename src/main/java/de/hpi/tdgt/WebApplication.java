@@ -1,10 +1,12 @@
 package de.hpi.tdgt;
 
+import de.hpi.tdgt.controllers.UploadController;
 import de.hpi.tdgt.test.story.atom.Data_Generation;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
@@ -12,15 +14,17 @@ import java.net.URISyntaxException;
 @SpringBootApplication
 public class WebApplication {
     public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {
-        if(args.length < 1){
-            log.error("Usage: java -jar "+new java.io.File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getName()+" <Path to generated Data>");
+        if(args.length < 2){
+            log.error("Usage: java -jar "+new java.io.File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getName()+"[cli] <Path to PDGF dir> <Java 7 interpreter path>");
             System.exit(1);
         }
         if(args[0].equals("cli")){
             Main.main(args);
         }
         else {
-            Data_Generation.outputDirectory = args[0];
+            Data_Generation.outputDirectory = args[0]+File.separator+"output";
+            UploadController.PDGF_DIR = args[0];
+            UploadController.JAVA_7_DIR = args[1];
             SpringApplication.run(WebApplication.class, args);
         }
     }

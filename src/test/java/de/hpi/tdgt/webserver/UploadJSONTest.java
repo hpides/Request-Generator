@@ -54,7 +54,7 @@ public class UploadJSONTest extends RequestHandlingFramework {
 
     @Test
     public void runsUserStoryAgainstTestServerRunsActualTestAlsoInCliMode() throws Exception {
-        val args = new String[]{"cli","load", "./src/test/resources/de/hpi/tdgt/RequestExample.json", "./src/test/resources/de/hpi/tdgt"};
+        val args = new String[]{"cli","load", "./src/test/resources/de/hpi/tdgt/RequestExample.json", "./src/test/resources/de/hpi/tdgt", "./src/test/resources/de/hpi/tdgt"};
         WebApplication.main(args);
         //requests to this handler are sent
         assertThat(authHandler.getNumberFailedLogins(), greaterThan(0));
