@@ -50,7 +50,7 @@ public class UploadController {
         try {
             tempFile = File.createTempFile("pdgf", ".xml");
             tempFile.deleteOnExit();
-            val writer = new FileWriter(tempFile, StandardCharsets.UTF_8);
+            val writer = new FileWriter(tempFile);
             writer.write(pdgfConfig);
             writer.close();
         } catch (IOException e) {
