@@ -242,7 +242,7 @@
           ],
           "type": "REQUEST",
           "verb": "GET",
-          "addr": "http://search/posts/search/not",
+          "addr": "http://search/posts/search",
           "requestParams": [
             "key"
           ],
