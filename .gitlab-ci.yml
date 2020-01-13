@@ -19,16 +19,3 @@ junit:
     # config assumes broker is running on same machine as System under Test, so we need this environment for the tests
     - echo "127.0.0.1 users" >> /etc/hosts
     - mvn test
-
-spotbugs:
-  stage: test
-  image: "maven:3"
-  artifacts:
-    when: on_failure
-    paths:
-      - target/site/*
-  tags:
-    - BP-TDGT-CI
-  script:
-    - mvn compile site
-    - mvn verify -Dmaven.test.skip=true
