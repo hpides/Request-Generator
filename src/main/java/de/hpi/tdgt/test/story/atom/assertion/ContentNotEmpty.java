@@ -10,10 +10,10 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class ContentNotEmpty extends Assertion {
     @Override
-    public void check(RestResult restResult) {
+    public void check(RestResult restResult, long testid) {
         if(restResult.getResponse().length == 0){
             log.error("Failed content not empty assertion\""+getName()+"\": response was empty!");
-            AssertionStorage.getInstance().addFailure(this.getName(), "");
+            AssertionStorage.getInstance().addFailure(this.getName(), "", testid);
         }
     }
 }

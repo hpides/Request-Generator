@@ -16,10 +16,10 @@ public class ResponseCode extends Assertion{
     private int responseCode;
 
     @Override
-    public void check(RestResult restResult) {
+    public void check(RestResult restResult, long testid) {
         if(responseCode!=restResult.getReturnCode()){
             log.error("Failed response code assertion\""+getName()+"\": expected \""+responseCode+"\" but is actually \""+restResult.getReturnCode()+"\"!");
-            AssertionStorage.getInstance().addFailure(this.getName(), ""+restResult.getReturnCode());
+            AssertionStorage.getInstance().addFailure(this.getName(), ""+restResult.getReturnCode(), testid);
         }
     }
 }

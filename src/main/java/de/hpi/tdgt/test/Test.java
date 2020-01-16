@@ -32,12 +32,19 @@ public class Test {
      * Topic on which control messages are broadcasted
      */
     public static final String MQTT_TOPIC = "de.hpi.tdgt.control";
+    //stories need to know the test e.g. for it's id
+    public void setStories(UserStory[] stories) {
+        this.stories = stories;
+        Arrays.stream(stories).forEach(story -> story.setParent(this));
+    }
 
     private int repeat;
     private int scaleFactor;
     private UserStory[] stories;
     private int requests_per_second;
     private MqttClient client;
+    //we can assume this is unique. Probably, only one test at a time is run.
+    private final long testId = System.currentTimeMillis();
     /**
      * Run all stories that have WarmupEnd until reaching WarmupEnd. Other stories are not run.
      * *ALWAYS* run start after running warmup before you run warmup again, even in tests, to get rid of waiting threads.
@@ -83,7 +90,7 @@ public class Test {
         try {
             //clear retained messages from last test
             client.publish(MQTT_TOPIC, new byte[0],0,true);
-            client.publish(MQTT_TOPIC, "testStart".getBytes(StandardCharsets.UTF_8),2,true);
+            client.publish(MQTT_TOPIC, ("testStart "+testId).getBytes(StandardCharsets.UTF_8),2,true);
         } catch (MqttException e) {
             log.error("Could not send control start message: ", e);
         }
@@ -106,7 +113,7 @@ public class Test {
         //remove global state
         RequestThrottler.reset();
         try {
-            client.publish(MQTT_TOPIC, "testEnd".getBytes(StandardCharsets.UTF_8),2,true);
+            client.publish(MQTT_TOPIC, ("testEnd "+testId).getBytes(StandardCharsets.UTF_8),2,true);
             //clear retained messages for next test
             client.publish(MQTT_TOPIC, new byte[0],0,true);
         } catch (MqttException e) {
@@ -147,6 +154,7 @@ public class Test {
         for(int i=0; i < stories.length; i++){
             //repeat stories as often as wished
             for(int j = 0; j < scaleFactor * stories[i].getScalePercentage(); j++) {
+                stories[i].setParent(this);
                 stories[i].setStarted(true);
                 val future = ThreadRecycler.getInstance().getExecutorService().submit(stories[i]);
                 futures.add(future);

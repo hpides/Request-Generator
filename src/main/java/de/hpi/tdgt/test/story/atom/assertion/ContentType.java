@@ -16,10 +16,10 @@ public class ContentType extends Assertion {
     private String contentType;
 
     @Override
-    public void check(RestResult restResult) {
+    public void check(RestResult restResult, long testid) {
         if(!contentType.equals(restResult.getContentType())){
             log.error("Failed content type assertion\""+getName()+"\": expected \""+contentType+"\" but is actually \""+restResult.getContentType()+"\"!");
-            AssertionStorage.getInstance().addFailure(this.getName(), restResult.getContentType());
+            AssertionStorage.getInstance().addFailure(this.getName(), restResult.getContentType(), testid);
         }
     }
 }
