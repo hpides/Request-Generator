@@ -41,6 +41,7 @@ public class UserStory implements Runnable, Cloneable{
         for(int i = 0; i < atoms.length; i++){
             story.getAtoms()[i] = atoms[i].clone();
         }
+        story.setParent(parent);
         //fix references
         Arrays.stream(story.getAtoms()).forEach(atom -> atom.initSuccessors(story));
         return story;

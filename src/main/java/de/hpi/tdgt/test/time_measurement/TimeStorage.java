@@ -176,7 +176,8 @@ public class TimeStorage {
     }
 
     private ObjectMapper mapper = new ObjectMapper();
-    public void registerTime(String verb, String addr, long latency, String story) {
+    public void registerTime(String verb, String addr, long latency, String story, long testid) {
+        this.testID = testid;
         //test was started after reset was called, so restart the thread
         if (reporter == null) {
             reporter = new Thread(mqttReporter);

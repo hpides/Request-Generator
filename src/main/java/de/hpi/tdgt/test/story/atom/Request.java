@@ -114,7 +114,13 @@ public class Request extends Atom {
 
         if (basicAuth == null) {
             try {
-                extractResponseParams(rc.postFormToEndpoint(this.getParent().getName(), this.getParent().getParent().getTestId(), new URL(this.addr), params));
+                //a few tests trigger the alternative case
+                if(this.getParent() != null && this.getParent().getParent()!=null) {
+                    extractResponseParams(rc.postFormToEndpoint(this.getParent().getName(), this.getParent().getParent().getTestId(), new URL(this.addr), params));
+                }
+                else {
+                    extractResponseParams(rc.postFormToEndpoint("unknown", 0, new URL(this.addr), params));
+                }
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
                 log.error(e);

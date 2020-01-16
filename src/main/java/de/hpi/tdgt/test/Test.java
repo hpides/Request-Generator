@@ -154,6 +154,7 @@ public class Test {
         for(int i=0; i < stories.length; i++){
             //repeat stories as often as wished
             for(int j = 0; j < scaleFactor * stories[i].getScalePercentage(); j++) {
+                stories[i].setParent(this);
                 stories[i].setStarted(true);
                 val future = ThreadRecycler.getInstance().getExecutorService().submit(stories[i]);
                 futures.add(future);
