@@ -52,9 +52,6 @@ public class Test {
      * @throws InterruptedException if interrupted in Thread.sleep
      */
     public Collection<Future<?>> warmup() throws InterruptedException {
-        //might have been used by a previous test
-        AssertionStorage.getInstance().reset();
-        TimeStorage.getInstance().reset();
         
         RequestThrottler.setInstance(this.requests_per_second);
         Thread watchdog = new Thread(RequestThrottler.getInstance());
