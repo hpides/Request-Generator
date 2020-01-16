@@ -18,9 +18,7 @@ import java.util.Vector;
 
 import static de.hpi.tdgt.Utils.assertInstanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -86,7 +84,8 @@ public class DeserializeAtomTest {
     @Test
     public void secondAtomOfSecondStoryHasCorrectAddress(){
         val secondAtomOfSecondStory = (Request) this.secondAtomOfSecondStory;
-        assertEquals("http://search/posts/search", secondAtomOfSecondStory.getAddr());
+        //I sometimes disable this endpoint to test assertions by appending "/not"
+        assertThat(secondAtomOfSecondStory.getAddr(), startsWith("http://search/posts/search"));
     }
 
     @Test
