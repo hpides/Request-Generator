@@ -10,6 +10,7 @@ import de.hpi.tdgt.test.story.atom.Atom;
 import de.hpi.tdgt.test.story.atom.Request;
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
 import de.hpi.tdgt.test.story.atom.assertion.ContentType;
+import de.hpi.tdgt.test.story.atom.assertion.MqttAssertionMessage;
 import de.hpi.tdgt.test.time_measurement.MqttTimeMessage;
 import de.hpi.tdgt.test.time_measurement.TimeStorage;
 import de.hpi.tdgt.util.Pair;
@@ -221,11 +222,11 @@ public class MQTTTest extends RequestHandlingFramework {
         publisher.disconnect();
         publisher.close();
     }
-    private Collection<Map<String, Pair<Integer, Set>>> readAssertion(Set<String> messages) throws IOException {
-        LinkedList<Map<String, Pair<Integer, Set>>> response = new LinkedList<>();
+    private LinkedList<MqttAssertionMessage> readAssertion(Set<String> messages) throws IOException {
+        LinkedList<MqttAssertionMessage> response = new LinkedList<>();
 
         //magic to get jackson to serialize to the correct class
-        TypeReference<HashMap<String, Pair<Integer, Set<String>>>> typeRef = new TypeReference<>() {};
+        TypeReference<MqttAssertionMessage> typeRef = new TypeReference<>() {};
         for(val item : messages){
             try {
                 response.add(mapper.readValue(item, typeRef));
@@ -247,15 +248,15 @@ public class MQTTTest extends RequestHandlingFramework {
         getWithAuth.setSuccessorLinks(new Atom[0]);
         getWithAuth.run(params);
         Thread.sleep(3000);
-
-        MatcherAssert.assertThat(readAssertion(message), Matchers.hasItem(Matchers.hasKey("auth does not return 401")));
+        val allActuals = getAllActuals(message);
+        MatcherAssert.assertThat(allActuals, Matchers.hasItem(Matchers.hasKey("auth does not return 401")));
         HashSet<String> actuals = new HashSet<>();
         actuals.add("401");
-        MatcherAssert.assertThat(readAssertion(message), Matchers.contains(Matchers.hasEntry("auth does not return 401", new Pair<>(1, actuals))));
+        MatcherAssert.assertThat(allActuals.get(allActuals.size()-1), Matchers.hasEntry("auth does not return 401", new Pair<>(1, actuals)));
     }
     @Test
     public void ContentTypeAssertionStreamsFailedAssertions() throws MqttException, InterruptedException, ExecutionException, IOException {
-        val message = prepareClient(AssertionStorage.MQTT_TOPIC);
+        val messages = prepareClient(AssertionStorage.MQTT_TOPIC);
         val params = new HashMap<String, String>();
         params.put("key","something");
         params.put("value","somethingElse");
@@ -267,16 +268,26 @@ public class MQTTTest extends RequestHandlingFramework {
         assertion.setContentType("application/xml");
         postWithBodyAndAssertion.run(params);
         Thread.sleep(3000);
-
-        MatcherAssert.assertThat(readAssertion(message), Matchers.contains(Matchers.hasKey("postWithBody returns JSON")));
+        val allActuals = getAllActuals(messages);
+        MatcherAssert.assertThat(allActuals.get(allActuals.size()-1), Matchers.hasKey("postWithBody returns JSON"));
         HashSet<String> actuals = new HashSet<>();
         actuals.add("application/json");
-        MatcherAssert.assertThat(readAssertion(message), Matchers.contains(Matchers.hasEntry("postWithBody returns JSON", new Pair<>(1, actuals))));
+        MatcherAssert.assertThat(allActuals.get(allActuals.size()-1), Matchers.hasEntry("postWithBody returns JSON", new Pair<>(1, actuals)));
+    }
+
+    private LinkedList<Map<String, Pair<Integer, Set<String>>>> getAllActuals(Set<String> messages) throws IOException {
+        val allActuals = new LinkedList<Map<String, Pair<Integer, Set<String>>>>();
+        for(val message : readAssertion(messages)){
+            if(!message.getActuals().isEmpty()) {
+                allActuals.add(message.getActuals());
+            }
+        }
+        return allActuals;
     }
 
     @Test
     public void AssertionStorageIsDeletedEverySecond() throws MqttException, InterruptedException, ExecutionException, IOException {
-        val message = prepareClient(AssertionStorage.MQTT_TOPIC);
+        val messages = prepareClient(AssertionStorage.MQTT_TOPIC);
         val params = new HashMap<String, String>();
         params.put("key","something");
         params.put("value","somethingElse");
@@ -288,34 +299,50 @@ public class MQTTTest extends RequestHandlingFramework {
         assertion.setContentType("application/xml");
         postWithBodyAndAssertion.run(params);
         Thread.sleep(3000);
-        MatcherAssert.assertThat(readAssertion(message), Matchers.contains(Matchers.hasKey("postWithBody returns JSON")));
+        var allActuals = getAllActuals(messages);
+        MatcherAssert.assertThat(allActuals.get(allActuals.size()-1), Matchers.hasKey("postWithBody returns JSON"));
         //remove existing values
-        message.clear();
+        messages.clear();
         assertion.setContentType("application/json");
         postWithBodyAndAssertion.run(params);
         Thread.sleep(3000);
         //other failure should be removed now
         HashSet<String> actuals = new HashSet<>();
         actuals.add("application/json");
+        allActuals = getAllActuals(messages);
         //empty values are filtered
-        MatcherAssert.assertThat(readAssertion(message), Matchers.emptyIterable());
+        MatcherAssert.assertThat(allActuals, Matchers.emptyIterable());
     }
 
     @Test
     public void ResponseNotEmptyAssertionStreamsFailedAssertions() throws MqttException, InterruptedException, ExecutionException, IOException {
         val params = new HashMap<String, String>();
-        val message = prepareClient(AssertionStorage.MQTT_TOPIC);
+        val messages = prepareClient(AssertionStorage.MQTT_TOPIC);
         val getJsonObjectWithAssertion = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getAtoms()[2];
         //do not run successors
         getJsonObjectWithAssertion.setSuccessorLinks(new Atom[0]);
         getJsonObjectWithAssertion.setAddr("http://localhost:9000/empty");
         getJsonObjectWithAssertion.run(params);
         Thread.sleep(3000);
-
-        MatcherAssert.assertThat(readAssertion(message), Matchers.hasItem(Matchers.hasKey("jsonObject returns something")));
+        val allActuals = getAllActuals(messages);
+        MatcherAssert.assertThat(allActuals, Matchers.hasItem(Matchers.hasKey("jsonObject returns something")));
         HashSet<String> actuals = new HashSet<>();
         actuals.add("");
-        MatcherAssert.assertThat(readAssertion(message), Matchers.contains(Matchers.hasEntry("jsonObject returns something", new Pair<>(1, actuals))));
+        //hamcrest Matchers.contains did not work, so assume the wanted entry is the last
+        MatcherAssert.assertThat(allActuals.get(allActuals.size()-1), Matchers.hasEntry("jsonObject returns something", new Pair<>(1, actuals)));
+    }
+    @Test
+    public void ResponseNotEmptyAssertionStreamsFailedAssertionsWithTestId() throws MqttException, InterruptedException, ExecutionException, IOException {
+        val params = new HashMap<String, String>();
+        val messages = prepareClient(AssertionStorage.MQTT_TOPIC);
+        val getJsonObjectWithAssertion = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getAtoms()[2];
+        //do not run successors
+        getJsonObjectWithAssertion.setSuccessorLinks(new Atom[0]);
+        getJsonObjectWithAssertion.setAddr("http://localhost:9000/empty");
+        getJsonObjectWithAssertion.run(params);
+        Thread.sleep(3000);
+        val actuals = readAssertion(messages);
+        MatcherAssert.assertThat(actuals.get(0).getTestId(), Matchers.greaterThan(0L));
     }
 
     @Test

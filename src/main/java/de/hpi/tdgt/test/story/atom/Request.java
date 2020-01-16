@@ -164,7 +164,7 @@ public class Request extends Atom {
         }
         //check assertions after request
         for (val assertion : assertions) {
-            assertion.check(result);
+            assertion.check(result, this.getParent().getParent().getTestId());
         }
     }
 
