@@ -63,7 +63,6 @@ public class RequestHandlingFramework {
         os.close();
         //tests want predictable behaviour in regards to when an entry is stored
         AssertionStorage.getInstance().setStoreEntriesAsynch(false);
-        TimeStorage.getInstance().setStoreEntriesAsynch(false);
     }
 
     @AfterEach

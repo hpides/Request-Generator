@@ -162,26 +162,8 @@ public class TimeStorage {
     }
 
     private ObjectMapper mapper = new ObjectMapper();
-    /**
-     * If true, times are stored asynch. Else times are stored synchronously.
-     */
-    @Getter
-    @Setter
-    private boolean storeEntriesAsynch = true;
-    public void registerTime(String verb, String addr, long latency, String story) {
-        //in certain situations, e.g. tests, we might wish to disable asynch storage for predictable result.
-        if(storeEntriesAsynch) {
-            //needs quite some synchronization time and might run some time, so run it async if possible
-            ThreadRecycler.getInstance().getExecutorService().submit(() -> {
-                doRegisterTime(verb, addr, latency, story);
-            });
-        }
-        else {
-            doRegisterTime(verb, addr, latency, story);
-        }
-    }
 
-    private void doRegisterTime(String verb, String addr, long latency, String story) {
+    public void registerTime(String verb, String addr, long latency, String story) {
         //test was started after reset was called, so restart the thread
         if (reporter == null) {
             reporter = new Thread(mqttReporter);

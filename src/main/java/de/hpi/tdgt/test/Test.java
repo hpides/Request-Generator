@@ -87,7 +87,6 @@ public class Test {
         } catch (MqttException e) {
             log.error("Could not send control start message: ", e);
         }
-        TimeStorage.getInstance().setStoreEntriesAsynch(false);
         //start all warmup tasks
         WarmupEnd.startTest();
         //this thread makes sure that requests per second get limited

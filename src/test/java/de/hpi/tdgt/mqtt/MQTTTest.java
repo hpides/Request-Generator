@@ -36,7 +36,6 @@ public class MQTTTest extends RequestHandlingFramework {
     public void beforeEach(){
         //this test MUST handle asynch behaviour
         AssertionStorage.getInstance().setStoreEntriesAsynch(true);
-        TimeStorage.getInstance().setStoreEntriesAsynch(true);
     }
     @Test
     public void TimeStorageStreamsTimesUsingMQTT() throws MqttException, InterruptedException, IOException {
@@ -72,7 +71,6 @@ public class MQTTTest extends RequestHandlingFramework {
     @Test
     public void TimeStorageStreamsAllTimesOfAllStoriesUsingMQTT() throws MqttException, InterruptedException, IOException {
         //this test is based on the assumption that both entries are added at roughly the same time, so we want predictable timing behavior
-        TimeStorage.getInstance().setStoreEntriesAsynch(false);
         val messages = prepareClient(TimeStorage.MQTT_TOPIC);
         String storyName1 = "story1";
         String storyName2 = "story2";
