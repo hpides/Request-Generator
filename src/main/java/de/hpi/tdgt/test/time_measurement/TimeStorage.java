@@ -26,23 +26,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Log4j2
 public class TimeStorage {
-    private final MqttClient client;
+    //can't be re-connected, create a new instance everytime the thread is run
+    private MqttClient client;
     private Thread reporter = null;
     private Runnable mqttReporter;
     private final AtomicBoolean running = new AtomicBoolean(true);
     protected TimeStorage() {
-        MqttClient mqtt_client = null;
-        String publisherId = UUID.randomUUID().toString();
-        try {
-            //use memory persistence because it is not important that all packets are transferred and we do not want to spam the file system
-            mqtt_client = new MqttClient(PropertiesReader.getMqttHost(), publisherId, new MemoryPersistence());
-        } catch (MqttException e) {
-            log.error("Error creating mqttclient in TimeStorage: ", e);
-        }
-        client = mqtt_client;
-//to clean files
+        //to clean files
         mqttReporter = () -> {
-            log.error("TimeStorage Start.");
             while (running.get()) {
                 //first second starts after start / first entry
                 try {
@@ -51,7 +42,13 @@ public class TimeStorage {
                     //Clean up
                     break;
                 }
-                long startCalc = System.nanoTime();
+                String publisherId = UUID.randomUUID().toString();
+                try {
+                    //use memory persistence because it is not important that all packets are transferred and we do not want to spam the file system
+                    client = new MqttClient(PropertiesReader.getMqttHost(), publisherId, new MemoryPersistence());
+                } catch (MqttException e) {
+                    log.error("Error creating mqttclient in TimeStorage: ", e);
+                }
                 //client is null if reset was called
                 if (client != null && !client.isConnected()) {
 
@@ -95,10 +92,7 @@ public class TimeStorage {
                 } catch (MqttException e) {
                     log.error("Error sending mqtt message in Time_Storage: ", e);
                 }
-                long endCalc = System.nanoTime();
-                log.error("Calc took "+(endCalc-startCalc)+" ns.");
             }
-            log.error("TimeStorage Teardown.");
             //to clean files
             try {
                 if(client != null) {
@@ -205,7 +199,6 @@ public class TimeStorage {
                 registeredTimesLastSecond.computeIfAbsent(addr, k -> new ConcurrentHashMap<>());
                 registeredTimesLastSecond.get(addr).computeIfAbsent(verb, k -> new ConcurrentHashMap<>());
                 registeredTimesLastSecond.get(addr).get(verb).computeIfAbsent(story, k -> new Vector<>()).add(latency);
-                log.info("Added val: " + registeredTimesLastSecond.isEmpty());
             }
         }
     }
