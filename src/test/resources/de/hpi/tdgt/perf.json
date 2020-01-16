@@ -1,7 +1,7 @@
 {
   "repeat": 1,
-  "scaleFactor": 10,
-  "requests_per_second": 10000,
+  "scaleFactor": 100000,
+  "requests_per_second": 100000,
   "stories": [
     {
       "scalePercentage": 1,
@@ -15,7 +15,7 @@
             1
           ],
           "type": "DELAY",
-          "delayMs": 4000
+          "delayMs": 1
         },{
           "name": "Index",
           "id": 1,
@@ -24,7 +24,7 @@
           ],
           "type": "REQUEST",
           "verb": "GET",
-          "addr": "http://users:5001/",
+          "addr": "http://192.168.137.1/",
           "assertions": [
             {
               "type": "RESPONSE_CODE",

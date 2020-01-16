@@ -26,15 +26,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Log4j2
 public class TimeStorage {
-    private MqttClient client = null;
+    private final MqttClient client;
     private Thread reporter = null;
     private Runnable mqttReporter;
     private final AtomicBoolean running = new AtomicBoolean(true);
     protected TimeStorage() {
-
-
+        MqttClient mqtt_client = null;
+        String publisherId = UUID.randomUUID().toString();
+        try {
+            //use memory persistence because it is not important that all packets are transferred and we do not want to spam the file system
+            mqtt_client = new MqttClient(PropertiesReader.getMqttHost(), publisherId, new MemoryPersistence());
+        } catch (MqttException e) {
+            log.error("Error creating mqttclient in TimeStorage: ", e);
+        }
+        client = mqtt_client;
 //to clean files
         mqttReporter = () -> {
+            log.error("TimeStorage Start.");
             while (running.get()) {
                 //first second starts after start / first entry
                 try {
@@ -43,16 +51,10 @@ public class TimeStorage {
                     //Clean up
                     break;
                 }
+                long startCalc = System.nanoTime();
                 //client is null if reset was called
-                if (client == null || ! client.isConnected()) {
-                    String publisherId = UUID.randomUUID().toString();
-                    try {
-                        //use memory persistence because it is not important that all packets are transferred and we do not want to spam the file system
-                        client = new MqttClient(PropertiesReader.getMqttHost(), publisherId, new MemoryPersistence());
-                    } catch (MqttException e) {
-                        log.error("Error creating mqttclient in TimeStorage: ", e);
-                        return;
-                    }
+                if (client != null && !client.isConnected()) {
+
                     MqttConnectOptions options = new MqttConnectOptions();
                     options.setAutomaticReconnect(true);
                     options.setCleanSession(true);
@@ -74,7 +76,8 @@ public class TimeStorage {
                 try {
                     //needs to be synchronized so we do not miss entries
                     synchronized (registeredTimesLastSecond) {
-                        message = mapper.writeValueAsString(toMQTTSummaryMap(registeredTimesLastSecond)).getBytes(StandardCharsets.UTF_8);
+                        val message_str = mapper.writeValueAsString(toMQTTSummaryMap(registeredTimesLastSecond));
+                        message = message_str.getBytes(StandardCharsets.UTF_8);
                         registeredTimesLastSecond.clear();
                     }
                 } catch (JsonProcessingException e) {
@@ -85,13 +88,17 @@ public class TimeStorage {
                 mqttMessage.setQos(2);
                 mqttMessage.setRetained(true);
                 try {
-                    client.publish(MQTT_TOPIC, mqttMessage);
+                    if(client != null) {
+                        client.publish(MQTT_TOPIC, mqttMessage);
+                    }
                     log.trace(String.format("Transferred %d bytes via mqtt!", message.length));
                 } catch (MqttException e) {
                     log.error("Error sending mqtt message in Time_Storage: ", e);
                 }
+                long endCalc = System.nanoTime();
+                log.error("Calc took "+(endCalc-startCalc)+" ns.");
             }
-
+            log.error("TimeStorage Teardown.");
             //to clean files
             try {
                 if(client != null) {
@@ -100,12 +107,12 @@ public class TimeStorage {
                     client.disconnect();
                     client.close();
                 }
-                client = null;
             } catch (MqttException e) {
                 e.printStackTrace();
             }
         };
         reporter = new Thread(mqttReporter);
+        reporter.setPriority(Thread.MAX_PRIORITY);
         reporter.start();
     }
 
@@ -186,6 +193,7 @@ public class TimeStorage {
             reporter = new Thread(mqttReporter);
             log.info("Resumed reporter.");
             running.set(true);
+            reporter.setPriority(Thread.MAX_PRIORITY);
             reporter.start();
         }
         //triggers exception
