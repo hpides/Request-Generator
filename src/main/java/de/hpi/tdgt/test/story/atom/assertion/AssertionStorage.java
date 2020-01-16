@@ -29,6 +29,8 @@ public class AssertionStorage {
     private Thread reporter;
     private Runnable mqttRunnable;
     private final AtomicBoolean running = new AtomicBoolean(true);
+
+    private long testid = 0;
     private AssertionStorage() {
         String publisherId = UUID.randomUUID().toString();
         //we want to receive every packet EXACTLY Once
@@ -68,7 +70,7 @@ public class AssertionStorage {
                 byte[] message = new byte[0];
                 try {
                     synchronized (actualsLastSecond) {
-                        message = AssertionStorage.this.mapper.writeValueAsString(actualsLastSecond).getBytes(StandardCharsets.UTF_8);
+                        message = (AssertionStorage.this.mapper.writeValueAsString(new MqttAssertionMessage(testid, this.actualsLastSecond))).getBytes(StandardCharsets.UTF_8);
                         AssertionStorage.this.actualsLastSecond.clear();
                     }
                 } catch (JsonProcessingException e) {
@@ -122,7 +124,9 @@ public class AssertionStorage {
     @Getter
     @Setter
     private boolean storeEntriesAsynch = true;
-    public void addFailure(String assertionName, String actual) {
+    public void addFailure(String assertionName, String actual, long testid) {
+        //we can assume there is just ne test running at any given time, so this is sufficient
+        this.testid = testid;
         if(storeEntriesAsynch) {
             //needs quite some synchronization time and might run some time, so run it async if possible
             ThreadRecycler.getInstance().getExecutorService().submit(() -> {

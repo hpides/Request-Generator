@@ -22,66 +22,72 @@ import java.util.zip.GZIPInputStream;
 @Log4j2
 public class RestClient {
 
-    public RestResult getFromEndpoint(String story, URL url, Map<String, String> getParams) throws IOException {
+    public RestResult getFromEndpoint(String story, long testId,  URL url, Map<String, String> getParams) throws IOException {
         val request = new Request();
         request.setUrl(url);
         request.setParams(getParams);
         request.setMethod(HttpConstants.GET);
         request.setStory(story);
+        request.setTestId(testId);
         return exchangeWithEndpoint(request);
     }
 
-    public RestResult getBodyFromEndpoint(String story, URL url, String body) throws IOException {
+    public RestResult getBodyFromEndpoint(String story, long testId,  URL url, String body) throws IOException {
         val request = new Request();
         request.setUrl(url);
         request.setMethod(HttpConstants.GET);
         request.setBody(body);
         request.setForm(false);
         request.setStory(story);
+        request.setTestId(testId);
         return exchangeWithEndpoint(request);
     }
 
-    public RestResult postFormToEndpoint(String story, URL url, Map<String, String> getParams) throws IOException {
+    public RestResult postFormToEndpoint(String story, long testId,  URL url, Map<String, String> getParams) throws IOException {
         val request = new Request();
         request.setUrl(url);
         request.setParams(getParams);
         request.setMethod(HttpConstants.POST);
         request.setForm(true);
         request.setStory(story);
+        request.setTestId(testId);
         return exchangeWithEndpoint(request);
     }
 
-    public RestResult postBodyToEndpoint(String story, URL url, String body) throws IOException {
+    public RestResult postBodyToEndpoint(String story, long testId,  URL url, String body) throws IOException {
         val request = new Request();
         request.setUrl(url);
         request.setMethod(HttpConstants.POST);
         request.setForm(false);
         request.setBody(body);
         request.setStory(story);
+        request.setTestId(testId);
         return exchangeWithEndpoint(request);
     }
 
-    public RestResult putFormToEndpoint(String story, URL url, Map<String, String> getParams) throws IOException {
+    public RestResult putFormToEndpoint(String story, long testId,  URL url, Map<String, String> getParams) throws IOException {
         val request = new Request();
         request.setUrl(url);
         request.setParams(getParams);
         request.setMethod(HttpConstants.PUT);
         request.setForm(true);
         request.setStory(story);
+        request.setTestId(testId);
         return exchangeWithEndpoint(request);
     }
 
-    public RestResult putBodyToEndpoint(String story, URL url, String body) throws IOException {
+    public RestResult putBodyToEndpoint(String story, long testId,  URL url, String body) throws IOException {
         val request = new Request();
         request.setUrl(url);
         request.setMethod(HttpConstants.PUT);
         request.setForm(false);
         request.setBody(body);
         request.setStory(story);
+        request.setTestId(testId);
         return exchangeWithEndpoint(request);
     }
 
-    public RestResult getFromEndpointWithAuth(String story, URL url, Map<String, String> getParams, String username, String password) throws IOException {
+    public RestResult getFromEndpointWithAuth(String story, long testId,  URL url, Map<String, String> getParams, String username, String password) throws IOException {
         val request = new Request();
         request.setUrl(url);
         request.setParams(getParams);
@@ -89,10 +95,11 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
+        request.setTestId(testId);
         return exchangeWithEndpoint(request);
     }
 
-    public RestResult getBodyFromEndpointWithAuth(String story, URL url, String body, String username, String password) throws IOException {
+    public RestResult getBodyFromEndpointWithAuth(String story, long testId,  URL url, String body, String username, String password) throws IOException {
         val request = new Request();
         request.setUrl(url);
         request.setMethod(HttpConstants.GET);
@@ -101,10 +108,11 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
+        request.setTestId(testId);
         return exchangeWithEndpoint(request);
     }
 
-    public RestResult postFormToEndpointWithAuth(String story, URL url, Map<String, String> getParams, String username, String password) throws IOException {
+    public RestResult postFormToEndpointWithAuth(String story, long testId,  URL url, Map<String, String> getParams, String username, String password) throws IOException {
         val request = new Request();
         request.setUrl(url);
         request.setParams(getParams);
@@ -113,10 +121,11 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
+        request.setTestId(testId);
         return exchangeWithEndpoint(request);
     }
 
-    public RestResult postBodyToEndpointWithAuth(String story, URL url, String body, String username, String password) throws IOException {
+    public RestResult postBodyToEndpointWithAuth(String story, long testId,  URL url, String body, String username, String password) throws IOException {
         val request = new Request();
         request.setUrl(url);
         request.setMethod(HttpConstants.POST);
@@ -125,10 +134,11 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
+        request.setTestId(testId);
         return exchangeWithEndpoint(request);
     }
 
-    public RestResult putFormToEndpointWithAuth(String story, URL url, Map<String, String> getParams, String username, String password) throws IOException {
+    public RestResult putFormToEndpointWithAuth(String story, long testId,  URL url, Map<String, String> getParams, String username, String password) throws IOException {
         val request = new Request();
         request.setUrl(url);
         request.setParams(getParams);
@@ -137,10 +147,11 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
+        request.setTestId(testId);
         return exchangeWithEndpoint(request);
     }
 
-    public RestResult putBodyToEndpointWithAuth(String story, URL url, String body, String username, String password) throws IOException {
+    public RestResult putBodyToEndpointWithAuth(String story, long testId,  URL url, String body, String username, String password) throws IOException {
         val request = new Request();
         request.setUrl(url);
         request.setMethod(HttpConstants.PUT);
@@ -149,18 +160,20 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
+        request.setTestId(testId);
         return exchangeWithEndpoint(request);
     }
 
-    public RestResult deleteFromEndpoint(String story, URL url, Map<String, String> getParams) throws IOException {
+    public RestResult deleteFromEndpoint(String story, long testId,  URL url, Map<String, String> getParams) throws IOException {
         val request = new Request();
         request.setUrl(url);
         request.setParams(getParams);
         request.setMethod(HttpConstants.DELETE);
+        request.setTestId(testId);
         return exchangeWithEndpoint(request);
     }
 
-    public RestResult deleteFromEndpointWithAuth(String story, URL url, Map<String, String> getParams, String username, String password) throws IOException {
+    public RestResult deleteFromEndpointWithAuth(String story, long testId,  URL url, Map<String, String> getParams, String username, String password) throws IOException {
         val request = new Request();
         request.setUrl(url);
         request.setParams(getParams);
@@ -168,6 +181,7 @@ public class RestClient {
         request.setUsername(username);
         request.setPassword(password);
         request.setStory(story);
+        request.setTestId(testId);
         return exchangeWithEndpoint(request);
     }
 
@@ -377,7 +391,7 @@ public class RestClient {
         res.setContentType(conn.getContentType());
         res.setHeaders(conn.getHeaderFields());
         res.setReturnCode(conn.getResponseCode());
-        storage.registerTime(request.getMethod(), request.getUrl().toString(), res.durationNanos(), request.getStory());
+        storage.registerTime(request.getMethod(), request.getUrl().toString(), res.durationNanos(), request.getStory(), request.getTestId());
         log.info("Request took "+res.durationMillis()+" ms.");
     }
 }

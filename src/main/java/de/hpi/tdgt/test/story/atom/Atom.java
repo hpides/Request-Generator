@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
         @JsonSubTypes.Type(value = Start.class, name = "START"),
         @JsonSubTypes.Type(value = WarmupEnd.class, name = "WARMUP_END"),
 })
-@EqualsAndHashCode
+@EqualsAndHashCode(exclude = {"parent"})
 @Log4j2
 public abstract class Atom implements Cloneable {
     private String name;
@@ -58,9 +58,7 @@ public abstract class Atom implements Cloneable {
     //e.g. for request, so it can account time to a story
     @JsonIgnore
     @Getter(AccessLevel.PROTECTED)
-    //only use in tests!
-    @Setter
-    private String storyName;
+    private UserStory parent;
     public abstract void perform() throws InterruptedException;
     
     //use this method to get successors of this atom
@@ -93,7 +91,7 @@ public abstract class Atom implements Cloneable {
         });
         //boilerplate
         this.successorLinks = successorList.toArray(new Atom[0]);
-        this.storyName = parent.getName();
+        this.parent = parent;
     }
 
     private void runSuccessors() throws InterruptedException, ExecutionException {
@@ -125,7 +123,6 @@ public abstract class Atom implements Cloneable {
      * @return
      */
     protected abstract Atom performClone();
-    private boolean alreadyCloned = false;
     /**
      * My original thought was to clone the atom of every story per Thread, while every Thread represents a user. This should guarantee that every user has an own state (knownParams, predecessorsReady, ...).
      * Using ThreadLocalStorage we should be able to avoid this problem, and keep our structure reentrant.
@@ -139,6 +136,7 @@ public abstract class Atom implements Cloneable {
         atom.setName(this.getName());
         atom.setRepeat(this.getRepeat());
         atom.successors = successors;
+        atom.parent = this.parent;
         return atom;
     }
 }
