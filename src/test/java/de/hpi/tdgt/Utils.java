@@ -39,13 +39,13 @@ public class Utils {
         Assertions.assertTrue(c.isInstance(o), "First atom of first story should be a data generation atom and not a "+o.getClass().getName());
     }
     public InputStream getUsersCSV() throws IOException {
-        return getClass().getResourceAsStream("users.csv");
+        return getClass().getResourceAsStream("output/users.csv");
     }
     public InputStream getPostsCSV() throws IOException {
-        return getClass().getResourceAsStream("posts.csv");
+        return getClass().getResourceAsStream("output/posts.csv");
     }
 
     public InputStream getValuesCSV() throws IOException {
-        return getClass().getResourceAsStream("values.csv");
+        return getClass().getResourceAsStream("output/values.csv");
     }
 }

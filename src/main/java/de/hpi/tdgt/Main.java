@@ -42,7 +42,7 @@ public class Main {
                 Test deserializedTest = Deserializer.deserialize(json);
                 log.info("Successfully deserialized input json including " + deserializedTest.getStories().length + " stories.");
                 log.info("Running test...");
-                Data_Generation.outputDirectory = args[3];
+                Data_Generation.outputDirectory = args[3]+"/output";
                 UploadController.PDGF_DIR = args[3];
                 UploadController.JAVA_7_DIR = args[4];
                 //in case warmup is added
