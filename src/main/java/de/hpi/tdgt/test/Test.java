@@ -38,6 +38,10 @@ public class Test {
         Arrays.stream(stories).forEach(story -> story.setParent(this));
     }
 
+    /**
+     * Contains the original test config as JSON. This saves time because when broadcasting it, the test does not have to be serialized again.
+     */
+    private String configJSON;
     private int repeat;
     private int scaleFactor;
     private UserStory[] stories;
@@ -90,7 +94,7 @@ public class Test {
         try {
             //clear retained messages from last test
             client.publish(MQTT_TOPIC, new byte[0],0,true);
-            client.publish(MQTT_TOPIC, ("testStart "+testId).getBytes(StandardCharsets.UTF_8),2,true);
+            client.publish(MQTT_TOPIC, ("testStart "+testId+" "+configJSON).getBytes(StandardCharsets.UTF_8),2,true);
         } catch (MqttException e) {
             log.error("Could not send control start message: ", e);
         }
