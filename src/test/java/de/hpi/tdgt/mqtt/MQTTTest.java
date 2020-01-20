@@ -353,6 +353,34 @@ public class MQTTTest extends RequestHandlingFramework {
         boolean hasTestStart = hasMessageStartingWith(message, messageStart);
         MatcherAssert.assertThat("control topic should have received a \"testStart\"!",hasTestStart);
     }
+    //this test verifies that format expected by performance data storage is met
+    @Test
+    public void ATestStartMessageWithIdAndConfigIsSent() throws MqttException, InterruptedException, ExecutionException, IOException {
+        val message = prepareClient(de.hpi.tdgt.test.Test.MQTT_TOPIC);
+        //test that does not do anything is sufficient, no need to waste resources here
+        de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getNoopJson());
+        test.start(test.warmup());
+        String messageStart = "testStart";
+        val startMessage = findMessageStartingWith(message, messageStart);
+        val parts = startMessage.split(" ");
+        //if there are whitespaces in the string, it will be split by them to
+        MatcherAssert.assertThat(parts.length, Matchers.greaterThanOrEqualTo(3));
+        MatcherAssert.assertThat(parts[0], Matchers.equalTo(messageStart));
+        MatcherAssert.assertThat(Long.parseLong(parts[1]), Matchers.greaterThan(0L));
+
+        //collect potentially split config
+        val sb = new StringBuilder();
+        var first = true;
+        for(int i = 2; i < parts.length; i++){
+            if(!first){
+                sb.append(' ');
+            }
+            first = false;
+            sb.append(parts[i]);
+        }
+        //make sure whitespaces are also preserved
+        MatcherAssert.assertThat(sb.toString(), Matchers.equalTo(new Utils().getNoopJson()));
+    }
 
     @Test
     public void ATestEndMessageIsSent() throws MqttException, InterruptedException, ExecutionException, IOException {
@@ -364,14 +392,15 @@ public class MQTTTest extends RequestHandlingFramework {
         boolean hasTestEnd = hasMessageStartingWith(messages, messageEnd);
         MatcherAssert.assertThat("control topic should have received a \"testEnd\"!",hasTestEnd);
     }
-
-    private boolean hasMessageStartingWith(Set<String> messages, String messageStart) {
-        boolean hasTestEnd = false;
+    private String findMessageStartingWith(Set<String> messages, String messageStart){
         for(val message : messages){
             if (message.startsWith(messageStart)){
-                hasTestEnd = true;
+                return message;
             }
         }
-        return hasTestEnd;
+        return null;
+    }
+    private boolean hasMessageStartingWith(Set<String> messages, String messageStart) {
+        return findMessageStartingWith(messages,messageStart) != null;
     }
 }
