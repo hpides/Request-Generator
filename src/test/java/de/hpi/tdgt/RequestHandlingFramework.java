@@ -56,11 +56,11 @@ public class RequestHandlingFramework {
         handlers.add(putBodyHandler);
         handlers.add(authHandler);
         handlers.add(emptyResponseHandler);
-        File values = new File("values.csv");
+        /*File values = new File("values.csv");
         values.deleteOnExit();
         var os = new FileOutputStream(values);
         IOUtils.copy(new Utils().getValuesCSV(), os);
-        os.close();
+        os.close();*/
         //tests want predictable behaviour in regards to when an entry is stored
         AssertionStorage.getInstance().setStoreEntriesAsynch(false);
     }
