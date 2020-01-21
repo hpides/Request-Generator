@@ -75,7 +75,7 @@ public abstract class Atom implements Cloneable {
             for(int i = 0; i < repeat; i++) {
                 perform();
             }
-            runSuccessors();
+            //runSuccessors();
         }
     }
 

@@ -49,9 +49,9 @@ public class UserStory implements Runnable, Cloneable{
     
     @Override
     public void run() {
-        Runnable storyRunnable = new Runnable() {
+        /*Runnable storyRunnable = new Runnable() {
             @Override
-            public void run() {
+            public void run() {*/
 
                 try {
                     UserStory clone;
@@ -68,13 +68,13 @@ public class UserStory implements Runnable, Cloneable{
                 } catch (InterruptedException e) {
                     log.error(e);
                 }
-            }
+            /*}
         };
         try {
             ThreadRecycler.getInstance().getExecutorService().submit(storyRunnable).get();
         } catch (InterruptedException | ExecutionException e) {
             log.error(e);
-        }
+        }*/
     }
 
 

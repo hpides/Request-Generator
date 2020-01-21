@@ -129,10 +129,10 @@ public class AssertionStorage {
         this.testid = testid;
         if(storeEntriesAsynch) {
             //needs quite some synchronization time and might run some time, so run it async if possible
-            ThreadRecycler.getInstance().getExecutorService().submit(() -> {
+            /*ThreadRecycler.getInstance().getExecutorService().submit(() -> {
                 doAddFailure(assertionName, actual);
 
-            });
+            });*/
         }
         else {
             doAddFailure(assertionName, actual);

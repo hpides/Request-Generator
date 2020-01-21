@@ -1,6 +1,6 @@
 {
   "repeat": 1,
-  "scaleFactor": 100000,
+  "scaleFactor": 33333,
   "requests_per_second": 100000,
   "stories": [
     {
@@ -8,18 +8,9 @@
       "name": "Statische Seite anfragen",
       "atoms": [
         {
-          "name": "Warten",
-          "id": 0,
-          "repeat": 1,
-          "successors": [
-            1
-          ],
-          "type": "DELAY",
-          "delayMs": 1
-        },{
           "name": "Index",
           "id": 1,
-          "repeat": 1,
+          "repeat": 3,
           "successors": [
           ],
           "type": "REQUEST",
