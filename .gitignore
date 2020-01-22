@@ -25,3 +25,6 @@ users.csv
 values.csv
 search.csv
 logs/
+native/.vs
+native/out
+*.dll
