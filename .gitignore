@@ -26,5 +26,7 @@ values.csv
 search.csv
 logs/
 native/.vs
+fiber-example/.vs
 native/out
+fiber-example/out
 *.dll
