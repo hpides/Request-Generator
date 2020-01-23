@@ -15,7 +15,7 @@ import java.net.URISyntaxException;
 @SpringBootApplication
 public class WebApplication {
     public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {
-        new Fiber().sayHello();
+
         if(args.length < 2){
             log.error("Usage: java -jar "+new java.io.File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getName()+"[cli] <Path to PDGF dir> <Java 7 interpreter path>");
             System.exit(1);
