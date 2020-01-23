@@ -47,6 +47,7 @@ public class Main {
                 UploadController.JAVA_7_DIR = args[4];
                 //in case warmup is added
                 new UploadController().uploadTestConfig(deserializedTest);
+                System.exit(0);
             } catch (IOException | ExecutionException e) {
                 log.error(e);
             }

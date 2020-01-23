@@ -95,7 +95,7 @@ public abstract class Atom implements Cloneable {
     }
 
     private void runSuccessors() throws InterruptedException, ExecutionException {
-        val threads = Arrays.stream(successorLinks).map(successorLink -> new Runnable(){
+        /*val threads = Arrays.stream(successorLinks).map(successorLink -> new Runnable(){
             @Override
             public void run() {
                 try {
@@ -115,6 +115,10 @@ public abstract class Atom implements Cloneable {
             if(!thread.isCancelled()) {
                 thread.get();
             }
+        }*/
+        for(val atom : successorLinks){
+            val clonedMap = new HashMap<String, String>(Atom.this.getKnownParams());
+            atom.run(clonedMap);
         }
     }
 

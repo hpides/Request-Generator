@@ -19,68 +19,64 @@ import java.util.concurrent.ExecutionException;
 @Setter
 @NoArgsConstructor
 @Log4j2
-public class UserStory implements Runnable, Cloneable{
+public class UserStory implements Runnable, Cloneable {
     private double scalePercentage;
     private String name;
     private Atom[] atoms;
     @JsonIgnore
     @Getter
     private Test parent;
-    public void setAtoms(Atom[] atoms){
+
+    public void setAtoms(Atom[] atoms) {
         this.atoms = atoms;
         //set links
         Arrays.stream(atoms).forEach(atom -> atom.initSuccessors(this));
     }
+
     @Override
-    public UserStory clone(){
+    public UserStory clone() {
         val story = new UserStory();
         story.setName(this.getName());
         story.setScalePercentage(this.getScalePercentage());
         story.atoms = new Atom[atoms.length];
         //make a clone for all local changes, e.g. predecessorsReady
-        for(int i = 0; i < atoms.length; i++){
+        for (int i = 0; i < atoms.length; i++) {
             story.getAtoms()[i] = atoms[i].clone();
         }
         story.setParent(parent);
         //fix references
-        Arrays.stream(story.getAtoms()).forEach(atom -> atom.initSuccessors(story));
+        for(Atom atom : story.getAtoms()){
+            atom.initSuccessors(story);
+        }
+        // this lead to IllegalMonitorStateException Arrays.stream(story.getAtoms()).forEach(atom -> atom.initSuccessors(story));
         return story;
     }
-    
+
     @Override
     public void run() {
-        Runnable storyRunnable = new Runnable() {
-            @Override
-            public void run() {
 
-                try {
-                    UserStory clone;
-                    synchronized (this) {
-                        clone = UserStory.this.clone();
-                    }
-                    log.info("Running story " + clone.getName() + " in thread " + Thread.currentThread().getId());
-                    try {
-                        clone.getAtoms()[0].run(new HashMap<>());
-                    } catch (ExecutionException e) {
-                        log.error(e);
-                    }
-                    log.info("Finished story " + clone.getName() + " in thread " + Thread.currentThread().getId());
-                } catch (InterruptedException e) {
-                    log.error(e);
-                }
-            }
-        };
         try {
-            ThreadRecycler.getInstance().getExecutorService().submit(storyRunnable).get();
-        } catch (InterruptedException | ExecutionException e) {
+            UserStory clone;
+            synchronized (this) {
+                clone = UserStory.this.clone();
+            }
+            log.info("Running story " + clone.getName() + " in thread " + Thread.currentThread().getId());
+            try {
+                clone.getAtoms()[0].run(new HashMap<>());
+            } catch (ExecutionException e) {
+                log.error(e);
+            }
+            log.info("Finished story " + clone.getName() + " in thread " + Thread.currentThread().getId());
+        } catch (InterruptedException e) {
             log.error(e);
         }
+
     }
 
 
-    public boolean hasWarmup(){
-        for(val atom : atoms){
-            if(atom instanceof WarmupEnd){
+    public boolean hasWarmup() {
+        for (val atom : atoms) {
+            if (atom instanceof WarmupEnd) {
                 return true;
             }
         }
@@ -95,13 +91,14 @@ public class UserStory implements Runnable, Cloneable{
 
     /**
      * Returns number of times a warmup in this story is waiting for a mutex.
+     *
      * @return int
      */
-    public int numberOfWarmupEnds(){
+    public int numberOfWarmupEnds() {
         int warmupEnds = 0;
-        for(val atom : atoms){
-            if(atom instanceof WarmupEnd){
-                warmupEnds+=atom.getRepeat();
+        for (val atom : atoms) {
+            if (atom instanceof WarmupEnd) {
+                warmupEnds += atom.getRepeat();
             }
         }
         return warmupEnds;

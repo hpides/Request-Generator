@@ -1,11 +1,17 @@
 package de.hpi.tdgt.requesthandling;
 
+import de.esoco.coroutine.ChannelId;
+import de.esoco.coroutine.Coroutine;
+import de.esoco.coroutine.step.Delay;
+import de.hpi.tdgt.fibers.Scheduler;
 import de.hpi.tdgt.test.Test;
 import de.hpi.tdgt.test.time_measurement.TimeStorage;
+import io.netty.handler.codec.http.HttpHeaders;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CountingInputStream;
+import org.asynchttpclient.*;
 
 import java.io.*;
 import java.net.*;
@@ -17,7 +23,14 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Time;
 import java.util.Base64;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.GZIPInputStream;
+
+import static de.esoco.coroutine.ChannelId.stringChannel;
+import static de.esoco.coroutine.step.ChannelReceive.receive;
+import static de.esoco.coroutine.step.ChannelSend.send;
+import static de.esoco.coroutine.step.CodeExecution.apply;
+import static de.esoco.coroutine.step.CodeExecution.run;
 
 @Log4j2
 public class RestClient {
@@ -191,31 +204,29 @@ public class RestClient {
         URL url = appendGetParametersToUrlIfNecessary(request.getUrl(), request.getParams(), request.getMethod());
 
         //set given properties
-        final HttpURLConnection httpURLConnection = prepareHttpUrlConnection(url, request.getMethod(), request.isFollowsRedirects(), request.getConnectTimeout(), request.getResponseTimeout(), request.isSendKeepAlive());
+        val config = prepareHttpUrlConnection(url, request.getMethod(), request.isFollowsRedirects(), request.getConnectTimeout(), request.getResponseTimeout(), request.isSendKeepAlive());
+        val client = Dsl.asyncHttpClient(config);
         int retry;
         val start = System.nanoTime();
+        val requestBuilder = new RequestBuilder();
+        requestBuilder.setUrl(url.toString());
+        requestBuilder.setMethod(request.getMethod());
+        BoundRequestBuilder builder = client.prepareRequest(requestBuilder);
+
         //set auth header if required
         if (request.getUsername() != null && request.getPassword() != null) {
-            httpURLConnection.setRequestProperty(HttpConstants.HEADER_AUTHORIZATION, "Basic "+Base64.getEncoder().encodeToString((request.getUsername() + ":" + request.getPassword()).getBytes(StandardCharsets.UTF_8)));
+            builder.setHeader(HttpConstants.HEADER_AUTHORIZATION, "Basic "+Base64.getEncoder().encodeToString((request.getUsername() + ":" + request.getPassword()).getBytes(StandardCharsets.UTF_8)));
         }
+
         //set POST Body to contain formencoded data
         if (request.isForm() && (request.getMethod().equals(HttpConstants.POST) || request.getMethod().equals(HttpConstants.PUT))) {
-            httpURLConnection.setRequestProperty("Content-Type", HttpConstants.APPLICATION_X_WWW_FORM_URLENCODED);
-            String body = mapToURLEncodedString(request.getParams()).toString();
-            httpURLConnection.setDoOutput(true);
-            OutputStream out = httpURLConnection.getOutputStream();
-            out.write(body.getBytes(StandardCharsets.UTF_8));
-            out.flush();
-            out.close();
+            builder.setHeader("Content-Type", HttpConstants.APPLICATION_X_WWW_FORM_URLENCODED);
+            builder.setBody(mapToURLEncodedString(request.getParams()).toString());
         }
         //set POST body to what was passed
         if (!request.isForm() && (request.getMethod().equals(HttpConstants.POST) || request.getMethod().equals(HttpConstants.PUT) || request.getMethod().equals(HttpConstants.GET)) && request.getBody() != null) {
-            httpURLConnection.setRequestProperty("Content-Type", HttpConstants.CONTENT_TYPE_APPLICATION_JSON);
-            httpURLConnection.setDoOutput(true);
-            OutputStream out = httpURLConnection.getOutputStream();
-            out.write(request.getBody().getBytes(StandardCharsets.UTF_8));
-            out.flush();
-            out.close();
+            builder.setHeader("Content-Type", HttpConstants.CONTENT_TYPE_APPLICATION_JSON);
+            builder.setBody(request.getBody());
         }
         if(Test.RequestThrottler.getInstance() != null) {
             try {
@@ -227,45 +238,46 @@ public class RestClient {
         else {
             log.warn("Internal error: Can not limit requests per second!");
         }
+        val scope = Test.RequestThrottler.getInstance().getScope();
+        val testChannel = stringChannel(url.toString()+System.nanoTime());
         //try to connect
+        val result = new RestResult();
+        final AtomicBoolean atomicBoolean = new AtomicBoolean(false);
         for (retry = -1; retry < request.getRetries(); retry++) {
-            try {
-                httpURLConnection.connect();
-                break;
-            } catch (SocketTimeoutException s) {
-                log.warn("Request timeout for URL " + url.toString() + " (connect timeout was " + request.getConnectTimeout() + ").");
-            } catch (IOException e) {
-                log.error("Could not connect to " + url.toString(), e);
-                return null;
+            result.setStartTime(start);
+            builder.execute(new AsyncCompletionHandler<RestResult>() {
+                    @Override
+                    public RestResult onCompleted(Response response) throws Exception {
+                        readResponse(result, request, response);
+                        atomicBoolean.set(true);
+                        return result;
+                    }
+                });
+            while(!atomicBoolean.get()) {
+                Delay.sleep(1);
             }
+                break;
         }
         //exceeded max retries
         if (retry >= request.getRetries()) {
             return null;
         }
         //got a connection
-        val result = new RestResult();
-        result.setStartTime(start);
-        readResponse(httpURLConnection, result, request);
-
         return result;
     }
 
-    private HttpURLConnection prepareHttpUrlConnection(URL url, String method, boolean followsRedirects, int connectTimeout, int responseTimeout, boolean sendKeepAlive) throws IOException {
-        final HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-        httpURLConnection.setInstanceFollowRedirects(followsRedirects);
+    private AsyncHttpClientConfig prepareHttpUrlConnection(URL url, String method, boolean followsRedirects, int connectTimeout, int responseTimeout, boolean sendKeepAlive) throws IOException {
+        DefaultAsyncHttpClientConfig.Builder clientBuilder = Dsl.config();
+        clientBuilder.setFollowRedirect(followsRedirects);
+        clientBuilder.setKeepAlive(sendKeepAlive);
         if (connectTimeout > 0) {
-            httpURLConnection.setConnectTimeout(connectTimeout);
+            clientBuilder.setConnectTimeout(connectTimeout);
         }
         if (responseTimeout > 0) {
-            httpURLConnection.setReadTimeout(responseTimeout);
+
+            clientBuilder.setReadTimeout(responseTimeout);
         }
-        if (sendKeepAlive) {
-            httpURLConnection.setRequestProperty(HttpConstants.HEADER_CONNECTION, HttpConstants.KEEP_ALIVE);
-        }
-        //TODO headers like content type
-        httpURLConnection.setRequestMethod(method);
-        return httpURLConnection;
+        return clientBuilder.build();
     }
 
     private URL appendGetParametersToUrlIfNecessary(URL url, Map<String, String> params, String method) throws MalformedURLException {
@@ -310,87 +322,12 @@ public class RestClient {
      * @return response content
      * @throws IOException if an I/O exception occurs
      */
-    private void readResponse(HttpURLConnection conn, RestResult res, Request request) throws IOException {
-        BufferedInputStream in = null;
-
-        //final long contentLength = conn.getContentLength();
-        //might return nullbyte here if we do not need actual content
-
-        // works OK even if ContentEncoding is null
-        boolean gzipped = HttpConstants.ENCODING_GZIP.equals(conn.getContentEncoding());
-        CountingInputStream instream = null;
-        try {
-            instream = new CountingInputStream(conn.getInputStream());
-            if (gzipped) {
-                in = new BufferedInputStream(new GZIPInputStream(instream));
-            } else {
-                in = new BufferedInputStream(instream);
-            }
-        } catch (IOException e) {
-            if (!(e.getCause() instanceof FileNotFoundException)) {
-                Throwable cause = e.getCause();
-                if (cause != null) {
-                    //log.error("Cause: {}", cause.toString());
-                    if (cause instanceof Error) {
-                        throw (Error) cause;
-                    }
-                }
-            }
-            // Normal InputStream is not available
-            InputStream errorStream = conn.getErrorStream();
-            if (errorStream == null) {
-                res.setResponse(NULL_BA);
-                res.setEndTime(System.nanoTime());
-                res.setContentType(conn.getContentType());
-                res.setHeaders(conn.getHeaderFields());
-                res.setReturnCode(conn.getResponseCode());
-            }
-            if (log.isInfoEnabled()) {
-                if(conn.getResponseCode() == 401 || conn.getResponseCode() == 403){
-                    log.info("Error Response Code: " + conn.getResponseCode() + "for "+request.getMethod() +" "+request.getUrl() + " for used authentication "+request.getUsername()+":"+request.getPassword());
-                }
-                else{
-                    log.info("Error Response Code: " + conn.getResponseCode() + "for "+request.getMethod() +" "+request.getUrl());
-                }
-                if(errorStream != null){
-                    log.warn("Error Response Content: ",IOUtils.toString(errorStream, "UTF-8") );
-                }
-            }
-
-            if (gzipped) {
-                if (errorStream != null) {
-                    in = new BufferedInputStream(new GZIPInputStream(errorStream));
-                }
-            } else {
-                if (errorStream != null) {
-                    in = new BufferedInputStream(errorStream);
-                }
-            }
-        } catch (Exception e) {
-            Throwable cause = e.getCause();
-            if (cause != null) {
-                if (cause instanceof Error) {
-                    throw (Error) cause;
-                }
-            }
-            in = new BufferedInputStream(conn.getErrorStream());
-        }
-        // N.B. this closes 'in'
-        var responseData = NULL_BA;
-        if (in != null) {
-            responseData = IOUtils.toByteArray(in);
-            in.close();
-        }
-        if (instream != null) {
-            instream.close();
-        }
-        //got results, store them and the time
-        //TODO do we want to measure the time to transfer the data? Currently we are, but we could also take the time after retrieving content length
-        res.setResponse(responseData);
+    private void readResponse(RestResult res, Request request, Response response) throws IOException {
+        res.setResponse(response.getResponseBodyAsBytes());
         res.setEndTime(System.nanoTime());
-        res.setContentType(conn.getContentType());
-        res.setHeaders(conn.getHeaderFields());
-        res.setReturnCode(conn.getResponseCode());
+        res.setContentType(response.getContentType());
+        res.setHeaders(response.getHeaders());
+        res.setReturnCode(response.getStatusCode());
         storage.registerTime(request.getMethod(), request.getUrl().toString(), res.durationNanos(), request.getStory(), request.getTestId());
         log.info("Request took "+res.durationMillis()+" ms.");
     }

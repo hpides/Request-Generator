@@ -1,5 +1,9 @@
 package de.hpi.tdgt.test;
 
+import de.esoco.coroutine.Coroutine;
+import de.esoco.coroutine.CoroutineScope;
+import de.esoco.lib.datatype.Range;
+import de.hpi.tdgt.fibers.Scheduler;
 import de.hpi.tdgt.test.story.atom.WarmupEnd;
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
 import de.hpi.tdgt.test.time_measurement.TimeStorage;
@@ -22,6 +26,8 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+
+import static de.esoco.coroutine.step.CodeExecution.run;
 
 @Getter
 @Setter
@@ -154,17 +160,29 @@ public class Test {
     }
 
     private Collection<Future<?>> runTest(UserStory[] stories) throws InterruptedException {
-        val futures = new Vector<Future<?>>();
+        val futures = new Vector<Coroutine<?,?>>();
         for(int i=0; i < stories.length; i++){
             //repeat stories as often as wished
             for(int j = 0; j < scaleFactor * stories[i].getScalePercentage(); j++) {
                 stories[i].setParent(this);
                 stories[i].setStarted(true);
-                val future = ThreadRecycler.getInstance().getExecutorService().submit(stories[i]);
-                futures.add(future);
+                //val future = ThreadRecycler.getInstance().getExecutorService().submit(stories[i]);
+                //futures.add(future);
+                val routine = Coroutine.first(run(stories[i]));
+                futures.add(routine);
             }
+            long start = System.currentTimeMillis();
+            CoroutineScope.launch(scope -> {
+                RequestThrottler.getInstance().setScope(scope);
+                for(Coroutine<?,?> routine : futures){
+                    routine.runAsync(scope);
+                }
+            });
+            long finished = System.currentTimeMillis();
+            log.info("Ran "+scaleFactor+"requests in "+(finished-start)+" ms.");
         }
-        return futures;
+        //return futures;
+        return new Vector<>();
     }
 
     /**
@@ -177,7 +195,9 @@ public class Test {
         }
         @Getter
         private static RequestThrottler instance = null;
-
+        @Getter
+        @Setter
+        private CoroutineScope scope;
         private RequestThrottler(int requestsPerSecond){
             requestLimiter =  new Semaphore(requestsPerSecond,true);
         }

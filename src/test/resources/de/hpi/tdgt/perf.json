@@ -1,6 +1,6 @@
 {
   "repeat": 1,
-  "scaleFactor": 100000,
+  "scaleFactor": 1000,
   "requests_per_second": 100000,
   "stories": [
     {
@@ -24,7 +24,7 @@
           ],
           "type": "REQUEST",
           "verb": "GET",
-          "addr": "http://192.168.137.1/",
+          "addr": "http://localhost/",
           "assertions": [
             {
               "type": "RESPONSE_CODE",
