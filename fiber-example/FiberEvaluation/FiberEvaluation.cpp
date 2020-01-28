@@ -751,7 +751,7 @@ VOID
 __stdcall sendHttpRequest(LPVOID lpParameter)
 {
 	int id = (int)lpParameter;
-	//printf("Fiber %d is running!\n", id);
+	printf("Fiber %d is running!\n", id);
 	if (hSession != NULL)
 	{
 		rcContext[id].hWindow = NULL;
@@ -762,7 +762,7 @@ __stdcall sendHttpRequest(LPVOID lpParameter)
 		rcContext[id].hRequest = 0;
 		rcContext[id].lpBuffer = NULL;
 		rcContext[id].szMemo[0] = 0;
-		SendRequest(&rcContext[id], L"http://192.168.137.1");
+		SendRequest(&rcContext[id], L"http://localhost");
 	}
 	else
 	{
