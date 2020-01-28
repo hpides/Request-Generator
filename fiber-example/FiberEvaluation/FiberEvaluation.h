@@ -11,7 +11,7 @@
 #include <Winhttp.h>
 #include <atomic>
 #include <time.h>
-#define FIBER_COUNT 100000       // max fibers (including primary)
+#define FIBER_COUNT 100001//12501       // max fibers per Thread (including primary)
 #define PRIMARY_FIBER 0       // base fiber
 
 

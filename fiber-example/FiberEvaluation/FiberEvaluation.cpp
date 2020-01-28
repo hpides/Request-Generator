@@ -23,13 +23,17 @@ typedef struct {
     WCHAR       szMemo[256];    // String providing state information
 } REQUEST_CONTEXT;
 
-static REQUEST_CONTEXT rcContext[FIBER_COUNT];
-CRITICAL_SECTION g_CallBackCritSec;
+REQUEST_CONTEXT* rcContext;
 WINHTTP_STATUS_CALLBACK pCallback = NULL;
 atomic_int finished = 0;
 // This macro returns the constant name in a string.
 #define CASE_OF(constant)   case constant: return (L# constant)
 #pragma comment(lib, "winhttp.lib")
+
+
+// Forward declaration.
+void __stdcall AsyncCallback(HINTERNET, DWORD_PTR, DWORD, LPVOID, DWORD);
+
 LPCWSTR GetApiErrorString(DWORD dwResult)
 {
 	// Return the error result as a string so that the
@@ -80,26 +84,19 @@ void Cleanup(REQUEST_CONTEXT* cpContext)
 
 	// note: this function can be called concurrently by differnet threads, therefore any global data
 	// reference needs to be protected
-
-	EnterCriticalSection(&g_CallBackCritSec);
-	//Re-enable the download button.
-	LeaveCriticalSection(&g_CallBackCritSec);
 }
 
-// Forward declaration.
-void __stdcall AsyncCallback(HINTERNET, DWORD_PTR, DWORD, LPVOID, DWORD);
-BOOL SendRequest(REQUEST_CONTEXT* cpContext, LPWSTR szURL)
-{
-	WCHAR szHost[256];
-	DWORD dwOpenRequestFlag = 0;
-	URL_COMPONENTS urlComp;
-	BOOL fRet = FALSE;
-	WCHAR szBuffer[256];
+WCHAR szHost[256];
+DWORD dwOpenRequestFlag = 0;
+URL_COMPONENTS urlComp;
+BOOL fRet = FALSE;
+WCHAR szBuffer[256];
 
-	WINHTTP_AUTOPROXY_OPTIONS AutoProxyOptions = { 0 };
-	WINHTTP_CURRENT_USER_IE_PROXY_CONFIG IEProxyConfig;
-	WINHTTP_PROXY_INFO  proxyInfo = { 0 };
-
+WINHTTP_AUTOPROXY_OPTIONS AutoProxyOptions = { 0 };
+WINHTTP_CURRENT_USER_IE_PROXY_CONFIG IEProxyConfig;
+WINHTTP_PROXY_INFO  proxyInfo = { 0 };
+LPWSTR szURL;
+void prepareRequest() {
 	// Initialize URL_COMPONENTS structure.
 	ZeroMemory(&urlComp, sizeof(urlComp));
 	urlComp.dwStructSize = sizeof(urlComp);
@@ -147,13 +144,7 @@ BOOL SendRequest(REQUEST_CONTEXT* cpContext, LPWSTR szURL)
 
 	//printf(">Calling WinHttpConnect for host %s and port %d\n", szHost, urlComp.nPort);
 	// Open an HTTP session.
-	cpContext->hConnect = WinHttpConnect(hSession, szHost,
-		urlComp.nPort, 0);
-	if (NULL == cpContext->hConnect)
-	{
-		//printf("< WinHttpConnect failed : %X\n", GetLastError());
-		goto cleanup;
-	}
+
 	//printf("< WinHttpConnect  succeeded");
 
 	//printf("> Calling WinHttpGetIEProxyConfigForCurrentUser");
@@ -214,9 +205,26 @@ BOOL SendRequest(REQUEST_CONTEXT* cpContext, LPWSTR szURL)
 	// Prepare OpenRequest flag
 	dwOpenRequestFlag = (INTERNET_SCHEME_HTTPS == urlComp.nScheme) ?
 		WINHTTP_FLAG_SECURE : 0;
+	return;
+cleanup:
+	fprintf(stderr, "Error!!!!!");
+
+}
+BOOL SendRequest(REQUEST_CONTEXT* cpContext, int thread_id)
+{
+
+
+
+
 
 	//printf(">Calling WinHttpOpenRequest");
-
+	cpContext->hConnect = WinHttpConnect(hSession, szHost,
+		urlComp.nPort, 0);
+	if (NULL == cpContext->hConnect)
+	{
+		perror("WinHttpConnect Failed");
+		goto cleanup;
+	}
 	// Open a "GET" request.
 	cpContext->hRequest = WinHttpOpenRequest(cpContext->hConnect,
 		L"GET", urlComp.lpszUrlPath,
@@ -239,8 +247,7 @@ BOOL SendRequest(REQUEST_CONTEXT* cpContext, LPWSTR szURL)
 		WINHTTP_NO_REQUEST_DATA, 0, 0,
 		(DWORD_PTR)cpContext))
 	{
-		//printf("< WinHttpSendRequest failed : %X\n", GetLastError());
-		goto cleanup;
+		perror("Sending request failed");
 	}
 	//printf("< WinHttpSendRequest succeeded");
 	fRet = TRUE;
@@ -296,8 +303,8 @@ BOOL Header(REQUEST_CONTEXT* cpContext)
 		WINHTTP_QUERY_RAW_HEADERS_CRLF,
 		WINHTTP_HEADER_NAME_BY_INDEX, lpOutBuffer, &dwSize, WINHTTP_NO_HEADER_INDEX))
 
-	// Free the allocated memory.
-	delete[] lpOutBuffer;
+		// Free the allocated memory.
+		delete[] lpOutBuffer;
 
 	return TRUE;
 }
@@ -374,7 +381,7 @@ BOOL ReadData(REQUEST_CONTEXT* cpContext)
 		return FALSE;
 	}
 	//printf("<WinHttpReadData");
-	
+
 	return TRUE;
 }
 //********************************************************************
@@ -462,8 +469,8 @@ void __stdcall AsyncCallback(HINTERNET hInternet, DWORD_PTR dwContext,
 				lpWideBuffer[cpContext->dwTotalSize] = 0;
 				/* note: in the case of binary data, only data upto the first null will be displayed */
 				finished++;
-				//printf("%ls\n",lpWideBuffer);
-
+				// re-enable to print output
+				//printf("%ls\n", lpWideBuffer);
 				// Delete the remaining data buffers.
 				delete[] lpWideBuffer;
 				delete[] cpContext->lpBuffer;
@@ -598,8 +605,8 @@ void __stdcall AsyncCallback(HINTERNET hInternet, DWORD_PTR dwContext,
 		//An error occurred while sending an HTTP request. 
 		//The lpvStatusInformation parameter contains a pointer to a WINHTTP_ASYNC_RESULT structure. Its dwResult member indicates the ID of the called function and dwError indicates the return value.
 		pAR = (WINHTTP_ASYNC_RESULT*)lpvStatusInformation;
-		//printf("REQUEST_ERROR - error %d, result %s\n", pAR->dwError, GetApiErrorString(pAR->dwResult));
-
+		//printf("REQUEST_ERROR - error %d, result %ls\n", pAR->dwError, GetApiErrorString(pAR->dwResult));
+		finished++;
 		Cleanup(cpContext);
 		break;
 
@@ -746,56 +753,61 @@ void __stdcall AsyncCallback(HINTERNET hInternet, DWORD_PTR dwContext,
 		break;
 	}
 }
-LPVOID g_lpFiber[FIBER_COUNT];
+
+
+int fibers;
+int repetitions;
+LPVOID *g_lpFiber;
 VOID
 __stdcall sendHttpRequest(LPVOID lpParameter)
 {
 	int id = (int)lpParameter;
-	printf("Fiber %d is running!\n", id);
+	int thread_id = (int) ceil(id / fibers);
+	//printf("Fiber %d of thread %d is running!\n", id, thread_id);
 	if (hSession != NULL)
 	{
-		rcContext[id].hWindow = NULL;
-		rcContext[id].nURL = IDC_URL1;
-		rcContext[id].nHeader = IDC_HEADER1;
-		rcContext[id].nResource = IDC_RESOURCE1;
-		rcContext[id].hConnect = 0;
-		rcContext[id].hRequest = 0;
-		rcContext[id].lpBuffer = NULL;
-		rcContext[id].szMemo[0] = 0;
-		SendRequest(&rcContext[id], L"http://localhost");
+		for (int i = (id - 1) * repetitions; i < id *repetitions; i++) {
+			rcContext[i].hWindow = NULL;
+			rcContext[i].nURL = IDC_URL1;
+			rcContext[i].nHeader = IDC_HEADER1;
+			rcContext[i].nResource = IDC_RESOURCE1;
+			rcContext[i].hConnect = 0;
+			rcContext[i].hRequest = 0;
+			rcContext[i].lpBuffer = NULL;
+			rcContext[i].szMemo[0] = 0;
+			SendRequest(&rcContext[i], thread_id);
+		}
 	}
 	else
 	{
 		fprintf(stderr, "hSession is null!");
 	}
-	if (id < FIBER_COUNT - 1) {
+	if (id < (thread_id + 1)  * fibers - 1) {
 		SwitchToFiber(g_lpFiber[id + 1]);
 	}
-	SwitchToFiber(g_lpFiber[PRIMARY_FIBER]);
+	SwitchToFiber(g_lpFiber[fibers * thread_id]);
 }
-
-int main()
+atomic_int fibers_created = 0;
+DWORD WINAPI run(LPVOID params)
 {
-	InitializeCriticalSection(&g_CallBackCritSec);
+	int id = (int)params;
+	
 	cout << "Hello CMake." << endl;
-    hSession = WinHttpOpen(L"Asynchronous WinHTTP Demo/1.0",
-        WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-        WINHTTP_NO_PROXY_NAME,
-        WINHTTP_NO_PROXY_BYPASS,
-        WINHTTP_FLAG_ASYNC);
-	g_lpFiber[PRIMARY_FIBER] = ConvertThreadToFiber(NULL);
+    
+	g_lpFiber[fibers * id] = ConvertThreadToFiber(NULL);
 
-	if (g_lpFiber[PRIMARY_FIBER] == NULL)
+	if (g_lpFiber[fibers * id] == NULL)
 	{
 		//printf("ConvertThreadToFiber error (%d)\n", GetLastError());
 		return 1;
 	}
 	time_t start, end, duration;
 	start = time(0);
-	for (int i = PRIMARY_FIBER + 1; i < FIBER_COUNT; i++) {
+	for (int i = fibers * id + 1; i < fibers * (id+1); i++) {
+		fibers_created++;
 		g_lpFiber[i] = CreateFiber(0, sendHttpRequest, (LPVOID) i);
 		if(g_lpFiber[i] == NULL) {
-			//printf("CreateFiber error (%d)\n", GetLastError());
+			printf("CreateFiber error (%d)\n", GetLastError());
 			return 1;
 		}
 	}
@@ -804,19 +816,49 @@ int main()
 	end = time(0);
 	duration = end - start;
 
-	printf("\n\n %ld fibers creation took %llu seconds\n", FIBER_COUNT, duration);
-	start = time(0);
-	SwitchToFiber(g_lpFiber[1]);
-	printf("Back to primary fiber\n");
-	while (finished < FIBER_COUNT - 1) {
-		printf("%ld remaining.\n", FIBER_COUNT - 1 - finished);
-		Sleep(1000);
+	printf("\n\n %ld fibers creation took %llu seconds\n", unsigned(fibers_created), duration);
+	SwitchToFiber(g_lpFiber[fibers * id + 1]);
+	//printf("Back to primary fiber\n");
+	while (finished < 8 * repetitions * (fibers - 1)) {
+		//printf("%ld of %ld finished.\n", unsigned(finished), repetitions * (fibers - 1));
+		Sleep(100);
 	}
-	end = time(0);
+	return 0;
+}
+
+int main(int argc, char* argv[]){
+	if (argc < 3) {
+		fprintf(stderr, "Using default, 10k fibers with 10 requests each!");
+		fibers = 12501;
+		repetitions = 1;
+	}
+	else {
+		fibers = atoi(argv[1]);
+		repetitions = atoi(argv[2]);
+	}
+	g_lpFiber = (LPVOID*)calloc(fibers * 8L, sizeof(LPVOID));
+	rcContext = (REQUEST_CONTEXT*)calloc(fibers * 8L * repetitions, sizeof(REQUEST_CONTEXT));
+	hSession = WinHttpOpen(L"Asynchronous WinHTTP Demo/1.0",
+		WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+		WINHTTP_NO_PROXY_NAME,
+		WINHTTP_NO_PROXY_BYPASS,
+		WINHTTP_FLAG_ASYNC);
+
+	szURL = L"http://192.168.137.1";
+	prepareRequest();
+	time_t start, end, duration;
+	start = GetTickCount64();
+	HANDLE threads[8];
+	for (int i = 0; i < 8; i++) {
+		threads[i] = CreateThread(NULL, 0, run, (LPVOID) i, 0, NULL);
+	}
+
+	WaitForMultipleObjects(8, threads, TRUE, INFINITE);
+	end = GetTickCount64();
+
+	printf("Finished are %d requests\n", unsigned(finished));
 	duration = end - start;
 
-	printf("\n\n %ld fibers duration %llu seconds\n", FIBER_COUNT, duration);
-	// Close the session handle.
+	printf("\n\n %ld fibers each on 8 threads duration %llu ms\n", fibers, duration);
 	WinHttpCloseHandle(hSession);
-	return 0;
 }
