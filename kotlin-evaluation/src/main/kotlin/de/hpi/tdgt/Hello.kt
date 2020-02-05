@@ -65,8 +65,10 @@ class Application {
                 }
                 val startTime = System.currentTimeMillis()
                 //returns when requests are sent!
-                runBlocking() {
-                    parallelRequests()
+                runBlocking {
+                    withContext(Dispatchers.IO) {
+                        parallelRequests()
+                    }
                 }
                 val endTime = System.currentTimeMillis();
                 println("DONE: " + requests + " requests in " + (endTime - startTime) + " ms!")
