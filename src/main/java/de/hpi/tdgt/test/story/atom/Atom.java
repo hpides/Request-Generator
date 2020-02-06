@@ -83,11 +83,25 @@ public abstract class Atom implements Cloneable {
         predecessorCount++;
     }
 
+    private int getSuccessorIndex(int successorID, Atom[] atoms){
+        for(int i = 0; i < atoms.length; i++){
+            if(atoms[i].getId() == successorID){
+                return i;
+            }
+        }
+        return -1;
+    }
+
     public void initSuccessors(UserStory parent) {
         val successorList = new Vector<Atom>();
         Arrays.stream(successors).forEach(successor -> {
-            successorList.add(parent.getAtoms()[successor]);
-            parent.getAtoms()[successor].incrementPredecessorCount();
+            int successorIndex = getSuccessorIndex(successor, parent.getAtoms());
+            if(successorIndex == -1){
+                log.error("Could not find successor with id "+successor+" for atom \""+name+"\"");
+                return;
+            }
+            successorList.add(parent.getAtoms()[successorIndex]);
+            parent.getAtoms()[successorIndex].incrementPredecessorCount();
         });
         //boilerplate
         this.successorLinks = successorList.toArray(new Atom[0]);

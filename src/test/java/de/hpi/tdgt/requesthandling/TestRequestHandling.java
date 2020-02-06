@@ -230,6 +230,16 @@ public class TestRequestHandling extends RequestHandlingFramework {
     }
 
     @Test
+    public void testUserStoryWithChangedIDsAgainstTestServer() throws IOException, InterruptedException, ExecutionException {
+        de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleWithNonIndexIDsJSON());
+        test.start();
+        //repeated 7 times in first, 3 times 10 times in second story; only first value in corresponding table is correct
+        //in one scenario, one instance of first story gets correct param, executes once
+        //in other scenario, one instance of second story gets correct param; executes 10 times
+        assertThat(authHandler.getNumberFailedLogins(), anyOf(is(36), is(27)));
+    }
+
+    @Test
     public void testUserStoryAgainstTestServerWithScaleFactor() throws IOException, InterruptedException, ExecutionException {
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
         test.start();

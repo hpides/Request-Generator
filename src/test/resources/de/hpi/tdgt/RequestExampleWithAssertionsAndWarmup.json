@@ -127,7 +127,7 @@
         },
         {
           "name": "GET with auth",
-          "id": 3,
+          "id": 1,
           "repeat": 10,
           "successors": [
           ],
