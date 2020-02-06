@@ -2,8 +2,6 @@ package de.hpi.tdgt.test;
 
 import de.hpi.tdgt.test.story.atom.Data_Generation;
 import de.hpi.tdgt.test.story.atom.WarmupEnd;
-import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
-import de.hpi.tdgt.test.time_measurement.TimeStorage;
 import de.hpi.tdgt.util.PropertiesReader;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,7 +12,6 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
-import java.util.stream.Collectors;
 
 import de.hpi.tdgt.test.story.UserStory;
 import lombok.extern.log4j.Log4j2;
@@ -48,7 +45,7 @@ public class Test {
     private UserStory[] stories;
     //this is used to be able to repeat them
     private UserStory[] stories_clone;
-    private int requests_per_second;
+    private int active_instances_per_second;
     private MqttClient client;
     //we can assume this is unique. Probably, only one test at a time is run.
     private final long testId = System.currentTimeMillis();
@@ -72,8 +69,8 @@ public class Test {
         //preserve stories for test repetition
         stories_clone = new UserStory[stories.length];
         cloneStories(stories, stories_clone);
-        RequestThrottler.setInstance(this.requests_per_second);
-        Thread watchdog = new Thread(RequestThrottler.getInstance());
+        ActiveInstancesThrottler.setInstance(this.active_instances_per_second);
+        Thread watchdog = new Thread(ActiveInstancesThrottler.getInstance());
         watchdog.setPriority(Thread.MAX_PRIORITY);
         watchdog.start();
         //will run stories with warmup only, so they can run until WarmupEnd is reached
@@ -122,8 +119,8 @@ public class Test {
             //start all warmup tasks
             WarmupEnd.startTest();
             //this thread makes sure that requests per second get limited
-            RequestThrottler.setInstance(this.requests_per_second);
-            Thread watchdog = new Thread(RequestThrottler.getInstance());
+            ActiveInstancesThrottler.setInstance(this.active_instances_per_second);
+            Thread watchdog = new Thread(ActiveInstancesThrottler.getInstance());
             watchdog.setPriority(Thread.MAX_PRIORITY);
             watchdog.start();
             val threads = runTest(Arrays.stream(stories).filter(story -> !story.isStarted()).toArray(UserStory[]::new));
@@ -136,7 +133,7 @@ public class Test {
             }
             watchdog.interrupt();
             //remove global state
-            RequestThrottler.reset();
+            ActiveInstancesThrottler.reset();
             Data_Generation.reset();
             //this resets all state atoms might have
             cloneStories(stories_clone, stories);
@@ -199,22 +196,22 @@ public class Test {
     }
 
     /**
-     * This is a runnable for a high-priority thread that makes sure that no more threads than requested run.
+     * This is a runnable for a high-priority thread that makes sure that no more user stories than requested run.
      */
     @Log4j2
-    public static class RequestThrottler implements Runnable{
-        static void setInstance(int requestsPerSecond){
-            instance = new RequestThrottler(requestsPerSecond);
+    public static class ActiveInstancesThrottler implements Runnable{
+        static void setInstance(int instancesPerSecond){
+            instance = new ActiveInstancesThrottler(instancesPerSecond);
         }
         @Getter
-        private static RequestThrottler instance = null;
+        private static ActiveInstancesThrottler instance = null;
 
-        private RequestThrottler(int requestsPerSecond){
-            requestLimiter =  new Semaphore(requestsPerSecond,true);
+        private ActiveInstancesThrottler(int instancesPerSecond){
+            requestLimiter =  new Semaphore(instancesPerSecond,true);
         }
         //only used for measurement, does not have to be synchronized
         @Getter
-        int requestsPerSecond = 0;
+        int instancesPerSecond = 0;
         private static void reset(){
             instance = null;
         }
@@ -223,25 +220,25 @@ public class Test {
          */
         private final Semaphore mutex = new Semaphore(1);
         private final Semaphore requestLimiter;
-        public void allowRequest() throws InterruptedException {
+        public void allowInstanceToRun() throws InterruptedException {
             log.trace("Waiting for requestLimiter...");
             requestLimiter.acquire();
             log.trace("Waiting for mutex (allowRequest)...");
             mutex.acquire();
-            requestsPerSecond++;
+            instancesPerSecond++;
             mutex.release();
             log.trace("Released mutex (allowRequest)");
         }
         @Override
         public void run() {
             while(!Thread.interrupted()) {
-                int requests_lastsecond = requestsPerSecond;
+                int instancesLastSecond = instancesPerSecond;
                 log.trace("Waiting for mutex (run)...");
-                log.info(requests_lastsecond+" requests in the last second.");
+                log.info(instancesLastSecond+" active instances in the last second.");
                 try {
                     mutex.acquire();
-                    requestLimiter.release(requestsPerSecond);
-                    requestsPerSecond = 0;
+                    requestLimiter.release(instancesPerSecond);
+                    instancesPerSecond = 0;
                     mutex.release();
                     log.trace("Released mutex (run)");
                     Thread.sleep(1000);

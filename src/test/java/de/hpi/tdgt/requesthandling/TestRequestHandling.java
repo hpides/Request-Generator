@@ -267,16 +267,16 @@ public class TestRequestHandling extends RequestHandlingFramework {
         long start = System.currentTimeMillis();
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
         //should not take forever
-        test.setRequests_per_second(10);
+        test.setActive_instances_per_second(2);
         test.start();
         long end = System.currentTimeMillis();
-        int requests_total = handlers.stream().map(HttpHandlers.HttpHandlerBase::getRequests_total).mapToInt(Integer::intValue).sum();
+        double instances_total = test.getScaleFactor() * Arrays.stream(test.getStories()).mapToDouble(UserStory::getScalePercentage).sum();
         double duration_seconds = (end - start) / 1000d;
-        log.info("Total requests: "+requests_total);
-        double requests_per_second = requests_total / duration_seconds;
-        log.info("Requests per second: "+requests_per_second);
-        //account for "bad luck"
-        assertThat(requests_per_second, lessThanOrEqualTo(1d +test.getRequests_per_second()));
+        log.info("Total instances: "+instances_total);
+        double active_instances_per_second = instances_total / duration_seconds;
+        log.info("Requests per second: "+active_instances_per_second);
+        //maximum number of active instances per second, accounting for "bad luck"
+        assertThat(active_instances_per_second, lessThanOrEqualTo(1d + test.getActive_instances_per_second()));
     }
 
 }
