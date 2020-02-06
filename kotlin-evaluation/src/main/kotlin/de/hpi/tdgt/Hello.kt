@@ -3,6 +3,8 @@ package de.hpi.tdgt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
 import org.apache.commons.cli.*
+import org.asynchttpclient.DefaultAsyncHttpClientConfig
+import org.asynchttpclient.Dsl
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -10,19 +12,20 @@ import java.net.http.HttpResponse
 import java.time.Duration
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
+
+
 class Application {
     companion object {
         val requests = AtomicInteger(0);
         var repetitions = 0;
         var coroutines = 0;
         var host = "http://localhost"
-        val client = HttpClient.newBuilder().connectTimeout(Duration.ofMillis(30000)).followRedirects(HttpClient.Redirect.ALWAYS).build();
-        val request = HttpRequest.newBuilder().uri(URI.create(host)).build();
+        val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(30000).setReadTimeout(30000))
         suspend fun sendRequest() {
 
             for (i in 1..repetitions) {
-                val future = client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                future.await()
+                val future = client.prepareGet(host).execute()
+                future.toCompletableFuture().await()
                 requests.incrementAndGet()
             }
         }
