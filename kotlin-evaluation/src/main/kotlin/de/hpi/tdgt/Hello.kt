@@ -1,11 +1,12 @@
 package de.hpi.tdgt
 
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.apache.Apache
-import io.ktor.client.request.get
-import io.ktor.util.KtorExperimentalAPI
 import kotlinx.coroutines.*
 import org.apache.commons.cli.*
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.time.Duration
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 class Application {
@@ -14,17 +15,18 @@ class Application {
         var repetitions = 0;
         var coroutines = 0;
         var host = "http://localhost"
-        val client = HttpClient(Apache);
-        @KtorExperimentalAPI
-        suspend fun sendRequest() {
+        val client = HttpClient.newBuilder().connectTimeout(Duration.ofMillis(30000)).followRedirects(HttpClient.Redirect.ALWAYS).build();
+        val request = HttpRequest.newBuilder().uri(URI.create(host)).build();
+        fun sendRequest() {
 
             for (i in 1..repetitions) {
-                client.get<String>(host)
+                val future = client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                future.join().body()
                 requests.incrementAndGet()
             }
         }
 
-        @KtorExperimentalAPI
+
         suspend fun parallelRequests() = coroutineScope<Unit> {
             val jobs = LinkedList<Job>();
             for (i in 1..coroutines) {
@@ -34,11 +36,9 @@ class Application {
             for (job in jobs) {
                 job.join()
             }
-            client.close();
         }
 
         @ObsoleteCoroutinesApi
-        @KtorExperimentalAPI
         @JvmStatic fun main(args: Array<String>) {
             val options = Options()
             val coroutines_option = Option("c", "coroutines", true, "coroutines to use")
