@@ -1,6 +1,7 @@
 package de.hpi.tdgt
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.await
 import org.apache.commons.cli.*
 import java.net.URI
 import java.net.http.HttpClient
@@ -17,11 +18,11 @@ class Application {
         var host = "http://localhost"
         val client = HttpClient.newBuilder().connectTimeout(Duration.ofMillis(30000)).followRedirects(HttpClient.Redirect.ALWAYS).build();
         val request = HttpRequest.newBuilder().uri(URI.create(host)).build();
-        fun sendRequest() {
+        suspend fun sendRequest() {
 
             for (i in 1..repetitions) {
                 val future = client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                future.join().body()
+                future.await()
                 requests.incrementAndGet()
             }
         }
