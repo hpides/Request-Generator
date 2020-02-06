@@ -1,5 +1,6 @@
 package de.hpi.tdgt.test;
 
+import de.hpi.tdgt.test.story.atom.Data_Generation;
 import de.hpi.tdgt.test.story.atom.WarmupEnd;
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
 import de.hpi.tdgt.test.time_measurement.TimeStorage;
@@ -45,10 +46,22 @@ public class Test {
     private int repeat;
     private int scaleFactor;
     private UserStory[] stories;
+    //this is used to be able to repeat them
+    private UserStory[] stories_clone;
     private int requests_per_second;
     private MqttClient client;
     //we can assume this is unique. Probably, only one test at a time is run.
     private final long testId = System.currentTimeMillis();
+
+    /**
+     * Perform deep clone of stories to user_stories.
+     */
+    private void cloneStories(UserStory[] source, UserStory[] target){
+        for(int i=0; i < source.length; i++){
+            target[i] = source[i].clone();
+        }
+    }
+
     /**
      * Run all stories that have WarmupEnd until reaching WarmupEnd. Other stories are not run.
      * *ALWAYS* run start after running warmup before you run warmup again, even in tests, to get rid of waiting threads.
@@ -56,7 +69,9 @@ public class Test {
      * @throws InterruptedException if interrupted in Thread.sleep
      */
     public Collection<Future<?>> warmup() throws InterruptedException {
-        
+        //preserve stories for test repetition
+        stories_clone = new UserStory[stories.length];
+        cloneStories(stories, stories_clone);
         RequestThrottler.setInstance(this.requests_per_second);
         Thread watchdog = new Thread(RequestThrottler.getInstance());
         watchdog.setPriority(Thread.MAX_PRIORITY);
@@ -81,6 +96,9 @@ public class Test {
      * @throws InterruptedException if interrupted joining threads
      */
     public void start() throws InterruptedException, ExecutionException {
+        //preserve stories for repeat
+        stories_clone = new UserStory[stories.length];
+        cloneStories(stories, stories_clone);
         start(new Vector<>());
     }
 
@@ -98,24 +116,37 @@ public class Test {
         } catch (MqttException e) {
             log.error("Could not send control start message: ", e);
         }
-        //start all warmup tasks
-        WarmupEnd.startTest();
-        //this thread makes sure that requests per second get limited
-        RequestThrottler.setInstance(this.requests_per_second);
-        Thread watchdog = new Thread(RequestThrottler.getInstance());
-        watchdog.setPriority(Thread.MAX_PRIORITY);
-        watchdog.start();
-        val threads = runTest(Arrays.stream(stories).filter(story -> !story.isStarted()).toArray(UserStory[]::new));
-        //can wait for these threads also
-        threads.addAll(threadsFromWarmup);
-        for(val thread : threads){
-            //join thread
-            if(!thread.isCancelled())
-                thread.get();
+
+        for(int i = 0; i < repeat; i++) {
+            log.info("Starting test run "+i+" of "+repeat);
+            //start all warmup tasks
+            WarmupEnd.startTest();
+            //this thread makes sure that requests per second get limited
+            RequestThrottler.setInstance(this.requests_per_second);
+            Thread watchdog = new Thread(RequestThrottler.getInstance());
+            watchdog.setPriority(Thread.MAX_PRIORITY);
+            watchdog.start();
+            val threads = runTest(Arrays.stream(stories).filter(story -> !story.isStarted()).toArray(UserStory[]::new));
+            //can wait for these threads also
+            threads.addAll(threadsFromWarmup);
+            for (val thread : threads) {
+                //join thread
+                if (!thread.isCancelled())
+                    thread.get();
+            }
+            watchdog.interrupt();
+            //remove global state
+            RequestThrottler.reset();
+            Data_Generation.reset();
+            //this resets all state atoms might have
+            cloneStories(stories_clone, stories);
+            //do not run another warmup after the last run, because it would not be finished
+            if(i < repeat - 1) {
+                threadsFromWarmup = warmup();
+            }
         }
-        watchdog.interrupt();
-        //remove global state
-        RequestThrottler.reset();
+
+
         try {
             client.publish(MQTT_TOPIC, ("testEnd "+testId).getBytes(StandardCharsets.UTF_8),2,true);
             //clear retained messages for next test

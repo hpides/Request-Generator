@@ -240,6 +240,14 @@ public class TestRequestHandling extends RequestHandlingFramework {
     }
 
     @Test
+    public void testUserStoryWithRepeatAgainstTestServer() throws IOException, InterruptedException, ExecutionException {
+        de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleWithRepeatJSON());
+        test.start();
+        // GET with auth is 10 times executed per story, only once with the right credentials
+        assertThat(authHandler.getNumberFailedLogins(), is(test.getRepeat() * 9));
+    }
+
+    @Test
     public void testUserStoryAgainstTestServerWithScaleFactor() throws IOException, InterruptedException, ExecutionException {
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
         test.start();

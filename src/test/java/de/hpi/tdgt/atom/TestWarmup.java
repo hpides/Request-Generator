@@ -50,6 +50,15 @@ public class TestWarmup extends RequestHandlingFramework {
         //7 in first story, 30 in second story
         assertThat(authHandler.getRequests_total(), is(37));
     }
+
+    @Test
+    public void testStoriesAreCompletedAfterWarmupWithRepeat() throws InterruptedException, ExecutionException {
+        warmupTest.setRepeat(3);
+        val threads = warmupTest.warmup();
+        warmupTest.start(threads);
+        //7 in first story, 30 in second story
+        assertThat(authHandler.getRequests_total(), is(3*37));
+    }
     @Test
     public void testFirstStoryHasWarmup(){
         assertThat(warmupTest.getStories()[0].hasWarmup(), is(true));
