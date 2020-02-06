@@ -25,6 +25,12 @@ public class Utils {
         return writer.toString();
     }
 
+    public String getRequestExampleWithNonIndexIDsJSON() throws IOException {
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(getClass().getResourceAsStream("RequestExampleWithNonIndexIDs.json"), writer);
+        return writer.toString();
+    }
+
     public String getRequestExampleWithAssertionsJSON() throws IOException {
         StringWriter writer = new StringWriter();
         IOUtils.copy(getClass().getResourceAsStream("RequestExampleWithAssertions.json"), writer);
