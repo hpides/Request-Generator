@@ -1,0 +1,118 @@
+{
+  "repeat": 1,
+  "scaleFactor": 10,
+  "requests_per_second": 100,
+  "stories": [
+    {
+      "scalePercentage": 0.7,
+      "name": "Send some requests with and without data",
+      "atoms": [
+        {
+          "name": "Generate key and value",
+          "id": 2,
+          "repeat": 1,
+          "successors": [
+            1
+          ],
+          "type": "DATA_GENERATION",
+          "data": [
+            "key",
+            "value"
+          ],
+          "table": "values"
+        },
+        {
+          "name": "POST JSON",
+          "id": 1,
+          "repeat": 1,
+          "successors": [
+            0,
+            5
+          ],
+          "type": "REQUEST",
+          "verb": "POST",
+          "addr": "http://localhost:9000/postWithBody",
+          "requestJSONObject": "{\"key\":$key, \"value\":$value}",
+          "responseJSONObject": [
+            "key",
+            "value"
+          ]
+        },
+        {
+          "name": "Get JSON Object",
+          "id": 0,
+          "repeat": 1,
+          "successors": [
+          ],
+          "type": "REQUEST",
+          "verb": "GET",
+          "addr": "http://localhost:9000/jsonObject",
+          "requestParams": [
+            "key",
+            "value"
+          ],
+          "responseJSONObject": [
+            "key",
+            "value"
+          ]
+        },
+        {
+          "name": "GET with auth1",
+          "id": 5,
+          "repeat": 1,
+          "successors": [
+          ],
+          "type": "REQUEST",
+          "verb": "GET",
+          "addr": "http://localhost:9000/auth",
+          "requestParams": [
+          ],
+          "basicAuth": {
+            "user": "key",
+            "password": "value"
+          },
+          "responseParams": [
+          ]
+        }
+      ]
+    },
+    {
+      "scalePercentage": 0.3,
+      "name": "Send some requests with and without data",
+      "atoms": [
+        {
+          "name": "Generate key and value",
+          "id": -1,
+          "repeat": 1,
+          "successors": [
+            10
+          ],
+          "type": "DATA_GENERATION",
+          "data": [
+            "key",
+            "value"
+          ],
+          "table": "values"
+        },
+        {
+          "name": "GET with auth",
+          "id": 10,
+          "repeat": 10,
+          "successors": [
+          ],
+          "type": "REQUEST",
+          "verb": "GET",
+          "addr": "http://localhost:9000/auth",
+          "requestParams": [
+          ],
+          "basicAuth": {
+            "user": "key",
+            "password": "value"
+          },
+          "responseParams": [
+          ]
+        }
+      ]
+    }
+  ]
+}
