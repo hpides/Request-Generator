@@ -14,7 +14,6 @@ import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.sql.Time;
 import java.util.Base64;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
@@ -217,16 +216,7 @@ public class RestClient {
             out.flush();
             out.close();
         }
-        if(Test.RequestThrottler.getInstance() != null) {
-            try {
-                Test.RequestThrottler.getInstance().allowRequest();
-            } catch (InterruptedException e) {
-                log.error("Interrupted wail waiting to be allowed to send a request: ",e);
-            }
-        }
-        else {
-            log.warn("Internal error: Can not limit requests per second!");
-        }
+
         //try to connect
         for (retry = -1; retry < request.getRetries(); retry++) {
             try {
