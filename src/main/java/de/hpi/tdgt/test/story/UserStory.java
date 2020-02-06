@@ -52,8 +52,20 @@ public class UserStory implements Runnable, Cloneable{
         Runnable storyRunnable = new Runnable() {
             @Override
             public void run() {
-
                 try {
+                    //get one of the tickets
+                    if(Test.ActiveInstancesThrottler.getInstance() != null) {
+                        try {
+                            Test.ActiveInstancesThrottler.getInstance().allowInstanceToRun();
+                        } catch (InterruptedException e) {
+                            log.error("Interrupted wail waiting to be allowed to send a request, aborting: ",e);
+                            return;
+                        }
+                    }
+                    else {
+                        log.warn("Internal error: Can not limit active story instances per second!");
+                    }
+
                     UserStory clone;
                     synchronized (this) {
                         clone = UserStory.this.clone();
