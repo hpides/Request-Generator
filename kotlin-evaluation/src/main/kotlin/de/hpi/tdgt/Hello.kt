@@ -1,68 +1,47 @@
 package de.hpi.tdgt
 
+import io.netty.handler.codec.http.HttpResponse
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.apache.commons.cli.*
-import org.apache.http.HttpResponse
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.client.methods.HttpUriRequest
-import org.apache.http.concurrent.FutureCallback
-import org.apache.http.impl.nio.client.HttpAsyncClients
-import org.apache.http.nio.client.HttpAsyncClient
+import org.asynchttpclient.Dsl
+import org.asynchttpclient.Response
 import java.util.*
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
 
 
 class Application {
     companion object {
         val requests = AtomicInteger(0);
+        val errorCodes = AtomicInteger(0);
         var repetitions = 0;
         var coroutines = 0;
         var host = "http://localhost"
-        var requestConfig:RequestConfig? = RequestConfig.custom()
-        .setSocketTimeout(300000)
-        .setConnectTimeout(300000).build()
-        val client = HttpAsyncClients.custom()
-            .setDefaultRequestConfig(requestConfig)
-            .setMaxConnPerRoute(1000000)
-            .setMaxConnTotal(100000)
-            .build()
-
-        fun HttpAsyncClient.execute(request: HttpUriRequest): CompletableFuture<HttpResponse> {
-            val future = CompletableFuture<HttpResponse>()
-
-            this.execute(request, object : FutureCallback<HttpResponse> {
-                override fun completed(result: HttpResponse) {
-                    future.complete(result)
-                }
-
-                override fun cancelled() {
-                    future.cancel(false)
-                }
-
-                override fun failed(ex: Exception) {
-                    future.completeExceptionally(ex)
-                }
-            })
-
-            return future
-        }
+        var client = Dsl.asyncHttpClient()
+        var permits = 10000
+        var requestLimiter = Semaphore(permits)
 
         suspend fun sendRequest() {
             for (i in 1..repetitions) {
-                val request = HttpGet(host)
-                val future = client.execute(request)
-                val response = future.toCompletableFuture().await()
-                //println(response.statusLine)
+                var response: Response? = null
+                requestLimiter.withPermit {
+                    val future = client.prepareGet(host).execute()
+                     response = future.toCompletableFuture().await()
+                }
+                if(response!!.statusCode!=200){
+                    errorCodes.incrementAndGet()
+                }
                 requests.incrementAndGet()
             }
         }
 
 
-        suspend fun parallelRequests() = coroutineScope<Unit> {
+        suspend fun parallelRequests() = coroutineScope {
             val jobs = LinkedList<Job>();
+            requestLimiter = Semaphore(permits)
+            println("Using $permits permits!");
             for (i in 1..coroutines) {
                 val job = async { sendRequest() }
                 jobs.add(job)
@@ -86,6 +65,10 @@ class Application {
             repeat.isRequired = true
             options.addOption(repeat)
 
+            val concurrent_requests = Option("p", "parallel_requests", true, "open requests in parallel")
+            concurrent_requests.isRequired = false
+            options.addOption(concurrent_requests)
+
             val parser = DefaultParser()
             val formatter = HelpFormatter()
             val cmd: CommandLine
@@ -97,7 +80,9 @@ class Application {
                 if(cmd.hasOption("host")){
                     host = cmd.getOptionValue("host")
                 }
-                client.start()
+                if(cmd.hasOption("parallel_requests")){
+                    permits = cmd.getOptionValue("parallel_requests").toInt()
+                }
                 val startTime = System.currentTimeMillis()
                 //returns when requests are sent!
                 runBlocking {
@@ -106,7 +91,7 @@ class Application {
                     }
                 }
                 val endTime = System.currentTimeMillis();
-                println("DONE: " + requests + " requests in " + (endTime - startTime) + " ms!")
+                println("DONE: " + requests + " requests in " + (endTime - startTime) + " ms with "+ errorCodes.get()+" errors!")
                 client.close()
             } catch (e: ParseException) {
                 System.out.println(e.message)
