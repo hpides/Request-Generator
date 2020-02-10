@@ -3,14 +3,15 @@ package de.hpi.tdgt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
 import org.apache.commons.cli.*
-import org.asynchttpclient.DefaultAsyncHttpClientConfig
-import org.asynchttpclient.Dsl
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-import java.time.Duration
+import org.apache.http.HttpResponse
+import org.apache.http.client.config.RequestConfig
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpUriRequest
+import org.apache.http.concurrent.FutureCallback
+import org.apache.http.impl.nio.client.HttpAsyncClients
+import org.apache.http.nio.client.HttpAsyncClient
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
 
 
@@ -20,12 +21,41 @@ class Application {
         var repetitions = 0;
         var coroutines = 0;
         var host = "http://localhost"
-        val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(30000).setReadTimeout(30000))
-        suspend fun sendRequest() {
+        var requestConfig:RequestConfig? = RequestConfig.custom()
+        .setSocketTimeout(300000)
+        .setConnectTimeout(300000).build()
+        val client = HttpAsyncClients.custom()
+            .setDefaultRequestConfig(requestConfig)
+            .setMaxConnPerRoute(1000000)
+            .setMaxConnTotal(100000)
+            .build()
 
+        fun HttpAsyncClient.execute(request: HttpUriRequest): CompletableFuture<HttpResponse> {
+            val future = CompletableFuture<HttpResponse>()
+
+            this.execute(request, object : FutureCallback<HttpResponse> {
+                override fun completed(result: HttpResponse) {
+                    future.complete(result)
+                }
+
+                override fun cancelled() {
+                    future.cancel(false)
+                }
+
+                override fun failed(ex: Exception) {
+                    future.completeExceptionally(ex)
+                }
+            })
+
+            return future
+        }
+
+        suspend fun sendRequest() {
             for (i in 1..repetitions) {
-                val future = client.prepareGet(host).execute()
-                future.toCompletableFuture().await()
+                val request = HttpGet(host)
+                val future = client.execute(request)
+                val response = future.toCompletableFuture().await()
+                //println(response.statusLine)
                 requests.incrementAndGet()
             }
         }
@@ -67,6 +97,7 @@ class Application {
                 if(cmd.hasOption("host")){
                     host = cmd.getOptionValue("host")
                 }
+                client.start()
                 val startTime = System.currentTimeMillis()
                 //returns when requests are sent!
                 runBlocking {
@@ -76,6 +107,7 @@ class Application {
                 }
                 val endTime = System.currentTimeMillis();
                 println("DONE: " + requests + " requests in " + (endTime - startTime) + " ms!")
+                client.close()
             } catch (e: ParseException) {
                 System.out.println(e.message)
                 formatter.printHelp("utility-name", options)
