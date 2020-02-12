@@ -3,9 +3,7 @@ package de.hpi.tdgt.test.story.atom.assertion;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.hpi.tdgt.requesthandling.RestResult;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import lombok.extern.log4j.Log4j2;
 
 //tell Jackson to use subclasses by type attribute
@@ -23,6 +21,8 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public abstract class Assertion {
     private String name;
 

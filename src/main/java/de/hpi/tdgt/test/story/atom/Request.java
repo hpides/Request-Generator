@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.hpi.tdgt.requesthandling.RestClient;
 import de.hpi.tdgt.requesthandling.RestResult;
 import de.hpi.tdgt.test.story.atom.assertion.Assertion;
+import de.hpi.tdgt.test.story.atom.assertion.RequestIsSent;
 import lombok.*;
 import lombok.extern.log4j.Log4j2;
 
@@ -61,9 +62,15 @@ public class Request extends Atom {
 
     private Assertion[] assertions = new Assertion[0];
 
+    private Assertion implicitNotFailedAssertion = null;
+
     @Override
     public void perform() throws InterruptedException {
         log.info("Sending request " + addr + " in Thread " + Thread.currentThread().getId() + "with attributes: " + getKnownParams());
+        if(implicitNotFailedAssertion == null){
+            implicitNotFailedAssertion = new RequestIsSent();
+            implicitNotFailedAssertion.setName("Request \""+getName()+"\" is sent");
+        }
         switch (verb) {
             case "POST":
                 handlePost();
@@ -168,9 +175,16 @@ public class Request extends Atom {
             log.warn("Not JSON! Response is ignored.");
             log.warn(result);
         }
-        //check assertions after request
-        for (val assertion : assertions) {
-            assertion.check(result, this.getParent().getParent().getTestId());
+        //in some tests, this might not exist
+        if(this.getParent() != null && this.getParent().getParent() != null) {
+            //check assertions after request
+            for (val assertion : assertions) {
+                assertion.check(result, this.getParent().getParent().getTestId());
+            }
+            implicitNotFailedAssertion.check(result, this.getParent().getParent().getTestId());
+        }
+        else {
+            log.error("Can not check assertions because I do not have a parent or grandparent: "+getName());
         }
     }
 

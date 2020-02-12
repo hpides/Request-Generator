@@ -252,6 +252,26 @@ public class MQTTTest extends RequestHandlingFramework {
         actuals.add("401");
         MatcherAssert.assertThat(allActuals.get(allActuals.size()-1), Matchers.hasEntry("auth does not return 401", new Pair<>(1, actuals)));
     }
+
+    @Test
+    public void RequestSucceededAssertionStreamsFailedAssertions() throws MqttException, InterruptedException, ExecutionException, IOException {
+        val params = new HashMap<String, String>();
+        params.put("key", "wrong");
+        params.put("value", "wrong");
+        val message = prepareClient(AssertionStorage.MQTT_TOPIC);
+        val getWithAuth = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getAtoms()[3];
+        getWithAuth.setAddr("http://AHostThatJustCanNotExist");
+        //make sure we do not run successors
+        getWithAuth.setSuccessorLinks(new Atom[0]);
+        getWithAuth.run(params);
+        Thread.sleep(3000);
+        val allActuals = getAllActuals(message);
+        String failedAssertioNName = "Request \""+getWithAuth.getName()+"\" is sent";
+        MatcherAssert.assertThat(allActuals, Matchers.hasItem(Matchers.hasKey(failedAssertioNName)));
+        HashSet<String> actuals = new HashSet<>();
+        actuals.add("java.net.UnknownHostException:AHostThatJustCanNotExist");
+        MatcherAssert.assertThat(allActuals.get(allActuals.size()-1), Matchers.hasEntry(failedAssertioNName, new Pair<>(1, actuals)));
+    }
     @Test
     public void ContentTypeAssertionStreamsFailedAssertions() throws MqttException, InterruptedException, ExecutionException, IOException {
         val messages = prepareClient(AssertionStorage.MQTT_TOPIC);
