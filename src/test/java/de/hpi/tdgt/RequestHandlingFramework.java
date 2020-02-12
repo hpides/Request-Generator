@@ -1,6 +1,7 @@
 package de.hpi.tdgt;
 
 import com.sun.net.httpserver.HttpServer;
+import de.hpi.tdgt.test.Test;
 import de.hpi.tdgt.test.story.atom.Data_Generation;
 import de.hpi.tdgt.test.story.atom.WarmupEnd;
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
@@ -77,5 +78,6 @@ public class RequestHandlingFramework {
         server.stop(0);
         TimeStorage.getInstance().reset();
         AssertionStorage.getInstance().reset();
+        Test.ConcurrentRequestsThrottler.getInstance().reset();
     }
 }

@@ -1,7 +1,7 @@
 {
   "repeat": 1,
   "scaleFactor": 10,
-  "active_instances_per_second": 100,
+  "activeInstancesPerSecond": 100,
   "stories": [
     {
       "scalePercentage": 0.7,
