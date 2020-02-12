@@ -21,7 +21,7 @@ public class RestResult {
     private String contentType;
     private Map<String, List<String>> headers;
     private int returnCode;
-
+    private Exception errorCondition = null;
     //check content encoding
     public boolean isPlainText(){
         return contentType != null && contentType.replaceAll("\\s+","").toLowerCase().startsWith(HttpConstants.CONTENT_TYPE_TEXT_PLAIN);
