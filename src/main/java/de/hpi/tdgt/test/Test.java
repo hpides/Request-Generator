@@ -3,9 +3,8 @@ package de.hpi.tdgt.test;
 import de.hpi.tdgt.test.story.atom.Data_Generation;
 import de.hpi.tdgt.test.story.atom.WarmupEnd;
 import de.hpi.tdgt.util.PropertiesReader;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jdk.jshell.spi.ExecutionControl;
+import lombok.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -15,7 +14,6 @@ import java.util.concurrent.Semaphore;
 
 import de.hpi.tdgt.test.story.UserStory;
 import lombok.extern.log4j.Log4j2;
-import lombok.val;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -248,5 +246,67 @@ public class Test {
             }
             log.trace("Requests per second watchdog was interrupted!");
         }
+    }
+
+    /**
+     * This makes sure not more requests than configured run in parallel
+     */
+    public static class ConcurrentRequestsThrottler {
+        @Getter
+        private static final ConcurrentRequestsThrottler instance = new ConcurrentRequestsThrottler();
+
+        private Semaphore maxParallelRequests;
+        private int waiters = 0;
+        private int active = 0;
+
+        @Getter
+        int maximumParallelRequests = 0;
+        public void setMaxParallelRequests(int concurrent) throws ExecutionControl.NotImplementedException {
+            if(maxParallelRequests == null) {
+                maxParallelRequests = new Semaphore(concurrent);
+                active = 0;
+                maximumParallelRequests = 0;
+            }
+            else {
+                int waiters;
+                synchronized (this) {
+                    waiters = this.waiters;
+                    //we needed to wait until no thread is waiting for the semaphore
+                    if (waiters > 0) {
+                        throw new ExecutionControl.NotImplementedException("Can not change number of concurrent requests while there are threads waiting for the semaphore!");
+                    }
+                    maxParallelRequests = new Semaphore(concurrent);
+                    active = 0;
+                    maximumParallelRequests = 0;
+                }
+            }
+        }
+
+        public void allowRequest() throws InterruptedException {
+            if(maxParallelRequests != null) {
+                synchronized (this){
+                    waiters++;
+                }
+                maxParallelRequests.acquire();
+                synchronized (this){
+                    waiters --;
+                    active++;
+                    //used by the test of this feature
+                    if(active > maximumParallelRequests){
+                        maximumParallelRequests = active;
+                    }
+                }
+            }
+        }
+
+        public void requestDone(){
+            if(maxParallelRequests != null) {
+                maxParallelRequests.release();
+                synchronized (this){
+                    active--;
+                }
+            }
+        }
+
     }
 }

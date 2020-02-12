@@ -222,6 +222,7 @@ public class RestClient {
         //try to connect
         for (retry = -1; retry < request.getRetries(); retry++) {
             try {
+                Test.ConcurrentRequestsThrottler.getInstance().allowRequest();
                 httpURLConnection.connect();
                 break;
             } catch (SocketTimeoutException s) {
@@ -240,6 +241,7 @@ public class RestClient {
         result.setStartTime(start);
         readResponse(httpURLConnection, result, request);
 
+        Test.ConcurrentRequestsThrottler.getInstance().requestDone();
         return result;
     }
 

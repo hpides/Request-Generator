@@ -4,10 +4,14 @@ import de.hpi.tdgt.HttpHandlers;
 import de.hpi.tdgt.RequestHandlingFramework;
 import de.hpi.tdgt.Utils;
 import de.hpi.tdgt.deserialisation.Deserializer;
+import de.hpi.tdgt.test.ThreadRecycler;
 import de.hpi.tdgt.test.story.UserStory;
 import de.hpi.tdgt.util.Pair;
+import jdk.jshell.spi.ExecutionControl;
+import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
 
 import java.io.*;
@@ -15,6 +19,8 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -277,6 +283,30 @@ public class TestRequestHandling extends RequestHandlingFramework {
         log.info("Requests per second: "+active_instances_per_second);
         //maximum number of active instances per second, accounting for "bad luck"
         assertThat(active_instances_per_second, lessThanOrEqualTo(1d + test.getActive_instances_per_second()));
+    }
+
+    private Runnable sendRequest = new Runnable() {
+        private int parralelRequests;
+        @SneakyThrows
+        @Override
+        public void run() {
+            val rc = new RestClient();
+            rc.postFormToEndpointWithAuth("TestRequestHandling", 0,  new URL("http://localhost:9000/auth"),new HashMap<>(),HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
+        }
+    };
+
+    @Test
+    public void testNoMoreRequestsInParallelThanSetAreFired() throws InterruptedException, ExecutionException, ExecutionControl.NotImplementedException {
+        int parallelRequests = 10;
+        de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.getInstance().setMaxParallelRequests(parallelRequests);
+        val futures = new Vector<Future<?>>();
+        for(int i = 0; i < parallelRequests * 10; i++){
+            futures.add(ThreadRecycler.getInstance().getExecutorService().submit(sendRequest));
+        }
+        for(val future : futures){
+            future.get();
+        }
+        assertThat(de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.getInstance().getMaximumParallelRequests(), Matchers.lessThanOrEqualTo(parallelRequests));
     }
 
 }
