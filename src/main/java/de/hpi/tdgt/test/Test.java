@@ -43,11 +43,14 @@ public class Test {
     private UserStory[] stories;
     //this is used to be able to repeat them
     private UserStory[] stories_clone;
-    //do not limit by default
-    private int active_instances_per_second = Integer.MAX_VALUE;
+    private int activeInstancesPerSecond = DEFAULT_ACTIVE_INSTANCES_PER_SECOND_LIMIT;
     private MqttClient client;
+
+    public static final int DEFAULT_CONCURRENT_REQUEST_LIMIT = 100;
+    public static final int DEFAULT_ACTIVE_INSTANCES_PER_SECOND_LIMIT = 10000;
+
     //by default, do not limit number of concurrent requests
-    private int maximumConcurrentRequests =Integer.MAX_VALUE;
+    private int maximumConcurrentRequests = DEFAULT_CONCURRENT_REQUEST_LIMIT;
 
     //we can assume this is unique. Probably, only one test at a time is run.
     private final long testId = System.currentTimeMillis();
