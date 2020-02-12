@@ -71,7 +71,7 @@ public class Test {
         //preserve stories for test repetition
         stories_clone = new UserStory[stories.length];
         cloneStories(stories, stories_clone);
-        ActiveInstancesThrottler.setInstance(this.active_instances_per_second);
+        ActiveInstancesThrottler.setInstance(this.activeInstancesPerSecond);
         Thread watchdog = new Thread(ActiveInstancesThrottler.getInstance());
         watchdog.setPriority(Thread.MAX_PRIORITY);
         watchdog.start();
@@ -121,7 +121,7 @@ public class Test {
             //start all warmup tasks
             WarmupEnd.startTest();
             //this thread makes sure that requests per second get limited
-            ActiveInstancesThrottler.setInstance(this.active_instances_per_second);
+            ActiveInstancesThrottler.setInstance(this.activeInstancesPerSecond);
             Thread watchdog = new Thread(ActiveInstancesThrottler.getInstance());
             watchdog.setPriority(Thread.MAX_PRIORITY);
             watchdog.start();

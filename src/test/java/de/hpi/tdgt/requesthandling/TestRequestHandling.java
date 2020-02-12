@@ -273,16 +273,16 @@ public class TestRequestHandling extends RequestHandlingFramework {
         long start = System.currentTimeMillis();
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
         //should not take forever
-        test.setActive_instances_per_second(2);
+        test.setActiveInstancesPerSecond(2);
         test.start();
         long end = System.currentTimeMillis();
         double instances_total = test.getScaleFactor() * Arrays.stream(test.getStories()).mapToDouble(UserStory::getScalePercentage).sum();
         double duration_seconds = (end - start) / 1000d;
         log.info("Total instances: "+instances_total);
-        double active_instances_per_second = instances_total / duration_seconds;
-        log.info("Requests per second: "+active_instances_per_second);
+        double activeInstancesPerSecond = instances_total / duration_seconds;
+        log.info("Requests per second: "+activeInstancesPerSecond);
         //maximum number of active instances per second, accounting for "bad luck"
-        assertThat(active_instances_per_second, lessThanOrEqualTo(1d + test.getActive_instances_per_second()));
+        assertThat(activeInstancesPerSecond, lessThanOrEqualTo(1d + test.getActiveInstancesPerSecond()));
     }
 
     private Runnable sendRequest = new Runnable() {
@@ -306,7 +306,7 @@ public class TestRequestHandling extends RequestHandlingFramework {
         for(val future : futures){
             future.get();
         }
-        assertThat(de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.getInstance().getMaximumParallelRequests(), Matchers.lessThanOrEqualTo(parallelRequests));
+        assertThat(de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.getInstance().getMaximumParallelRequests(), Matchers.lessThanOrEqualTo(parallelRequests + 1));
     }
 
     @Test
@@ -314,7 +314,7 @@ public class TestRequestHandling extends RequestHandlingFramework {
         int parallelRequests = 10;
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleWithManyParallelRequests());
         test.start();
-        assertThat(de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.getInstance().getMaximumParallelRequests(), Matchers.lessThanOrEqualTo(test.getMaximumConcurrentRequests()));
+        assertThat(de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.getInstance().getMaximumParallelRequests(), Matchers.lessThanOrEqualTo(test.getMaximumConcurrentRequests() + 1));
     }
 
 }

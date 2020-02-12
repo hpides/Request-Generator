@@ -1,7 +1,7 @@
 {
   "repeat": 1,
   "scaleFactor": 100,
-  "active_instances_per_second": 100,
+  "activeInstancesPerSecond": 100,
   "maximumConcurrentRequests": 10,
   "stories": [
     {
