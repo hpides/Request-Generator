@@ -30,6 +30,11 @@ public class Utils {
         IOUtils.copy(getClass().getResourceAsStream("RequestExampleWithRepeat.json"), writer);
         return writer.toString();
     }
+    public String getRequestExampleWithManyParallelRequests() throws IOException {
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(getClass().getResourceAsStream("RequestExampleWithManyParallelRequests.json"), writer);
+        return writer.toString();
+    }
 
     public String getRequestExampleWithNonIndexIDsJSON() throws IOException {
         StringWriter writer = new StringWriter();

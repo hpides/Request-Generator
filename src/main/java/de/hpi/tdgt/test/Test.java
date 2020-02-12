@@ -45,6 +45,9 @@ public class Test {
     private UserStory[] stories_clone;
     private int active_instances_per_second;
     private MqttClient client;
+
+    private int maximumConcurrentRequests;
+
     //we can assume this is unique. Probably, only one test at a time is run.
     private final long testId = System.currentTimeMillis();
 
@@ -180,6 +183,11 @@ public class Test {
     }
 
     private Collection<Future<?>> runTest(UserStory[] stories) throws InterruptedException {
+        try {
+            ConcurrentRequestsThrottler.getInstance().setMaxParallelRequests(maximumConcurrentRequests);
+        } catch (ExecutionControl.NotImplementedException e) {
+            log.error(e);
+        }
         val futures = new Vector<Future<?>>();
         for(int i=0; i < stories.length; i++){
             //repeat stories as often as wished
@@ -283,11 +291,12 @@ public class Test {
         }
 
         public void allowRequest() throws InterruptedException {
-            if(maxParallelRequests != null) {
                 synchronized (this){
                     waiters++;
                 }
-                maxParallelRequests.acquire();
+                if(maxParallelRequests != null) {
+                    maxParallelRequests.acquire();
+                }
                 synchronized (this){
                     waiters --;
                     active++;
@@ -296,16 +305,22 @@ public class Test {
                         maximumParallelRequests = active;
                     }
                 }
-            }
         }
 
         public void requestDone(){
             if(maxParallelRequests != null) {
                 maxParallelRequests.release();
-                synchronized (this){
-                    active--;
-                }
             }
+            synchronized (this){
+                active--;
+            }
+
+        }
+
+        public void reset(){
+            maxParallelRequests = null;
+            active = 0;
+            maximumParallelRequests = 0;
         }
 
     }

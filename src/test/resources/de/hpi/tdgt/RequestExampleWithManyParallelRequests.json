@@ -1,0 +1,30 @@
+{
+  "repeat": 1,
+  "scaleFactor": 100,
+  "active_instances_per_second": 100,
+  "maximumConcurrentRequests": 10,
+  "stories": [
+    {
+      "scalePercentage": 1,
+      "name": "Send some requests with and without data",
+      "atoms": [
+        {
+          "name": "Get JSON Object",
+          "id": 0,
+          "repeat": 1,
+          "successors": [
+          ],
+          "type": "REQUEST",
+          "verb": "GET",
+          "addr": "http://localhost:9000/jsonObject",
+          "requestParams": [
+          ],
+          "responseJSONObject": [
+            "key",
+            "value"
+          ]
+        }
+      ]
+    }
+  ]
+}

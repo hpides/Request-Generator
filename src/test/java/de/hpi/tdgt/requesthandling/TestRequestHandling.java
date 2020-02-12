@@ -269,7 +269,7 @@ public class TestRequestHandling extends RequestHandlingFramework {
         assertThat(authHandler.getTotalRequests(), is(7 + 3 * 10));
     }
     @Test
-    public void testNoMoreRequestsPerSecondThanSetAreFired() throws InterruptedException, IOException, ExecutionException {
+    public void testNoMoreInstancesPerSecondThanSetAreActive() throws InterruptedException, IOException, ExecutionException {
         long start = System.currentTimeMillis();
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
         //should not take forever
@@ -307,6 +307,14 @@ public class TestRequestHandling extends RequestHandlingFramework {
             future.get();
         }
         assertThat(de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.getInstance().getMaximumParallelRequests(), Matchers.lessThanOrEqualTo(parallelRequests));
+    }
+
+    @Test
+    public void testNoMoreRequestsPerSecondThanSetAreFired() throws InterruptedException, IOException, ExecutionException {
+        int parallelRequests = 10;
+        de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleWithManyParallelRequests());
+        test.start();
+        assertThat(de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.getInstance().getMaximumParallelRequests(), Matchers.lessThanOrEqualTo(test.getMaximumConcurrentRequests()));
     }
 
 }
