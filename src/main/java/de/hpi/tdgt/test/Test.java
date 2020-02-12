@@ -3,9 +3,8 @@ package de.hpi.tdgt.test;
 import de.hpi.tdgt.test.story.atom.Data_Generation;
 import de.hpi.tdgt.test.story.atom.WarmupEnd;
 import de.hpi.tdgt.util.PropertiesReader;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jdk.jshell.spi.ExecutionControl;
+import lombok.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -15,7 +14,6 @@ import java.util.concurrent.Semaphore;
 
 import de.hpi.tdgt.test.story.UserStory;
 import lombok.extern.log4j.Log4j2;
-import lombok.val;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -45,8 +43,15 @@ public class Test {
     private UserStory[] stories;
     //this is used to be able to repeat them
     private UserStory[] stories_clone;
-    private int active_instances_per_second;
+    private int activeInstancesPerSecond = DEFAULT_ACTIVE_INSTANCES_PER_SECOND_LIMIT;
     private MqttClient client;
+
+    public static final int DEFAULT_CONCURRENT_REQUEST_LIMIT = 100;
+    public static final int DEFAULT_ACTIVE_INSTANCES_PER_SECOND_LIMIT = 10000;
+
+    //by default, do not limit number of concurrent requests
+    private int maximumConcurrentRequests = DEFAULT_CONCURRENT_REQUEST_LIMIT;
+
     //we can assume this is unique. Probably, only one test at a time is run.
     private final long testId = System.currentTimeMillis();
 
@@ -69,7 +74,7 @@ public class Test {
         //preserve stories for test repetition
         stories_clone = new UserStory[stories.length];
         cloneStories(stories, stories_clone);
-        ActiveInstancesThrottler.setInstance(this.active_instances_per_second);
+        ActiveInstancesThrottler.setInstance(this.activeInstancesPerSecond);
         Thread watchdog = new Thread(ActiveInstancesThrottler.getInstance());
         watchdog.setPriority(Thread.MAX_PRIORITY);
         watchdog.start();
@@ -119,7 +124,7 @@ public class Test {
             //start all warmup tasks
             WarmupEnd.startTest();
             //this thread makes sure that requests per second get limited
-            ActiveInstancesThrottler.setInstance(this.active_instances_per_second);
+            ActiveInstancesThrottler.setInstance(this.activeInstancesPerSecond);
             Thread watchdog = new Thread(ActiveInstancesThrottler.getInstance());
             watchdog.setPriority(Thread.MAX_PRIORITY);
             watchdog.start();
@@ -182,6 +187,11 @@ public class Test {
     }
 
     private Collection<Future<?>> runTest(UserStory[] stories) throws InterruptedException {
+        try {
+            ConcurrentRequestsThrottler.getInstance().setMaxParallelRequests(maximumConcurrentRequests);
+        } catch (ExecutionControl.NotImplementedException e) {
+            log.error(e);
+        }
         val futures = new Vector<Future<?>>();
         for(int i=0; i < stories.length; i++){
             //repeat stories as often as wished
@@ -248,5 +258,74 @@ public class Test {
             }
             log.trace("Requests per second watchdog was interrupted!");
         }
+    }
+
+    /**
+     * This makes sure not more requests than configured run in parallel
+     */
+    public static class ConcurrentRequestsThrottler {
+        @Getter
+        private static final ConcurrentRequestsThrottler instance = new ConcurrentRequestsThrottler();
+
+        private Semaphore maxParallelRequests;
+        private int waiters = 0;
+        private int active = 0;
+
+        @Getter
+        int maximumParallelRequests = 0;
+        public void setMaxParallelRequests(int concurrent) throws ExecutionControl.NotImplementedException {
+            if(maxParallelRequests == null) {
+                maxParallelRequests = new Semaphore(concurrent);
+                active = 0;
+                maximumParallelRequests = 0;
+            }
+            else {
+                int waiters;
+                synchronized (this) {
+                    waiters = this.waiters;
+                    //we needed to wait until no thread is waiting for the semaphore
+                    if (waiters > 0) {
+                        throw new ExecutionControl.NotImplementedException("Can not change number of concurrent requests while there are threads waiting for the semaphore!");
+                    }
+                    maxParallelRequests = new Semaphore(concurrent);
+                    active = 0;
+                    maximumParallelRequests = 0;
+                }
+            }
+        }
+
+        public void allowRequest() throws InterruptedException {
+                synchronized (this){
+                    waiters++;
+                }
+                if(maxParallelRequests != null) {
+                    maxParallelRequests.acquire();
+                }
+                synchronized (this){
+                    waiters --;
+                    active++;
+                    //used by the test of this feature
+                    if(active > maximumParallelRequests){
+                        maximumParallelRequests = active;
+                    }
+                }
+        }
+
+        public void requestDone(){
+            if(maxParallelRequests != null) {
+                maxParallelRequests.release();
+            }
+            synchronized (this){
+                active--;
+            }
+
+        }
+
+        public void reset(){
+            maxParallelRequests = null;
+            active = 0;
+            maximumParallelRequests = 0;
+        }
+
     }
 }
