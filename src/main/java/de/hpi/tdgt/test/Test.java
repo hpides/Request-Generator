@@ -114,7 +114,7 @@ public class Test {
         try {
             //clear retained messages from last test
             client.publish(MQTT_TOPIC, new byte[0],0,true);
-            client.publish(MQTT_TOPIC, ("testStart "+testId+" "+configJSON).getBytes(StandardCharsets.UTF_8),2,true);
+            client.publish(MQTT_TOPIC, ("testStart "+testId+" "+configJSON).getBytes(StandardCharsets.UTF_8),2,false);
         } catch (MqttException e) {
             log.error("Could not send control start message: ", e);
         }
@@ -150,7 +150,7 @@ public class Test {
 
 
         try {
-            client.publish(MQTT_TOPIC, ("testEnd "+testId).getBytes(StandardCharsets.UTF_8),2,true);
+            client.publish(MQTT_TOPIC, ("testEnd "+testId).getBytes(StandardCharsets.UTF_8),2,false);
             //clear retained messages for next test
             client.publish(MQTT_TOPIC, new byte[0],0,true);
         } catch (MqttException e) {
