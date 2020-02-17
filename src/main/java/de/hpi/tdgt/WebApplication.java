@@ -1,7 +1,6 @@
 package de.hpi.tdgt;
 
 import de.hpi.tdgt.controllers.UploadController;
-import de.hpi.tdgt.fibers.Fiber;
 import de.hpi.tdgt.test.story.atom.Data_Generation;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.SpringApplication;
