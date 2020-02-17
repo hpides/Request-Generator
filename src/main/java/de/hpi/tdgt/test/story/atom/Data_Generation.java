@@ -74,9 +74,9 @@ public class Data_Generation extends Atom {
         synchronized (sc) {
             if (sc.hasNextLine()) {
                 line = sc.nextLine();
-                log.info("Retrieved "+line+"from table"+" in Thread "+Thread.currentThread().getId()+ "for atom "+this.getName());
+                log.info("Retrieved "+line+"from table"+" in Thread "+Thread.currentThread().getId()+ "for atom "+ this.getName());
             } else {
-                log.error("No data remains for atom "+this.getName());
+                log.error("No data remains for atom "+ this.getName());
                 sc.close();
                 return buffer;
             }

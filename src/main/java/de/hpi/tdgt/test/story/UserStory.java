@@ -5,27 +5,24 @@ import de.hpi.tdgt.test.Test;
 import de.hpi.tdgt.test.ThreadRecycler;
 import de.hpi.tdgt.test.story.atom.Atom;
 import de.hpi.tdgt.test.story.atom.WarmupEnd;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
 import lombok.val;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@Log4j2
 public class UserStory implements Runnable, Cloneable{
+    private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(UserStory.class);
     private double scalePercentage;
     private String name;
     private Atom[] atoms;
     @JsonIgnore
-    @Getter
     private Test parent;
+
+    public UserStory() {
+    }
+
     public void setAtoms(Atom[] atoms){
         this.atoms = atoms;
         //set links
@@ -113,9 +110,45 @@ public class UserStory implements Runnable, Cloneable{
         int warmupEnds = 0;
         for(val atom : atoms){
             if(atom instanceof WarmupEnd){
-                warmupEnds+=atom.getRepeat();
+                warmupEnds+= atom.getRepeat();
             }
         }
         return warmupEnds;
+    }
+
+    public double getScalePercentage() {
+        return this.scalePercentage;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public Atom[] getAtoms() {
+        return this.atoms;
+    }
+
+    public boolean isStarted() {
+        return this.isStarted;
+    }
+
+    public void setScalePercentage(double scalePercentage) {
+        this.scalePercentage = scalePercentage;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setParent(Test parent) {
+        this.parent = parent;
+    }
+
+    public void setStarted(boolean isStarted) {
+        this.isStarted = isStarted;
+    }
+
+    public Test getParent() {
+        return this.parent;
     }
 }

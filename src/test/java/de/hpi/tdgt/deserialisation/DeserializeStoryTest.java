@@ -47,7 +47,7 @@ public class DeserializeStoryTest {
         val story = deserializedTest.getStories()[0];
         val clone = story.clone();
         val firstAtom = clone.getAtoms()[0];
-        assertThat(firstAtom.getSuccessors()[0].getSuccessors()[0].getName(), equalTo("User anlegen"));
+        assertThat(firstAtom.getSuccessorLinks()[0].getSuccessorLinks()[0].getName(), equalTo("User anlegen"));
     }
 
     @Test

@@ -25,14 +25,14 @@ public class AtomTest {
         var successor1 = atom;
         while(!successor1.getName().equals("User löschen story 1")){
             if(successor1.getName().equals("User anlegen")){
-                successor1 = successor1.getSuccessors()[1];
+                successor1 = successor1.getSuccessorLinks()[1];
             }
-            else successor1 = successor1.getSuccessors()[0];
+            else successor1 = successor1.getSuccessorLinks()[0];
         }
 
         var successor2 = atom;
         while(!successor2.getName().equals("User löschen story 1")){
-            successor2 = successor2.getSuccessors()[0];
+            successor2 = successor2.getSuccessorLinks()[0];
         }
         assertSame(successor1,successor2);
     }

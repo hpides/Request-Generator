@@ -5,18 +5,17 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import de.hpi.tdgt.requesthandling.HttpConstants;
 import de.hpi.tdgt.util.Pair;
-import lombok.*;
-import lombok.extern.log4j.Log4j2;
+import lombok.val;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyPair;
 import java.util.*;
 import java.util.stream.Collectors;
-@Log4j2
 public class HttpHandlers {
+    private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(HttpHandlers.class);
     //Classes and methods based on https://www.codeproject.com/tips/1040097/create-a-simple-web-server-in-java-http-server
 
     /**
@@ -62,17 +61,22 @@ public class HttpHandlers {
             }
         }
     }
-    @Getter
-    @Setter
     public static abstract class HttpHandlerBase implements com.sun.net.httpserver.HttpHandler{
         int requests_total;
         @Override
         public void handle(HttpExchange he) throws IOException {
             requests_total ++;
         }
+
+        public int getRequests_total() {
+            return this.requests_total;
+        }
+
+        public void setRequests_total(int requests_total) {
+            this.requests_total = requests_total;
+        }
     }
 
-    @Getter
     public static class GetHandler extends HttpHandlerBase implements HttpHandler {
         
         private Map<String,Object> lastParameters = null;
@@ -104,8 +108,15 @@ public class HttpHandlers {
 
             os.close();
         }
+
+        public Map<String, Object> getLastParameters() {
+            return this.lastParameters;
+        }
+
+        public String getRequest() {
+            return this.request;
+        }
     }
-    @Getter
     public static class GetWithBodyHandler  extends HttpHandlerBase implements HttpHandler {
         private Map<String, Object> lastParameters = null;
         
@@ -144,14 +155,16 @@ public class HttpHandlers {
             os.write(response.getBytes());
             os.close();
         }
+
+        public Map<String, Object> getLastParameters() {
+            return this.lastParameters;
+        }
     }
     /**
      * Makes request URL Parameters to a JSON Object with the Request keys as keys and their values as values.
      */
-    @Getter
     public static class JSONObjectGetHandler  extends HttpHandlerBase implements HttpHandler{
         private Set<Pair<String, String>> allParams = new HashSet<>();
-        @Setter
         private int requestsTotal = 0;
         
         @Override
@@ -192,11 +205,22 @@ public class HttpHandlers {
 
             os.close();
         }
+
+        public Set<Pair<String, String>> getAllParams() {
+            return this.allParams;
+        }
+
+        public int getRequestsTotal() {
+            return this.requestsTotal;
+        }
+
+        public void setRequestsTotal(int requestsTotal) {
+            this.requestsTotal = requestsTotal;
+        }
     }
     /**
      * Makes request URL Parameters to a JSON Array of Objects with the Request keys as key for an object and their values as values.
      */
-    @Getter
     public static class JSONArrayGetHandler   extends HttpHandlerBase implements HttpHandler{
         
         @Override
@@ -280,7 +304,6 @@ public class HttpHandlers {
     /**
      * Expects request in body.
      */
-    @Getter
     public static class PostBodyHandler  extends HttpHandlerBase implements HttpHandler {
         private Set<Map> allParameters = new HashSet<>();
         
@@ -318,20 +341,21 @@ public class HttpHandlers {
             os.write(response.getBytes());
             os.close();
         }
+
+        public Set<Map> getAllParameters() {
+            return this.allParameters;
+        }
     }
 
     /**
      * Expects requests to be authorized with username (hardcoded "user") and password (hardcoded "password").
      * Saves in the field "lastLoginWasOK" if the last login used the correct username and password.
      */
-    @Getter
     public static class AuthHandler  extends HttpHandlerBase implements HttpHandler {
         public static final String username = "user";
         public static final String password = "pw";
         private boolean lastLoginWasOK = false;
-        @Setter
         private int numberFailedLogins = 0;
-        @Setter
         private int totalRequests = 0;
         
         @Override
@@ -369,11 +393,30 @@ public class HttpHandlers {
                 os.close();
             }
         }
+
+        public boolean isLastLoginWasOK() {
+            return this.lastLoginWasOK;
+        }
+
+        public int getNumberFailedLogins() {
+            return this.numberFailedLogins;
+        }
+
+        public int getTotalRequests() {
+            return this.totalRequests;
+        }
+
+        public void setNumberFailedLogins(int numberFailedLogins) {
+            this.numberFailedLogins = numberFailedLogins;
+        }
+
+        public void setTotalRequests(int totalRequests) {
+            this.totalRequests = totalRequests;
+        }
     }
     /**
      * Returns nothing.
      */
-    @Getter
     public static class EmptyResponseHandler  extends HttpHandlerBase implements HttpHandler {
         
         @Override

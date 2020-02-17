@@ -2,7 +2,7 @@ package de.hpi.tdgt.requesthandling;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.*;
+import lombok.val;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -10,13 +10,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
-@Getter
-@Setter
 public class RestResult {
     //parameters for httpurlconnection
     private long startTime;
     private long endTime;
-    @Setter(AccessLevel.PACKAGE)
     private byte[] response;
     private String contentType;
     private Map<String, List<String>> headers;
@@ -63,5 +60,65 @@ public class RestResult {
 
     public long durationMillis(){
         return durationNanos() / 1000000;
+    }
+
+    public long getStartTime() {
+        return this.startTime;
+    }
+
+    public long getEndTime() {
+        return this.endTime;
+    }
+
+    public byte[] getResponse() {
+        return this.response;
+    }
+
+    public String getContentType() {
+        return this.contentType;
+    }
+
+    public Map<String, List<String>> getHeaders() {
+        return this.headers;
+    }
+
+    public int getReturnCode() {
+        return this.returnCode;
+    }
+
+    public Exception getErrorCondition() {
+        return this.errorCondition;
+    }
+
+    public ObjectMapper getMapper() {
+        return this.mapper;
+    }
+
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
+    }
+
+    public void setEndTime(long endTime) {
+        this.endTime = endTime;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    public void setHeaders(Map<String, List<String>> headers) {
+        this.headers = headers;
+    }
+
+    public void setReturnCode(int returnCode) {
+        this.returnCode = returnCode;
+    }
+
+    public void setErrorCondition(Exception errorCondition) {
+        this.errorCondition = errorCondition;
+    }
+
+    void setResponse(byte[] response) {
+        this.response = response;
     }
 }
