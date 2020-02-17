@@ -25,6 +25,23 @@ public class Utils {
         return writer.toString();
     }
 
+    public String getRequestExampleWithRepeatJSON() throws IOException {
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(getClass().getResourceAsStream("RequestExampleWithRepeat.json"), writer);
+        return writer.toString();
+    }
+    public String getRequestExampleWithManyParallelRequests() throws IOException {
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(getClass().getResourceAsStream("RequestExampleWithManyParallelRequests.json"), writer);
+        return writer.toString();
+    }
+
+    public String getRequestExampleWithNonIndexIDsJSON() throws IOException {
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(getClass().getResourceAsStream("RequestExampleWithNonIndexIDs.json"), writer);
+        return writer.toString();
+    }
+
     public String getRequestExampleWithAssertionsJSON() throws IOException {
         StringWriter writer = new StringWriter();
         IOUtils.copy(getClass().getResourceAsStream("RequestExampleWithAssertions.json"), writer);

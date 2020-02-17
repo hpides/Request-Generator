@@ -14,7 +14,6 @@ import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.sql.Time;
 import java.util.Base64;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
@@ -217,37 +216,32 @@ public class RestClient {
             out.flush();
             out.close();
         }
-        if(Test.RequestThrottler.getInstance() != null) {
-            try {
-                Test.RequestThrottler.getInstance().allowRequest();
-            } catch (InterruptedException e) {
-                log.error("Interrupted wail waiting to be allowed to send a request: ",e);
-            }
-        }
-        else {
-            log.warn("Internal error: Can not limit requests per second!");
-        }
+
+        //got a connection
+        val result = new RestResult();
         //try to connect
         for (retry = -1; retry < request.getRetries(); retry++) {
             try {
+                Test.ConcurrentRequestsThrottler.getInstance().allowRequest();
                 httpURLConnection.connect();
                 break;
             } catch (SocketTimeoutException s) {
                 log.warn("Request timeout for URL " + url.toString() + " (connect timeout was " + request.getConnectTimeout() + ").");
-            } catch (IOException e) {
+                result.setErrorCondition(s);
+            } catch (Exception e) {
                 log.error("Could not connect to " + url.toString(), e);
-                return null;
+                result.setErrorCondition(e);
+                return result;
             }
         }
         //exceeded max retries
         if (retry >= request.getRetries()) {
             return null;
         }
-        //got a connection
-        val result = new RestResult();
         result.setStartTime(start);
         readResponse(httpURLConnection, result, request);
 
+        Test.ConcurrentRequestsThrottler.getInstance().requestDone();
         return result;
     }
 

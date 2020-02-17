@@ -4,10 +4,14 @@ import de.hpi.tdgt.HttpHandlers;
 import de.hpi.tdgt.RequestHandlingFramework;
 import de.hpi.tdgt.Utils;
 import de.hpi.tdgt.deserialisation.Deserializer;
+import de.hpi.tdgt.test.ThreadRecycler;
 import de.hpi.tdgt.test.story.UserStory;
 import de.hpi.tdgt.util.Pair;
+import jdk.jshell.spi.ExecutionControl;
+import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
 
 import java.io.*;
@@ -15,6 +19,8 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -230,6 +236,24 @@ public class TestRequestHandling extends RequestHandlingFramework {
     }
 
     @Test
+    public void testUserStoryWithChangedIDsAgainstTestServer() throws IOException, InterruptedException, ExecutionException {
+        de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleWithNonIndexIDsJSON());
+        test.start();
+        //repeated 7 times in first, 3 times 10 times in second story; only first value in corresponding table is correct
+        //in one scenario, one instance of first story gets correct param, executes once
+        //in other scenario, one instance of second story gets correct param; executes 10 times
+        assertThat(authHandler.getNumberFailedLogins(), anyOf(is(36), is(27)));
+    }
+
+    @Test
+    public void testUserStoryWithRepeatAgainstTestServer() throws IOException, InterruptedException, ExecutionException {
+        de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleWithRepeatJSON());
+        test.start();
+        // GET with auth is 10 times executed per story, only once with the right credentials
+        assertThat(authHandler.getNumberFailedLogins(), is(test.getRepeat() * 9));
+    }
+
+    @Test
     public void testUserStoryAgainstTestServerWithScaleFactor() throws IOException, InterruptedException, ExecutionException {
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
         test.start();
@@ -245,20 +269,52 @@ public class TestRequestHandling extends RequestHandlingFramework {
         assertThat(authHandler.getTotalRequests(), is(7 + 3 * 10));
     }
     @Test
-    public void testNoMoreRequestsPerSecondThanSetAreFired() throws InterruptedException, IOException, ExecutionException {
+    public void testNoMoreInstancesPerSecondThanSetAreActive() throws InterruptedException, IOException, ExecutionException {
         long start = System.currentTimeMillis();
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleJSON());
         //should not take forever
-        test.setRequests_per_second(10);
+        test.setActiveInstancesPerSecond(2);
         test.start();
         long end = System.currentTimeMillis();
-        int requests_total = handlers.stream().map(HttpHandlers.HttpHandlerBase::getRequests_total).mapToInt(Integer::intValue).sum();
+        double instances_total = test.getScaleFactor() * Arrays.stream(test.getStories()).mapToDouble(UserStory::getScalePercentage).sum();
         double duration_seconds = (end - start) / 1000d;
-        log.info("Total requests: "+requests_total);
-        double requests_per_second = requests_total / duration_seconds;
-        log.info("Requests per second: "+requests_per_second);
-        //account for "bad luck"
-        assertThat(requests_per_second, lessThanOrEqualTo(1d +test.getRequests_per_second()));
+        log.info("Total instances: "+instances_total);
+        double activeInstancesPerSecond = instances_total / duration_seconds;
+        log.info("Requests per second: "+activeInstancesPerSecond);
+        //maximum number of active instances per second, accounting for "bad luck"
+        assertThat(activeInstancesPerSecond, lessThanOrEqualTo(1d + test.getActiveInstancesPerSecond()));
+    }
+
+    private Runnable sendRequest = new Runnable() {
+        private int parralelRequests;
+        @SneakyThrows
+        @Override
+        public void run() {
+            val rc = new RestClient();
+            rc.postFormToEndpointWithAuth("TestRequestHandling", 0,  new URL("http://localhost:9000/auth"),new HashMap<>(),HttpHandlers.AuthHandler.username, HttpHandlers.AuthHandler.password);
+        }
+    };
+
+    @Test
+    public void testNoMoreRequestsInParallelThanSetAreFired() throws InterruptedException, ExecutionException, ExecutionControl.NotImplementedException {
+        int parallelRequests = 10;
+        de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.getInstance().setMaxParallelRequests(parallelRequests);
+        val futures = new Vector<Future<?>>();
+        for(int i = 0; i < parallelRequests * 10; i++){
+            futures.add(ThreadRecycler.getInstance().getExecutorService().submit(sendRequest));
+        }
+        for(val future : futures){
+            future.get();
+        }
+        assertThat(de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.getInstance().getMaximumParallelRequests(), Matchers.lessThanOrEqualTo(parallelRequests + 1));
+    }
+
+    @Test
+    public void testNoMoreRequestsPerSecondThanSetAreFired() throws InterruptedException, IOException, ExecutionException {
+        int parallelRequests = 10;
+        de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getRequestExampleWithManyParallelRequests());
+        test.start();
+        assertThat(de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.getInstance().getMaximumParallelRequests(), Matchers.lessThanOrEqualTo(test.getMaximumConcurrentRequests() + 1));
     }
 
 }

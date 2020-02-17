@@ -1,23 +1,19 @@
 package de.hpi.tdgt.test;
 
+import de.hpi.tdgt.test.story.atom.Data_Generation;
 import de.hpi.tdgt.test.story.atom.WarmupEnd;
-import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
-import de.hpi.tdgt.test.time_measurement.TimeStorage;
 import de.hpi.tdgt.util.PropertiesReader;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jdk.jshell.spi.ExecutionControl;
+import lombok.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
-import java.util.stream.Collectors;
 
 import de.hpi.tdgt.test.story.UserStory;
 import lombok.extern.log4j.Log4j2;
-import lombok.val;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -45,10 +41,29 @@ public class Test {
     private int repeat;
     private int scaleFactor;
     private UserStory[] stories;
-    private int requests_per_second;
+    //this is used to be able to repeat them
+    private UserStory[] stories_clone;
+    private int activeInstancesPerSecond = DEFAULT_ACTIVE_INSTANCES_PER_SECOND_LIMIT;
     private MqttClient client;
+
+    public static final int DEFAULT_CONCURRENT_REQUEST_LIMIT = 100;
+    public static final int DEFAULT_ACTIVE_INSTANCES_PER_SECOND_LIMIT = 10000;
+
+    //by default, do not limit number of concurrent requests
+    private int maximumConcurrentRequests = DEFAULT_CONCURRENT_REQUEST_LIMIT;
+
     //we can assume this is unique. Probably, only one test at a time is run.
     private final long testId = System.currentTimeMillis();
+
+    /**
+     * Perform deep clone of stories to user_stories.
+     */
+    private void cloneStories(UserStory[] source, UserStory[] target){
+        for(int i=0; i < source.length; i++){
+            target[i] = source[i].clone();
+        }
+    }
+
     /**
      * Run all stories that have WarmupEnd until reaching WarmupEnd. Other stories are not run.
      * *ALWAYS* run start after running warmup before you run warmup again, even in tests, to get rid of waiting threads.
@@ -56,9 +71,11 @@ public class Test {
      * @throws InterruptedException if interrupted in Thread.sleep
      */
     public Collection<Future<?>> warmup() throws InterruptedException {
-        
-        RequestThrottler.setInstance(this.requests_per_second);
-        Thread watchdog = new Thread(RequestThrottler.getInstance());
+        //preserve stories for test repetition
+        stories_clone = new UserStory[stories.length];
+        cloneStories(stories, stories_clone);
+        ActiveInstancesThrottler.setInstance(this.activeInstancesPerSecond);
+        Thread watchdog = new Thread(ActiveInstancesThrottler.getInstance());
         watchdog.setPriority(Thread.MAX_PRIORITY);
         watchdog.start();
         //will run stories with warmup only, so they can run until WarmupEnd is reached
@@ -81,6 +98,9 @@ public class Test {
      * @throws InterruptedException if interrupted joining threads
      */
     public void start() throws InterruptedException, ExecutionException {
+        //preserve stories for repeat
+        stories_clone = new UserStory[stories.length];
+        cloneStories(stories, stories_clone);
         start(new Vector<>());
     }
 
@@ -94,30 +114,43 @@ public class Test {
         try {
             //clear retained messages from last test
             client.publish(MQTT_TOPIC, new byte[0],0,true);
-            client.publish(MQTT_TOPIC, ("testStart "+testId+" "+configJSON).getBytes(StandardCharsets.UTF_8),2,true);
+            client.publish(MQTT_TOPIC, ("testStart "+testId+" "+configJSON).getBytes(StandardCharsets.UTF_8),2,false);
         } catch (MqttException e) {
             log.error("Could not send control start message: ", e);
         }
-        //start all warmup tasks
-        WarmupEnd.startTest();
-        //this thread makes sure that requests per second get limited
-        RequestThrottler.setInstance(this.requests_per_second);
-        Thread watchdog = new Thread(RequestThrottler.getInstance());
-        watchdog.setPriority(Thread.MAX_PRIORITY);
-        watchdog.start();
-        val threads = runTest(Arrays.stream(stories).filter(story -> !story.isStarted()).toArray(UserStory[]::new));
-        //can wait for these threads also
-        threads.addAll(threadsFromWarmup);
-        for(val thread : threads){
-            //join thread
-            if(!thread.isCancelled())
-                thread.get();
+
+        for(int i = 0; i < repeat; i++) {
+            log.info("Starting test run "+i+" of "+repeat);
+            //start all warmup tasks
+            WarmupEnd.startTest();
+            //this thread makes sure that requests per second get limited
+            ActiveInstancesThrottler.setInstance(this.activeInstancesPerSecond);
+            Thread watchdog = new Thread(ActiveInstancesThrottler.getInstance());
+            watchdog.setPriority(Thread.MAX_PRIORITY);
+            watchdog.start();
+            val threads = runTest(Arrays.stream(stories).filter(story -> !story.isStarted()).toArray(UserStory[]::new));
+            //can wait for these threads also
+            threads.addAll(threadsFromWarmup);
+            for (val thread : threads) {
+                //join thread
+                if (!thread.isCancelled())
+                    thread.get();
+            }
+            watchdog.interrupt();
+            //remove global state
+            ActiveInstancesThrottler.reset();
+            Data_Generation.reset();
+            //this resets all state atoms might have
+            cloneStories(stories_clone, stories);
+            //do not run another warmup after the last run, because it would not be finished
+            if(i < repeat - 1) {
+                threadsFromWarmup = warmup();
+            }
         }
-        watchdog.interrupt();
-        //remove global state
-        RequestThrottler.reset();
+
+
         try {
-            client.publish(MQTT_TOPIC, ("testEnd "+testId).getBytes(StandardCharsets.UTF_8),2,true);
+            client.publish(MQTT_TOPIC, ("testEnd "+testId).getBytes(StandardCharsets.UTF_8),2,false);
             //clear retained messages for next test
             client.publish(MQTT_TOPIC, new byte[0],0,true);
         } catch (MqttException e) {
@@ -154,6 +187,11 @@ public class Test {
     }
 
     private Collection<Future<?>> runTest(UserStory[] stories) throws InterruptedException {
+        try {
+            ConcurrentRequestsThrottler.getInstance().setMaxParallelRequests(maximumConcurrentRequests);
+        } catch (ExecutionControl.NotImplementedException e) {
+            log.error(e);
+        }
         val futures = new Vector<Future<?>>();
         for(int i=0; i < stories.length; i++){
             //repeat stories as often as wished
@@ -168,22 +206,22 @@ public class Test {
     }
 
     /**
-     * This is a runnable for a high-priority thread that makes sure that no more threads than requested run.
+     * This is a runnable for a high-priority thread that makes sure that no more user stories than requested run.
      */
     @Log4j2
-    public static class RequestThrottler implements Runnable{
-        static void setInstance(int requestsPerSecond){
-            instance = new RequestThrottler(requestsPerSecond);
+    public static class ActiveInstancesThrottler implements Runnable{
+        static void setInstance(int instancesPerSecond){
+            instance = new ActiveInstancesThrottler(instancesPerSecond);
         }
         @Getter
-        private static RequestThrottler instance = null;
+        private static ActiveInstancesThrottler instance = null;
 
-        private RequestThrottler(int requestsPerSecond){
-            requestLimiter =  new Semaphore(requestsPerSecond,true);
+        private ActiveInstancesThrottler(int instancesPerSecond){
+            requestLimiter =  new Semaphore(instancesPerSecond,true);
         }
         //only used for measurement, does not have to be synchronized
         @Getter
-        int requestsPerSecond = 0;
+        int instancesPerSecond = 0;
         private static void reset(){
             instance = null;
         }
@@ -192,25 +230,25 @@ public class Test {
          */
         private final Semaphore mutex = new Semaphore(1);
         private final Semaphore requestLimiter;
-        public void allowRequest() throws InterruptedException {
+        public void allowInstanceToRun() throws InterruptedException {
             log.trace("Waiting for requestLimiter...");
             requestLimiter.acquire();
             log.trace("Waiting for mutex (allowRequest)...");
             mutex.acquire();
-            requestsPerSecond++;
+            instancesPerSecond++;
             mutex.release();
             log.trace("Released mutex (allowRequest)");
         }
         @Override
         public void run() {
             while(!Thread.interrupted()) {
-                int requests_lastsecond = requestsPerSecond;
+                int instancesLastSecond = instancesPerSecond;
                 log.trace("Waiting for mutex (run)...");
-                log.info(requests_lastsecond+" requests in the last second.");
+                log.info(instancesLastSecond+" active instances in the last second.");
                 try {
                     mutex.acquire();
-                    requestLimiter.release(requestsPerSecond);
-                    requestsPerSecond = 0;
+                    requestLimiter.release(instancesPerSecond);
+                    instancesPerSecond = 0;
                     mutex.release();
                     log.trace("Released mutex (run)");
                     Thread.sleep(1000);
@@ -220,5 +258,74 @@ public class Test {
             }
             log.trace("Requests per second watchdog was interrupted!");
         }
+    }
+
+    /**
+     * This makes sure not more requests than configured run in parallel
+     */
+    public static class ConcurrentRequestsThrottler {
+        @Getter
+        private static final ConcurrentRequestsThrottler instance = new ConcurrentRequestsThrottler();
+
+        private Semaphore maxParallelRequests;
+        private int waiters = 0;
+        private int active = 0;
+
+        @Getter
+        int maximumParallelRequests = 0;
+        public void setMaxParallelRequests(int concurrent) throws ExecutionControl.NotImplementedException {
+            if(maxParallelRequests == null) {
+                maxParallelRequests = new Semaphore(concurrent);
+                active = 0;
+                maximumParallelRequests = 0;
+            }
+            else {
+                int waiters;
+                synchronized (this) {
+                    waiters = this.waiters;
+                    //we needed to wait until no thread is waiting for the semaphore
+                    if (waiters > 0) {
+                        throw new ExecutionControl.NotImplementedException("Can not change number of concurrent requests while there are threads waiting for the semaphore!");
+                    }
+                    maxParallelRequests = new Semaphore(concurrent);
+                    active = 0;
+                    maximumParallelRequests = 0;
+                }
+            }
+        }
+
+        public void allowRequest() throws InterruptedException {
+                synchronized (this){
+                    waiters++;
+                }
+                if(maxParallelRequests != null) {
+                    maxParallelRequests.acquire();
+                }
+                synchronized (this){
+                    waiters --;
+                    active++;
+                    //used by the test of this feature
+                    if(active > maximumParallelRequests){
+                        maximumParallelRequests = active;
+                    }
+                }
+        }
+
+        public void requestDone(){
+            if(maxParallelRequests != null) {
+                maxParallelRequests.release();
+            }
+            synchronized (this){
+                active--;
+            }
+
+        }
+
+        public void reset(){
+            maxParallelRequests = null;
+            active = 0;
+            maximumParallelRequests = 0;
+        }
+
     }
 }

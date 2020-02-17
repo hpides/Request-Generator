@@ -1,7 +1,7 @@
 {
   "repeat": 1,
   "scaleFactor": 10,
-  "requests_per_second": 10,
+  "activeInstancesPerSecond": 10,
   "stories": [
     {
       "scalePercentage": 0.7,
@@ -127,7 +127,7 @@
         },
         {
           "name": "GET with auth",
-          "id": 3,
+          "id": 1,
           "repeat": 10,
           "successors": [
           ],
