@@ -28,6 +28,7 @@ public class UploadController {
         try {
             testToRun = Deserializer.deserialize(testToRunAsJSON);
         } catch (IOException e) {
+            log.error(e);
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         testToRun.setTestId(id);
