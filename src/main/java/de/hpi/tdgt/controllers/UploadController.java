@@ -1,5 +1,6 @@
 package de.hpi.tdgt.controllers;
 
+import de.hpi.tdgt.deserialisation.Deserializer;
 import de.hpi.tdgt.test.Test;
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
 import de.hpi.tdgt.test.time_measurement.TimeStorage;
@@ -22,7 +23,13 @@ import java.util.concurrent.ExecutionException;
 public class UploadController {
     //will return 500 if exception during test occurs
     @PostMapping(path = "/upload/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> uploadTestConfig(@RequestBody Test testToRun, @PathVariable(required = false) long id) throws InterruptedException, ExecutionException {
+    public ResponseEntity<String> uploadTestConfig(@RequestBody String testToRunAsJSON, @PathVariable(required = false) long id) throws InterruptedException, ExecutionException {
+        Test testToRun;
+        try {
+            testToRun = Deserializer.deserialize(testToRunAsJSON);
+        } catch (IOException e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
         testToRun.setTestId(id);
         val ret  = new ResponseEntity<String>(HttpStatus.OK);
         long starttime = System.currentTimeMillis();
