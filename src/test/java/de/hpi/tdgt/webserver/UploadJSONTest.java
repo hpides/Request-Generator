@@ -40,13 +40,13 @@ public class UploadJSONTest extends RequestHandlingFramework {
     private TestRestTemplate restTemplate;
     @Test
     public void runsUserStoryAgainstTestServerReturns200() throws Exception {
-        RequestEntity<String> requestEntity = RequestEntity .post(new URL("http://localhost:"+port+"/upload").toURI()) .contentType(MediaType.APPLICATION_JSON) .body(exampleStory);
+        RequestEntity<String> requestEntity = RequestEntity .post(new URL("http://localhost:"+port+"/upload/"+System.currentTimeMillis()).toURI()) .contentType(MediaType.APPLICATION_JSON) .body(exampleStory);
         val response = restTemplate.exchange(requestEntity, String.class);
         assertThat(response.getStatusCode(), equalTo(HttpStatus.OK));
     }
     @Test
     public void runsUserStoryAgainstTestServerRunsActualTest() throws Exception {
-        RequestEntity<String> requestEntity = RequestEntity .post(new URL("http://localhost:"+port+"/upload").toURI()) .contentType(MediaType.APPLICATION_JSON) .body(exampleStory);
+        RequestEntity<String> requestEntity = RequestEntity .post(new URL("http://localhost:"+port+"/upload/"+System.currentTimeMillis()).toURI()) .contentType(MediaType.APPLICATION_JSON) .body(exampleStory);
         restTemplate.exchange(requestEntity, String.class);
         //requests to this handler are sent
         assertThat(authHandler.getNumberFailedLogins(), greaterThan(0));
@@ -61,19 +61,19 @@ public class UploadJSONTest extends RequestHandlingFramework {
     }
     @Test
     public void runsUserStoryAgainstTestServerReturns415OnWrongContentType() throws Exception {
-        RequestEntity<String> requestEntity = RequestEntity .post(new URL("http://localhost:"+port+"/upload").toURI()) .contentType(MediaType.APPLICATION_PDF) .body(exampleStory);
+        RequestEntity<String> requestEntity = RequestEntity .post(new URL("http://localhost:"+port+"/upload/"+System.currentTimeMillis()).toURI()) .contentType(MediaType.APPLICATION_PDF) .body(exampleStory);
         val response = restTemplate.exchange(requestEntity, String.class);
         assertThat(response.getStatusCode(), equalTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE));
     }
     @Test
     public void runsUserStoryAgainstTestServerReturns400OnNotJSON() throws Exception {
-        RequestEntity<String> requestEntity = RequestEntity .post(new URL("http://localhost:"+port+"/upload").toURI()) .contentType(MediaType.APPLICATION_JSON) .body("{");
+        RequestEntity<String> requestEntity = RequestEntity .post(new URL("http://localhost:"+port+"/upload/"+System.currentTimeMillis()).toURI()) .contentType(MediaType.APPLICATION_JSON) .body("{");
         val response = restTemplate.exchange(requestEntity, String.class);
         assertThat(response.getStatusCode(), equalTo(HttpStatus.BAD_REQUEST));
     }
     @Test
     public void runsUserStoryAgainstTestServerReturns400OnNoContent() throws Exception {
-        RequestEntity<String> requestEntity = RequestEntity .post(new URL("http://localhost:"+port+"/upload").toURI()) .contentType(MediaType.APPLICATION_JSON) .body("");
+        RequestEntity<String> requestEntity = RequestEntity .post(new URL("http://localhost:"+port+"/upload/"+System.currentTimeMillis()).toURI()) .contentType(MediaType.APPLICATION_JSON) .body("");
         val response = restTemplate.exchange(requestEntity, String.class);
         assertThat(response.getStatusCode(), equalTo(HttpStatus.BAD_REQUEST));
     }
