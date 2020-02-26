@@ -46,7 +46,7 @@ public class Main {
                 UploadController.PDGF_DIR = args[3];
                 UploadController.JAVA_7_DIR = args[4];
                 //in case warmup is added
-                new UploadController().uploadTestConfig(deserializedTest, System.currentTimeMillis());
+                new UploadController().uploadTestConfig(json,System.currentTimeMillis());
             } catch (IOException | ExecutionException e) {
                 log.error(e);
             }

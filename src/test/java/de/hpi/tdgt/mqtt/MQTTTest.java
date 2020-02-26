@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.hpi.tdgt.RequestHandlingFramework;
 import de.hpi.tdgt.Utils;
+import de.hpi.tdgt.WebApplication;
 import de.hpi.tdgt.deserialisation.Deserializer;
 import de.hpi.tdgt.test.story.UserStory;
 import de.hpi.tdgt.test.story.atom.Atom;
@@ -24,13 +25,35 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.RequestEntity;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+
 @Log4j2
+@ExtendWith(SpringExtension.class)
+@SpringBootTest(classes = WebApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class MQTTTest extends RequestHandlingFramework {
+
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
     private ObjectMapper mapper = new ObjectMapper();
     private IMqttClient publisher;
     private final UserStory mockParent = new UserStory();
@@ -380,6 +403,33 @@ public class MQTTTest extends RequestHandlingFramework {
         //test that does not do anything is sufficient, no need to waste resources here
         de.hpi.tdgt.test.Test test = Deserializer.deserialize(new Utils().getNoopJson());
         test.start(test.warmup());
+        String messageStart = "testStart";
+        val startMessage = findMessageStartingWith(message, messageStart);
+        val parts = startMessage.split(" ");
+        //if there are whitespaces in the string, it will be split by them to
+        MatcherAssert.assertThat(parts.length, Matchers.greaterThanOrEqualTo(3));
+        MatcherAssert.assertThat(parts[0], Matchers.equalTo(messageStart));
+        MatcherAssert.assertThat(Long.parseLong(parts[1]), Matchers.greaterThan(0L));
+
+        //collect potentially split config
+        val sb = new StringBuilder();
+        var first = true;
+        for(int i = 2; i < parts.length; i++){
+            if(!first){
+                sb.append(' ');
+            }
+            first = false;
+            sb.append(parts[i]);
+        }
+        //make sure whitespaces are also preserved
+        MatcherAssert.assertThat(sb.toString(), Matchers.equalTo(new Utils().getNoopJson()));
+    }
+
+    @Test
+    public void runsUserStoryAgainstTestServerSendsTestConfig() throws Exception {
+        val message = prepareClient(de.hpi.tdgt.test.Test.MQTT_TOPIC);
+        RequestEntity<String> requestEntity = RequestEntity.post(new URL("http://localhost:"+port+"/upload/"+System.currentTimeMillis()).toURI()) .contentType(MediaType.APPLICATION_JSON) .body(new Utils().getNoopJson());
+        restTemplate.exchange(requestEntity, String.class);
         String messageStart = "testStart";
         val startMessage = findMessageStartingWith(message, messageStart);
         val parts = startMessage.split(" ");
