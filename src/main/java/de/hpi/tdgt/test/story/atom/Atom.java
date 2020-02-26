@@ -1,6 +1,7 @@
 package de.hpi.tdgt.test.story.atom;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.hpi.tdgt.test.ThreadRecycler;
@@ -18,6 +19,8 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 @NoArgsConstructor
+//ignore extra attributes that the frontend uses
+@JsonIgnoreProperties(ignoreUnknown = true)
 //tell Jackson to use subclasses by type attribute
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
