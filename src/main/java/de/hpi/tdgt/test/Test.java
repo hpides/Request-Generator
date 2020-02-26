@@ -1,5 +1,6 @@
 package de.hpi.tdgt.test;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.hpi.tdgt.test.story.atom.Data_Generation;
 import de.hpi.tdgt.test.story.atom.WarmupEnd;
 import de.hpi.tdgt.util.PropertiesReader;
@@ -52,8 +53,11 @@ public class Test {
     //by default, do not limit number of concurrent requests
     private int maximumConcurrentRequests = DEFAULT_CONCURRENT_REQUEST_LIMIT;
 
+    @Getter
+    @Setter
+    @JsonIgnore
     //we can assume this is unique. Probably, only one test at a time is run.
-    private final long testId = System.currentTimeMillis();
+    private long testId = System.currentTimeMillis();
 
     /**
      * Perform deep clone of stories to user_stories.
