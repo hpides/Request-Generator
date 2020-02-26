@@ -8,6 +8,7 @@ import lombok.val;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,8 +21,9 @@ import java.util.concurrent.ExecutionException;
 @Log4j2
 public class UploadController {
     //will return 500 if exception during test occurs
-    @PostMapping(path = "/upload", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> uploadTestConfig(@RequestBody Test testToRun) throws InterruptedException, ExecutionException {
+    @PostMapping(path = "/upload/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> uploadTestConfig(@RequestBody Test testToRun, @PathVariable(required = false) long id) throws InterruptedException, ExecutionException {
+        testToRun.setTestId(id);
         val ret  = new ResponseEntity<String>(HttpStatus.OK);
         long starttime = System.currentTimeMillis();
         val threads = testToRun.warmup();
@@ -59,7 +61,7 @@ public class UploadController {
         }
         try {
             val pdgfProcess = new ProcessBuilder(JAVA_7_DIR, "-jar",PDGF_DIR+ File.separator+"pdgf.jar", "-l", tempFile.getAbsolutePath(),  "-l", PDGF_DIR+File.separator+"config"+File.separator+"customer-output.xml", "-c", "-ns", "-s").start();
-            //val pdgfProcess = new ProcessBuilder(JAVA_7_DIR, "-jar",PDGF_DIR+ File.separator+"pdgf.jar", "-l", "config/customer.xml",  "-l", "config\\customer-output.xml", "-c", "-ns", "-s").start();
+            log.info("PDGF command: {}", (Object) new String[]{JAVA_7_DIR, "-jar",PDGF_DIR+ File.separator+"pdgf.jar", "-l", tempFile.getAbsolutePath(),  "-l", PDGF_DIR+File.separator+"config"+File.separator+"customer-output.xml", "-c", "-ns", "-s"});
             log.info(pdgfProcess.info());
             try(val input = new BufferedReader(new InputStreamReader(pdgfProcess.getInputStream(), StandardCharsets.UTF_8))) {
                 String line;
