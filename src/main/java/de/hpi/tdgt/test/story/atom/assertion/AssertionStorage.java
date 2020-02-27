@@ -74,7 +74,7 @@ public class AssertionStorage {
                         AssertionStorage.this.actualsLastSecond.clear();
                         log.info("Deleted actuals last second!");
                     }
-                } catch (JsonProcessingException e) { 
+                } catch (JsonProcessingException e) {
                     log.error(e);
                 }
                 MqttMessage mqttMessage = new MqttMessage(message);
