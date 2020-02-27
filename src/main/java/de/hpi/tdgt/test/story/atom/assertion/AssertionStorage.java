@@ -72,8 +72,9 @@ public class AssertionStorage {
                     synchronized (actualsLastSecond) {
                         message = (AssertionStorage.this.mapper.writeValueAsString(new MqttAssertionMessage(testid, this.actualsLastSecond))).getBytes(StandardCharsets.UTF_8);
                         AssertionStorage.this.actualsLastSecond.clear();
+                        log.info("Deleted actuals last second!");
                     }
-                } catch (JsonProcessingException e) {
+                } catch (JsonProcessingException e) { 
                     log.error(e);
                 }
                 MqttMessage mqttMessage = new MqttMessage(message);
@@ -155,6 +156,9 @@ public class AssertionStorage {
             actuals.put(assertionName, pair);
         }
         synchronized (actualsLastSecond) {
+            pair = actualsLastSecond.getOrDefault(assertionName, new Pair<>(0, new ConcurrentSkipListSet<>()));
+            int current = pair.getKey();
+            pair.setKey(current + 1);
             actualsLastSecond.put(assertionName, pair);
         }
         addActual(assertionName, actual);
