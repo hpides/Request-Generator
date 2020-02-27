@@ -16,6 +16,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
 
 @Log4j2
@@ -296,6 +297,11 @@ public class RestClient {
     private static final byte[] NULL_BA = new byte[0];// can share these
     private static final TimeStorage storage = TimeStorage.getInstance();
     /**
+     * Counts how many requests the application as a whole sent. Resetted each time a test is over.
+     */
+    public static AtomicInteger requestsSent = new AtomicInteger(0);
+
+    /**
      * Taken from jmeter.
      * Reads the response from the URL connection.
      *
@@ -387,5 +393,6 @@ public class RestClient {
         res.setReturnCode(conn.getResponseCode());
         storage.registerTime(request.getMethod(), request.getUrl().toString(), res.durationNanos(), request.getStory(), request.getTestId());
         log.info("Request took "+res.durationMillis()+" ms.");
+        requestsSent.incrementAndGet();
     }
 }

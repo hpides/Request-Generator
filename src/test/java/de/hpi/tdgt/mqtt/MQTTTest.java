@@ -348,11 +348,35 @@ public class MQTTTest extends RequestHandlingFramework {
         postWithBodyAndAssertion.run(params);
         Thread.sleep(3000);
         //other failure should be removed now
-        HashSet<String> actuals = new HashSet<>();
-        actuals.add("application/json");
         allActuals = getAllActuals(messages);
         //empty values are filtered
         MatcherAssert.assertThat(allActuals, Matchers.emptyIterable());
+    }
+
+    @Test
+    public void AssertionStorageIsDeletedEverySecondIncludingNumberOfActuals() throws MqttException, InterruptedException, ExecutionException, IOException {
+        val messages = prepareClient(AssertionStorage.MQTT_TOPIC);
+        val params = new HashMap<String, String>();
+        params.put("key","something");
+        params.put("value","somethingElse");
+        val postWithBodyAndAssertion = (Request) Deserializer.deserialize(new Utils().getRequestExampleWithAssertionsJSON()).getStories()[0].getAtoms()[1];
+        //make sure we do not run successors
+        postWithBodyAndAssertion.setSuccessorLinks(new Atom[0]);
+        ContentType assertion = (ContentType) postWithBodyAndAssertion.getAssertions()[0];
+        //simulate failure
+        assertion.setContentType("application/xml");
+        postWithBodyAndAssertion.run(params);
+        Thread.sleep(3000);
+        var allActuals = getAllActuals(messages);
+        MatcherAssert.assertThat(allActuals.get(allActuals.size()-1), Matchers.hasKey("postWithBody returns JSON"));
+        //remove existing values
+        messages.clear();
+        postWithBodyAndAssertion.run(params);
+        Thread.sleep(3000);
+        //other failure should be removed now
+        allActuals = getAllActuals(messages);
+        //empty values are filtered
+        MatcherAssert.assertThat(allActuals.get(allActuals.size()-1), Matchers.hasEntry("postWithBody returns JSON", new Pair<>(1,new HashSet<>(Collections.singletonList("application/json")))));
     }
 
     @Test

@@ -1,6 +1,7 @@
 package de.hpi.tdgt.controllers;
 
 import de.hpi.tdgt.deserialisation.Deserializer;
+import de.hpi.tdgt.requesthandling.RestClient;
 import de.hpi.tdgt.test.Test;
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
 import de.hpi.tdgt.test.time_measurement.TimeStorage;
@@ -44,6 +45,8 @@ public class UploadController {
         AssertionStorage.getInstance().printSummary();
         TimeStorage.getInstance().reset();
         AssertionStorage.getInstance().reset();
+        log.info(RestClient.requestsSent.get()+" requests sent.");
+        RestClient.requestsSent.set(0);
         return ret;
     }
 
