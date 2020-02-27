@@ -47,9 +47,12 @@ public class AssertionStorage {
                 //will be closed in reset, so might have to be re-created here
                 if (client == null || ! client.isConnected()) {
                     try {
+                        //do not set null concurrently
+                        synchronized (this){
                         //use memory persistence because it is not important that all packets are transferred and we do not want to spam the file system
-                        client = new MqttClient(PropertiesReader.getMqttHost(), publisherId, new MemoryPersistence());
-                    } catch (MqttException e) {
+                            client = new MqttClient(PropertiesReader.getMqttHost(), publisherId, new MemoryPersistence());
+                        }
+                        } catch (MqttException e) {
                         log.error("Error creating mqttclient in AssertionStorage: ", e);
                         return;
                     }
@@ -58,52 +61,63 @@ public class AssertionStorage {
                     options.setCleanSession(true);
                     options.setConnectionTimeout(10);
                     try {
-                        client.connect(options);
-                        //clear retained messages from last test
-                        client.publish(MQTT_TOPIC, new byte[0],0,true);
+                        synchronized (this) {
+                            client.connect(options);
+                            //clear retained messages from last test
+                            client.publish(MQTT_TOPIC, new byte[0], 0, true);
+                        }
                     } catch (MqttException e) {
                         log.error("Could not connect to mqtt broker in AssertionStorage: ", e);
                         break;
                     }
                 }
-                //client is created and connected
-                byte[] message = new byte[0];
-                try {
-                    synchronized (actualsLastSecond) {
-                        message = (AssertionStorage.this.mapper.writeValueAsString(new MqttAssertionMessage(testid, this.actualsLastSecond))).getBytes(StandardCharsets.UTF_8);
-                        AssertionStorage.this.actualsLastSecond.clear();
-                        log.info("Deleted actuals last second!");
-                    }
-                } catch (JsonProcessingException e) {
-                    log.error(e);
-                }
-                MqttMessage mqttMessage = new MqttMessage(message);
-                //we want to receive every packet EXACTLY Once
-                mqttMessage.setQos(2);
-                mqttMessage.setRetained(true);
-                try {
-                    client.publish(AssertionStorage.MQTT_TOPIC, mqttMessage);
-                    log.info(String.format("Transferred %d bytes via mqtt to "+MQTT_TOPIC, message.length));
-                } catch (MqttException e) {
-                    log.error("Error sending mqtt message in Time_Storage: ", e);
-                }
-
+                sendCurrentActualsViaMqtt();
 
 
             }
             //to clean files
             try {
                 if(client != null) {
-                    //clear retained messages for next test
-                    client.publish(MQTT_TOPIC, new byte[0],0,true);
-                    client.disconnect();
-                    client.close();
+                    synchronized (this) {
+                        //clear retained messages for next test
+                        client.publish(MQTT_TOPIC, new byte[0], 0, true);
+                        client.disconnect();
+                        client.close();
+                        client = null;
+                    }
                 }
-                client = null;
             } catch (MqttException e) {
                 e.printStackTrace();
             }
         };
+    }
+    //needs to be synchronized, because concurrently client might be reset
+    private synchronized void sendCurrentActualsViaMqtt() {
+        //might be called subsequently if reset is called subsequently
+        if(client == null || !client.isConnected()){
+            return;
+        }
+        //client is created and connected
+        byte[] message = new byte[0];
+        try {
+            synchronized (actualsLastSecond) {
+                message = (AssertionStorage.this.mapper.writeValueAsString(new MqttAssertionMessage(testid, this.actualsLastSecond))).getBytes(StandardCharsets.UTF_8);
+                AssertionStorage.this.actualsLastSecond.clear();
+                log.info("Deleted actuals last second!");
+            }
+        } catch (JsonProcessingException e) {
+            log.error(e);
+        }
+        MqttMessage mqttMessage = new MqttMessage(message);
+        //we want to receive every packet EXACTLY Once
+        mqttMessage.setQos(2);
+        mqttMessage.setRetained(true);
+        try {
+            client.publish(AssertionStorage.MQTT_TOPIC, mqttMessage);
+            log.info(String.format("Transferred %d bytes via mqtt to "+MQTT_TOPIC, message.length));
+        } catch (MqttException e) {
+            log.error("Error sending mqtt message in Time_Storage: ", e);
+        }
     }
 
     @Getter
@@ -162,6 +176,13 @@ public class AssertionStorage {
             actualsLastSecond.put(assertionName, pair);
         }
         addActual(assertionName, actual);
+    }
+
+    /**
+     * Send remaining data to subscribers
+     */
+    public void flush(){
+        sendCurrentActualsViaMqtt();
     }
 
     public void reset() {
