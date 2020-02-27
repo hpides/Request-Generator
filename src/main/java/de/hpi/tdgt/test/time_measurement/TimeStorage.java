@@ -51,8 +51,10 @@ public class TimeStorage {
                 }
                 String publisherId = UUID.randomUUID().toString();
                 try {
-                    //use memory persistence because it is not important that all packets are transferred and we do not want to spam the file system
-                    client = new MqttClient(PropertiesReader.getMqttHost(), publisherId, new MemoryPersistence());
+                    synchronized (this) {
+                        //use memory persistence because it is not important that all packets are transferred and we do not want to spam the file system
+                        client = new MqttClient(PropertiesReader.getMqttHost(), publisherId, new MemoryPersistence());
+                    }
                 } catch (MqttException e) {
                     log.error("Error creating mqttclient in TimeStorage: ", e);
                 }
@@ -64,9 +66,11 @@ public class TimeStorage {
                     options.setCleanSession(true);
                     options.setConnectionTimeout(10);
                     try {
-                        client.connect(options);
-                        //clear retained messages from last test
-                        client.publish(MQTT_TOPIC, new byte[0],0,true);
+                        synchronized (this) {
+                            client.connect(options);
+                            //clear retained messages from last test
+                            client.publish(MQTT_TOPIC, new byte[0], 0, true);
+                        }
                     } catch (MqttException e) {
                         log.error("Could not connect to mqtt broker in TimeStorage: ", e);
                         //clean up
@@ -74,43 +78,20 @@ public class TimeStorage {
                     }
                 }
                 //client is created and connected
+                sendTimesViaMqtt();
 
-                //prevent error
-                byte[] message = new byte[0];
-                try {
-                    //needs to be synchronized so we do not miss entries
-                    synchronized (registeredTimesLastSecond) {
-                        val entry = toMQTTSummaryMap(registeredTimesLastSecond);
-                        // tests only want actual times
-                        if(!sendOnlyNonEmpty || (entry.getTimes() != null && !entry.getTimes().isEmpty())){
-                            message = mapper.writeValueAsString(entry).getBytes(StandardCharsets.UTF_8);
-                        }
-                        registeredTimesLastSecond.clear();
-                    }
-                } catch (JsonProcessingException e) {
-                    log.error(e);
-                }
-                MqttMessage mqttMessage = new MqttMessage(message);
-                //we want to receive every packet EXACTLY once
-                mqttMessage.setQos(2);
-                mqttMessage.setRetained(true);
-                try {
-                    if(client != null) {
-                        client.publish(MQTT_TOPIC, mqttMessage);
-                    }
-                    log.trace(String.format("Transferred %d bytes via mqtt!", message.length));
-                } catch (MqttException e) {
-                    log.error("Error sending mqtt message in Time_Storage: ", e);
-                }
             }
             //to clean files
             try {
                 if(client != null) {
-                    //clear retained messages for next test
-                    client.publish(MQTT_TOPIC, new byte[0],0,true);
-                    client.disconnect();
-                    client.close();
+                    synchronized (this) {
+                        //clear retained messages for next test
+                        client.publish(MQTT_TOPIC, new byte[0], 0, true);
+                        client.disconnect();
+                        client.close();
+                    }
                 }
+
             } catch (MqttException e) {
                 e.printStackTrace();
             }
@@ -118,6 +99,43 @@ public class TimeStorage {
         reporter = new Thread(mqttReporter);
         reporter.setPriority(Thread.MAX_PRIORITY);
         reporter.start();
+    }
+    //might be called while client is disconnected by other thread
+    private synchronized void sendTimesViaMqtt() {
+        //prevent error
+        byte[] message = new byte[0];
+        try {
+            //needs to be synchronized so we do not miss entries
+            synchronized (registeredTimesLastSecond) {
+                val entry = toMQTTSummaryMap(registeredTimesLastSecond);
+                // tests only want actual times
+                if(!sendOnlyNonEmpty || (entry.getTimes() != null && !entry.getTimes().isEmpty())){
+                    message = mapper.writeValueAsString(entry).getBytes(StandardCharsets.UTF_8);
+                }
+                registeredTimesLastSecond.clear();
+            }
+        } catch (JsonProcessingException e) {
+            log.error(e);
+        }
+        MqttMessage mqttMessage = new MqttMessage(message);
+        //we want to receive every packet EXACTLY once
+        mqttMessage.setQos(2);
+        mqttMessage.setRetained(true);
+        try {
+            if(client != null) {
+                client.publish(MQTT_TOPIC, mqttMessage);
+            }
+            log.trace(String.format("Transferred %d bytes via mqtt!", message.length));
+        } catch (MqttException e) {
+            log.error("Error sending mqtt message in Time_Storage: ", e);
+        }
+    }
+
+    /**
+     * Send all times that might still be stored via mqtt
+     */
+    public void flush(){
+        sendTimesViaMqtt();
     }
 
     /**

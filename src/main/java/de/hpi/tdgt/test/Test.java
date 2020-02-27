@@ -3,6 +3,8 @@ package de.hpi.tdgt.test;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.hpi.tdgt.test.story.atom.Data_Generation;
 import de.hpi.tdgt.test.story.atom.WarmupEnd;
+import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
+import de.hpi.tdgt.test.time_measurement.TimeStorage;
 import de.hpi.tdgt.util.PropertiesReader;
 import jdk.jshell.spi.ExecutionControl;
 import lombok.*;
@@ -151,6 +153,9 @@ public class Test {
                 threadsFromWarmup = warmup();
             }
         }
+        //make sure all times are sent
+        AssertionStorage.getInstance().flush();
+        TimeStorage.getInstance().flush();
 
 
         try {
