@@ -197,4 +197,14 @@ public class TestDataGeneration {
         assertThat(params, hasEntry("username", "Abdul-Nour.Abdallah"));
         assertThat(params, hasEntry("password", ""));
     }
+
+    @Test
+    public void dataGenerationThrowsNoErrorsIfEmpty() throws InterruptedException, ExecutionException {
+        val dataGeneration = new Data_Generation();
+        dataGeneration.setData(new String[0]);
+        dataGeneration.setTable("");
+        dataGeneration.setPredecessorCount(0);
+        dataGeneration.setRepeat(1);
+        dataGeneration.run(new HashMap<>());
+    }
 }

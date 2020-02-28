@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -71,19 +72,26 @@ public class Data_Generation extends Atom {
         //scanner is not thread save, but will only be assigned once. So we can synchronise on it.
         //this sync prevents mixups when calling nextLine, e.g. two threads call it at the same time when only one Line remaining
         String line;
-        synchronized (sc) {
-            if (sc.hasNextLine()) {
-                line = sc.nextLine();
-                log.info("Retrieved "+line+"from table"+" in Thread "+Thread.currentThread().getId()+ "for atom "+this.getName());
-            } else {
-                log.error("No data remains for atom "+this.getName());
-                sc.close();
-                return buffer;
+        //sc might be null, if file not found
+        if(sc != null){
+            synchronized (sc) {
+                if (sc.hasNextLine()) {
+                    line = sc.nextLine();
+                    log.info("Retrieved " + line + "from table" + " in Thread " + Thread.currentThread().getId() + "for atom " + this.getName());
+                } else {
+                    log.error("No data remains for atom " + this.getName());
+                    sc.close();
+                    return buffer;
+                }
+                // Scanner suppresses exceptions
+                if (sc.ioException() != null) {
+                    log.error("Exception: ", sc.ioException());
+                }
             }
-            // Scanner suppresses exceptions
-            if (sc.ioException() != null) {
-                log.error("Exception: ", sc.ioException());
-            }
+        }
+        else {
+            log.warn("Data generation "+getName()+" could not read data from file "+table+".csv");
+            return new HashMap<>();
         }
         //can be done without synchronisation, saves time spent in sequential mode
         String[] values = line.split(";");
@@ -106,7 +114,7 @@ public class Data_Generation extends Atom {
 
     public static String outputDirectory =".";
     private void initStream() {
-        if (stream == null && table != null) {
+        if (stream == null && table != null && !table.isEmpty()) {
             File table = new File(outputDirectory + "/"+ getTable() + ".csv");
             try {
                 stream = new FileInputStream(table);
@@ -118,12 +126,13 @@ public class Data_Generation extends Atom {
 
     private void initScanner() {
         //only one Thread is allowed to add a scanner at the same time; only need to synchronise scanner creation and retrieval
-        if (sc == null) {
+        //stream might be null, if no file found
+        if (sc == null && stream != null) {
             synchronized (association) {
                 if (association.containsKey(table)) {
                     sc = association.get(table);
                 } else {
-                    sc = new Scanner(stream, "UTF-8");
+                    sc = new Scanner(stream, StandardCharsets.UTF_8);
                     association.put(table, sc);
                 }
             }
