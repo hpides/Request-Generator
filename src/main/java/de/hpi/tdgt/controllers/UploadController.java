@@ -81,7 +81,8 @@ public class UploadController {
                     log.info(line);
                 }
             }
-            val returnCode = pdgfProcess.exitValue();
+            //wait for process to terminate
+            val returnCode = pdgfProcess.waitFor();
             if(returnCode != 0){
                 log.error("PDGF exited with "+returnCode);
             }
