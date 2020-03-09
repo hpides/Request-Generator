@@ -461,7 +461,7 @@ public class MQTTTest extends RequestHandlingFramework {
         assertThat("Some message should not be without actuals", message, notNullValue());
         MatcherAssert.assertThat(message.getActuals(), hasKey("Data Generation \"generation\" has no data remaining"));
         val reason = message.getActuals().get("Data Generation \"generation\" has no data remaining").getValue();
-        MatcherAssert.assertThat(reason, hasItem(containsStringIgnoringCase("read 37 lines from file ./src/test/resources/de/hpi/tdgt/NotThere.csv")));
+        MatcherAssert.assertThat(reason, hasItem(containsStringIgnoringCase("read 37 lines from file ./src/test/resources/de/hpi/tdgt/values.csv")));
     }
 
     @Test
@@ -487,7 +487,7 @@ public class MQTTTest extends RequestHandlingFramework {
         assertThat("Some message should not be without actuals", message, notNullValue());
         MatcherAssert.assertThat(message.getActuals(), hasKey("Data Generation \"generation\" has too few columns"));
         val reason = message.getActuals().get("Data Generation \"generation\" has too few columns").getValue();
-        MatcherAssert.assertThat(reason, hasItem(containsStringIgnoringCase("4 columns requested but only 2 found in file ./src/test/resources/de/hpi/tdgt/NotThere.csv")));
+        MatcherAssert.assertThat(reason, hasItem(containsStringIgnoringCase("4 columns requested but only 2 found in file ./src/test/resources/de/hpi/tdgt/values.csv")));
     }
     //this test verifies that format expected by performance data storage is met
     @Test
