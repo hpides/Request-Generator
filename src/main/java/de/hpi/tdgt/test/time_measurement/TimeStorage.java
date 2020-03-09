@@ -57,9 +57,15 @@ public class TimeStorage {
                     }
                 } catch (MqttException e) {
                     log.error("Error creating mqttclient in TimeStorage: ", e);
+                    try {
+                        Thread.sleep(1000);
+                        continue;
+                    } catch (InterruptedException ex) {
+                        return;
+                    }
                 }
                 //client is null if reset was called
-                if (client != null && !client.isConnected()) {
+                while (client != null && !client.isConnected()) {
 
                     MqttConnectOptions options = new MqttConnectOptions();
                     options.setAutomaticReconnect(true);
@@ -73,8 +79,7 @@ public class TimeStorage {
                         }
                     } catch (MqttException e) {
                         log.error("Could not connect to mqtt broker in TimeStorage: ", e);
-                        //clean up
-                        break;
+                        continue;
                     }
                 }
                 //client is created and connected

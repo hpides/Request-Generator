@@ -45,7 +45,7 @@ public class AssertionStorage {
                     break;
                 }
                 //will be closed in reset, so might have to be re-created here
-                if (client == null || ! client.isConnected()) {
+                while (client == null || ! client.isConnected()) {
                     try {
                         //do not set null concurrently
                         synchronized (this){
@@ -54,7 +54,12 @@ public class AssertionStorage {
                         }
                         } catch (MqttException e) {
                         log.error("Error creating mqttclient in AssertionStorage: ", e);
-                        return;
+                        try {
+                            Thread.sleep(1000);
+                            continue;
+                        } catch (InterruptedException ex) {
+                            return;
+                        }
                     }
                     MqttConnectOptions options = new MqttConnectOptions();
                     options.setAutomaticReconnect(true);
@@ -68,7 +73,7 @@ public class AssertionStorage {
                         }
                     } catch (MqttException e) {
                         log.error("Could not connect to mqtt broker in AssertionStorage: ", e);
-                        break;
+                        continue;
                     }
                 }
                 sendCurrentActualsViaMqtt();
