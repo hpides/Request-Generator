@@ -17,5 +17,5 @@ junit:
     - cp ./mosquitto/mosquitto.conf /mosquitto/config/
     - $(which mosquitto) -c /mosquitto/config/mosquitto.conf > mosquitto.log 2>&1 &
     # config assumes broker is running on same machine as System under Test, so we need this environment for the tests
-    - echo "127.0.0.1 users" >> /etc/hosts
+    - echo "127.0.0.1 mosquitto" >> /etc/hosts
     - mvn test

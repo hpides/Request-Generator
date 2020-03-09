@@ -1,6 +1,7 @@
 package de.hpi.tdgt.test;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.hpi.tdgt.test.story.atom.Data_Generation;
 import de.hpi.tdgt.test.story.atom.WarmupEnd;
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
@@ -26,6 +27,8 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 @Setter
 @NoArgsConstructor
 @Log4j2
+//allow frontend to store additional information
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Test {
     /**
      * Topic on which control messages are broadcasted
