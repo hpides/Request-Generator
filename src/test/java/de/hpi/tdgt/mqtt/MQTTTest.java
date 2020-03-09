@@ -8,6 +8,7 @@ import de.hpi.tdgt.WebApplication;
 import de.hpi.tdgt.deserialisation.Deserializer;
 import de.hpi.tdgt.test.story.UserStory;
 import de.hpi.tdgt.test.story.atom.Atom;
+import de.hpi.tdgt.test.story.atom.Data_Generation;
 import de.hpi.tdgt.test.story.atom.Request;
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
 import de.hpi.tdgt.test.story.atom.assertion.ContentType;
@@ -41,7 +42,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.*;
 
 @Log4j2
 @ExtendWith(SpringExtension.class)
@@ -419,6 +420,74 @@ public class MQTTTest extends RequestHandlingFramework {
         String messageStart = "testStart";
         boolean hasTestStart = hasMessageStartingWith(message, messageStart);
         MatcherAssert.assertThat("control topic should have received a \"testStart\"!",hasTestStart);
+    }
+
+    @Test
+    public void AnAssertionErrorIsSentIfDataGenerationDoesNotFindFile() throws MqttException, InterruptedException, ExecutionException, IOException {
+        val messages = prepareClient(AssertionStorage.MQTT_TOPIC);
+        //test that does not do anything is sufficient, no need to waste resources here
+        val generation = new Data_Generation();
+        generation.setTable("NotThere");
+        generation.setData(new String[] {"NotThere"});
+        generation.setName("generation");
+        generation.perform();
+        String messageStart = "testStart";
+        Thread.sleep(3000);
+        val actuals = readAssertion(messages);
+        MatcherAssert.assertThat(actuals.get(0).getActuals(), hasKey("Data Generation \"generation\" loads data"));
+        val reason = actuals.get(0).getActuals().get("Data Generation \"generation\" loads data").getValue();
+        MatcherAssert.assertThat(reason, hasItem(containsStringIgnoringCase("./NotThere.csv")));
+    }
+    @Test
+    public void AnAssertionErrorIsSentIfDataGenerationHasTooFewLines() throws MqttException, InterruptedException, ExecutionException, IOException {
+        val messages = prepareClient(AssertionStorage.MQTT_TOPIC);
+        //test that does not do anything is sufficient, no need to waste resources here
+        val generation = new Data_Generation();
+        generation.setTable("values");
+        generation.setData(new String[] {"username","password"});
+        generation.setName("generation");
+        //file is only 37 long
+        generation.setRepeat(40);
+        generation.run(new HashMap<>());
+        String messageStart = "testStart";
+        Thread.sleep(3000);
+        val actuals = readAssertion(messages);
+        MqttAssertionMessage message = null;
+        for(val assertion : actuals){
+            if(!assertion.getActuals().isEmpty()){
+                message = assertion;
+            }
+        }
+        assertThat("Some message should not be without actuals", message, notNullValue());
+        MatcherAssert.assertThat(message.getActuals(), hasKey("Data Generation \"generation\" has no data remaining"));
+        val reason = message.getActuals().get("Data Generation \"generation\" has no data remaining").getValue();
+        MatcherAssert.assertThat(reason, hasItem(containsStringIgnoringCase("read 37 lines from file ./values.csv")));
+    }
+
+    @Test
+    public void AnAssertionErrorIsSentIfDataGenerationHasTooFewColumns() throws MqttException, InterruptedException, ExecutionException, IOException {
+        val messages = prepareClient(AssertionStorage.MQTT_TOPIC);
+        //test that does not do anything is sufficient, no need to waste resources here
+        val generation = new Data_Generation();
+        generation.setTable("values");
+        //only 2 columns in file
+        generation.setData(new String[] {"username","password","somethingNotExisting"});
+        generation.setName("generation");
+        generation.setRepeat(1);
+        generation.run(new HashMap<>());
+        String messageStart = "testStart";
+        Thread.sleep(3000);
+        val actuals = readAssertion(messages);
+        MqttAssertionMessage message = null;
+        for(val assertion : actuals){
+            if(!assertion.getActuals().isEmpty()){
+                message = assertion;
+            }
+        }
+        assertThat("Some message should not be without actuals", message, notNullValue());
+        MatcherAssert.assertThat(message.getActuals(), hasKey("Data Generation \"generation\" has too few columns"));
+        val reason = message.getActuals().get("Data Generation \"generation\" has too few columns").getValue();
+        MatcherAssert.assertThat(reason, hasItem(containsStringIgnoringCase("3 columns requested but only 2 found in file ./values.csv")));
     }
     //this test verifies that format expected by performance data storage is met
     @Test
