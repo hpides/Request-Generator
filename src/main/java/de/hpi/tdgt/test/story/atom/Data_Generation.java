@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage;
 import lombok.*;
 import lombok.extern.log4j.Log4j2;
 
@@ -63,6 +64,9 @@ public class Data_Generation extends Atom {
         ret.setData(this.data);
         return ret;
     }
+    //used for an error message for user
+    @JsonIgnore
+    private int readLines = 0;
 
     public Map<String, String> readBuffer() {
         initStream();
@@ -72,15 +76,17 @@ public class Data_Generation extends Atom {
         //scanner is not thread save, but will only be assigned once. So we can synchronise on it.
         //this sync prevents mixups when calling nextLine, e.g. two threads call it at the same time when only one Line remaining
         String line;
+
         //sc might be null, if file not found
         if(sc != null){
             synchronized (sc) {
                 if (sc.hasNextLine()) {
+                    readLines ++;
                     line = sc.nextLine();
                     log.info("Retrieved " + line + "from table" + " in Thread " + Thread.currentThread().getId() + "for atom " + this.getName());
                 } else {
                     log.error("No data remains for atom " + this.getName());
-                    sc.close();
+                    reportFailureToUser("Data Generation \""+this.getName()+"\" has no data remaining", "read "+readLines+" lines from file "+outputDirectory + "/"+ getTable() + ".csv");
                     return buffer;
                 }
                 // Scanner suppresses exceptions
@@ -91,12 +97,13 @@ public class Data_Generation extends Atom {
         }
         else {
             log.warn("Data generation "+getName()+" could not read data from file "+table+".csv");
-            return new HashMap<>();
+            return buffer;
         }
         //can be done without synchronisation, saves time spent in sequential mode
         String[] values = line.split(";");
-        if (values.length < this.getData().length -1) {
+        if (values.length < this.getData().length - 1) {
             log.error("Generated data does not match required data!");
+            reportFailureToUser("Data Generation \""+this.getName()+"\" has too few columns", this.getData().length+" columns requested but only "+ values.length+" found in file "+outputDirectory + "/"+ getTable() + ".csv");
         } else {
             for (int i = 0; i < data.length; i++) {
                 //assume last csv column was empty
@@ -120,8 +127,18 @@ public class Data_Generation extends Atom {
                 stream = new FileInputStream(table);
             } catch (FileNotFoundException e) {
                log.error(e);
+               String message = e.getMessage();
+                reportFailureToUser("Data Generation \""+this.getName()+"\" loads data", message);
             }
         }
+    }
+
+    private void reportFailureToUser(String assertionName, String message) {
+        long testId = 0;
+        if(getParent()!= null && getParent().getParent()!=null){
+            testId = getParent().getParent().getTestId();
+        }
+        AssertionStorage.getInstance().addFailure(assertionName, message, testId);
     }
 
     private void initScanner() {
