@@ -436,7 +436,7 @@ public class MQTTTest extends RequestHandlingFramework {
         val actuals = readAssertion(messages);
         MatcherAssert.assertThat(actuals.get(0).getActuals(), hasKey("Data Generation \"generation\" loads data"));
         val reason = actuals.get(0).getActuals().get("Data Generation \"generation\" loads data").getValue();
-        MatcherAssert.assertThat(reason, hasItem(containsStringIgnoringCase("./NotThere.csv")));
+        MatcherAssert.assertThat(reason, hasItem(containsStringIgnoringCase("./src/test/resources/de/hpi/tdgt/NotThere.csv")));
     }
     @Test
     public void AnAssertionErrorIsSentIfDataGenerationHasTooFewLines() throws MqttException, InterruptedException, ExecutionException, IOException {
@@ -461,7 +461,7 @@ public class MQTTTest extends RequestHandlingFramework {
         assertThat("Some message should not be without actuals", message, notNullValue());
         MatcherAssert.assertThat(message.getActuals(), hasKey("Data Generation \"generation\" has no data remaining"));
         val reason = message.getActuals().get("Data Generation \"generation\" has no data remaining").getValue();
-        MatcherAssert.assertThat(reason, hasItem(containsStringIgnoringCase("read 37 lines from file ./values.csv")));
+        MatcherAssert.assertThat(reason, hasItem(containsStringIgnoringCase("read 37 lines from file ./src/test/resources/de/hpi/tdgt/NotThere.csv")));
     }
 
     @Test
@@ -487,7 +487,7 @@ public class MQTTTest extends RequestHandlingFramework {
         assertThat("Some message should not be without actuals", message, notNullValue());
         MatcherAssert.assertThat(message.getActuals(), hasKey("Data Generation \"generation\" has too few columns"));
         val reason = message.getActuals().get("Data Generation \"generation\" has too few columns").getValue();
-        MatcherAssert.assertThat(reason, hasItem(containsStringIgnoringCase("4 columns requested but only 2 found in file ./values.csv")));
+        MatcherAssert.assertThat(reason, hasItem(containsStringIgnoringCase("4 columns requested but only 2 found in file ./src/test/resources/de/hpi/tdgt/NotThere.csv")));
     }
     //this test verifies that format expected by performance data storage is met
     @Test
