@@ -471,7 +471,7 @@ public class MQTTTest extends RequestHandlingFramework {
         val generation = new Data_Generation();
         generation.setTable("values");
         //only 2 columns in file
-        generation.setData(new String[] {"username","password","somethingNotExisting"});
+        generation.setData(new String[] {"username","password","somethingThatMightJustBeEmpty","somethingNotExisting"});
         generation.setName("generation");
         generation.setRepeat(1);
         generation.run(new HashMap<>());
@@ -487,7 +487,7 @@ public class MQTTTest extends RequestHandlingFramework {
         assertThat("Some message should not be without actuals", message, notNullValue());
         MatcherAssert.assertThat(message.getActuals(), hasKey("Data Generation \"generation\" has too few columns"));
         val reason = message.getActuals().get("Data Generation \"generation\" has too few columns").getValue();
-        MatcherAssert.assertThat(reason, hasItem(containsStringIgnoringCase("3 columns requested but only 2 found in file ./values.csv")));
+        MatcherAssert.assertThat(reason, hasItem(containsStringIgnoringCase("4 columns requested but only 2 found in file ./values.csv")));
     }
     //this test verifies that format expected by performance data storage is met
     @Test

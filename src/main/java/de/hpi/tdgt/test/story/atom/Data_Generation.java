@@ -101,7 +101,7 @@ public class Data_Generation extends Atom {
         }
         //can be done without synchronisation, saves time spent in sequential mode
         String[] values = line.split(";");
-        if (values.length < this.getData().length) {
+        if (values.length < this.getData().length - 1) {
             log.error("Generated data does not match required data!");
             reportFailureToUser("Data Generation \""+this.getName()+"\" has too few columns", this.getData().length+" columns requested but only "+ values.length+" found in file "+outputDirectory + "/"+ getTable() + ".csv");
         } else {
