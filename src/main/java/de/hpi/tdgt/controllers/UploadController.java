@@ -54,9 +54,8 @@ public class UploadController {
     public static String PDGF_DIR = null;
 
     //will return 500 if exception during test occurs
-    @PostMapping(path = "/uploadPDGF", consumes = MediaType.APPLICATION_XML_VALUE)
+    @PostMapping(path = "/uploadPDGF", consumes = MediaType.APPLICATION_XML_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<String> uploadDataGenConfig(@RequestBody String pdgfConfig) throws InterruptedException, ExecutionException {
-        val ret  = new ResponseEntity<String>(HttpStatus.OK);
         long starttime = System.currentTimeMillis();
         //store uploaded config in temporary file, so multiple instances could run concurrently
         File tempFile;
@@ -70,14 +69,18 @@ public class UploadController {
             log.error(e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+        StringBuilder output = new StringBuilder();
         try {
             val pdgfProcess = new ProcessBuilder(JAVA_7_DIR, "-jar",PDGF_DIR+ File.separator+"pdgf.jar", "-l", tempFile.getAbsolutePath(),  "-l", PDGF_DIR+File.separator+"config"+File.separator+"customer-output.xml", "-c", "-ns", "-s").start();
             log.info("PDGF command: {}", (Object) new String[]{JAVA_7_DIR, "-jar",PDGF_DIR+ File.separator+"pdgf.jar", "-l", tempFile.getAbsolutePath(),  "-l", PDGF_DIR+File.separator+"config"+File.separator+"customer-output.xml", "-c", "-ns", "-s"});
             log.info(pdgfProcess.info());
+
             try(val input = new BufferedReader(new InputStreamReader(pdgfProcess.getInputStream(), StandardCharsets.UTF_8))) {
                 String line;
                 log.info("PDGF Output:");
                 while ((line = input.readLine()) != null) {
+                    output.append(line).append('\n');
                     log.info(line);
                 }
             }
@@ -92,6 +95,6 @@ public class UploadController {
         }
         long endtime = System.currentTimeMillis();
         log.info("---Data Generation finished in "+(endtime - starttime)+" ms.---");
-        return ret;
+        return new ResponseEntity<>(output.toString(), HttpStatus.OK);
     }
 }
