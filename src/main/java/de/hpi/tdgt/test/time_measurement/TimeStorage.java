@@ -49,23 +49,24 @@ public class TimeStorage {
                     //Clean up
                     break;
                 }
-                String publisherId = UUID.randomUUID().toString();
-                try {
-                    synchronized (this) {
-                        //use memory persistence because it is not important that all packets are transferred and we do not want to spam the file system
-                        client = new MqttClient(PropertiesReader.getMqttHost(), publisherId, new MemoryPersistence());
-                    }
-                } catch (MqttException e) {
-                    log.error("Error creating mqttclient in TimeStorage: ", e);
-                    try {
-                        Thread.sleep(1000);
-                        continue;
-                    } catch (InterruptedException ex) {
-                        return;
-                    }
-                }
+
                 //client is null if reset was called
-                while (client != null && !client.isConnected()) {
+                while (client == null || !client.isConnected()) {
+                    String publisherId = UUID.randomUUID().toString();
+                    try {
+                        synchronized (this) {
+                            //use memory persistence because it is not important that all packets are transferred and we do not want to spam the file system
+                            client = new MqttClient(PropertiesReader.getMqttHost(), publisherId, new MemoryPersistence());
+                        }
+                    } catch (MqttException e) {
+                        log.error("Error creating mqttclient in TimeStorage: ", e);
+                        try {
+                            Thread.sleep(1000);
+                            continue;
+                        } catch (InterruptedException ex) {
+                            return;
+                        }
+                    }
 
                     MqttConnectOptions options = new MqttConnectOptions();
                     options.setAutomaticReconnect(true);
@@ -82,7 +83,7 @@ public class TimeStorage {
                         continue;
                     }
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(100);
                     } catch (InterruptedException e) {
                         return;
                     }

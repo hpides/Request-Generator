@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import java.io.*
+import java.lang.IllegalArgumentException
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
@@ -29,7 +30,7 @@ class UploadController {
         val testToRun: Test
         testToRun = try {
             Deserializer.deserialize(testToRunAsJSON)
-        } catch (e: IOException) {
+        } catch (e: IllegalArgumentException) {
             log.error(e)
             return ResponseEntity(HttpStatus.BAD_REQUEST)
         }

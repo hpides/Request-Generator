@@ -328,7 +328,7 @@ class MQTTTest : RequestHandlingFramework() {
             object : TypeReference<MqttAssertionMessage?>() {}
         for (item in messages) {
             try {
-                response.add(mapper.readValue(item, typeRef))
+                response.add(mapper.readValue(item, typeRef)!!)
             } catch (e: Exception) {
                 log.error(e)
             }
@@ -402,7 +402,7 @@ class MQTTTest : RequestHandlingFramework() {
             )
         )
         val actuals = HashSet<String>()
-        actuals.add("java.net.UnknownHostException:AHostThatJustCanNotExist")
+        actuals.add("UnknownHostException:AHostThatJustCanNotExist")
         MatcherAssert.assertThat(
             allActuals[allActuals.size - 1],
             Matchers.hasEntry<String, Pair<Int, out Set<String>>?>(
@@ -651,7 +651,7 @@ class MQTTTest : RequestHandlingFramework() {
             Matchers.hasKey("Data Generation \"generation\" loads data")
         )
         val reason: Set<String?> =
-            actuals[0].actuals["Data Generation \"generation\" loads data"]!!.value
+            actuals[0].actuals["Data Generation \"generation\" loads data"]!!.value?:HashSet()
         MatcherAssert.assertThat(
             reason,
             Matchers.hasItem(Matchers.containsStringIgnoringCase("./src/test/resources/de/hpi/tdgt/NotThere.csv"))
@@ -694,7 +694,7 @@ class MQTTTest : RequestHandlingFramework() {
             Matchers.hasKey("Data Generation \"generation\" has no data remaining")
         )
         val reason: Set<String?> =
-            message.actuals["Data Generation \"generation\" has no data remaining"]!!.value
+            message.actuals["Data Generation \"generation\" has no data remaining"]!!.value?:HashSet()
         MatcherAssert.assertThat(
             reason,
             Matchers.hasItem(Matchers.containsStringIgnoringCase("read 37 lines from file ./src/test/resources/de/hpi/tdgt/values.csv"))
@@ -738,7 +738,7 @@ class MQTTTest : RequestHandlingFramework() {
             Matchers.hasKey("Data Generation \"generation\" has too few columns")
         )
         val reason: Set<String?> =
-            message.actuals["Data Generation \"generation\" has too few columns"]!!.value
+            message.actuals["Data Generation \"generation\" has too few columns"]!!.value?:HashSet()
         MatcherAssert.assertThat(
             reason,
             Matchers.hasItem(Matchers.containsStringIgnoringCase("4 columns requested but only 2 found in file ./src/test/resources/de/hpi/tdgt/values.csv"))

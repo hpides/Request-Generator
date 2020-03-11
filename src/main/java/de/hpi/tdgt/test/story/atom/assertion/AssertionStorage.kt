@@ -73,7 +73,7 @@ class AssertionStorage private constructor() {
         return actuals.getOrDefault(
             assertionName,
             Pair<Int, Set<String>>(0, ConcurrentSkipListSet())
-        ).key
+        ).key?:0
     }
 
     @JsonIgnore
@@ -125,8 +125,6 @@ class AssertionStorage private constructor() {
                     ConcurrentSkipListSet()
                 )
             )
-            val current = pair.key
-            pair.key = current + 1
             actualsLastSecond.put(assertionName, pair)
         }
         addActual(assertionName, actual)
@@ -156,16 +154,16 @@ class AssertionStorage private constructor() {
     fun printSummary() {
         for ((key, value) in actuals) {
             log.info("Assertion " + key + " failed " + value.key + " times.")
-            if (value.key > 0) {
+            if (value.key?:0 > 0) {
                 val actuals = StringBuilder("Actual values: [")
                 var first = true
                 for (actual in this.actuals.getOrDefault(
                     key,
-                    Pair<Int, MutableSet<String>>(
+                    Pair(
                         0,
                         ConcurrentSkipListSet()
                     )
-                ).value) {
+                ).value?:HashSet()) {
                     if (!first) {
                         actuals.append(", ")
                     }
@@ -193,18 +191,24 @@ class AssertionStorage private constructor() {
             assertionName,
             Pair(0, initialSet)
         )
-        var actualValues: MutableSet<String> = actuals[assertionName]!!.value
+        var actualValues: MutableSet<String> = actuals[assertionName]!!.value?:HashSet()
         synchronized(actuals) {
             actualValues.add(value)
-            actuals[assertionName]!!.key = actuals[assertionName]!!.key + 1
+            //only working way to increment it
+            val oldValue = actuals[assertionName]!!.key?:0
+            val pair = actuals[assertionName]!!
+            pair.key = oldValue + 1
         }
         synchronized(actualsLastSecond) {
             actualValues = actualsLastSecond.getOrDefault(
                 assertionName,
                 Pair(0, initialSet)
-            ).value
+            ).value?:HashSet()
             actualValues.add(value)
-            actualsLastSecond[assertionName]!!.key = actualsLastSecond[assertionName]!!.key + 1
+            //only working way to increment it
+            val oldValue = actualsLastSecond[assertionName]!!.key?:0
+            val pair = actualsLastSecond[assertionName]!!
+            pair.key = oldValue + 1
         }
     }
 
@@ -217,7 +221,7 @@ class AssertionStorage private constructor() {
         return actuals.getOrDefault(
             assertionName,
             Pair<Int, Set<String>>(0, ConcurrentSkipListSet())
-        ).value
+        ).value?:HashSet()
     }
 
     fun getActualsLastSecond(): Map<String, Pair<Int, MutableSet<String>>> {
