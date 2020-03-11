@@ -115,8 +115,6 @@ class AssertionStorage private constructor() {
                     ConcurrentSkipListSet()
                 )
             )
-            val current = pair.key
-            pair.key = current + 1
             actuals.put(assertionName, pair)
         }
         synchronized(actualsLastSecond) {

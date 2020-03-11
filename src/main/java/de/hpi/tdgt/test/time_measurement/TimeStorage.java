@@ -81,6 +81,11 @@ public class TimeStorage {
                         log.error("Could not connect to mqtt broker in TimeStorage: ", e);
                         continue;
                     }
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        return;
+                    }
                 }
                 //client is created and connected
                 sendTimesViaMqtt();

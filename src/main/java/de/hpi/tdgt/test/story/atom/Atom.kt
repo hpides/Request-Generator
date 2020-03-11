@@ -134,8 +134,8 @@ abstract class Atom : Cloneable {
         atom.id = id
         atom.name = name
         atom.repeat = repeat
-        atom.successorLinks = successorLinks
         atom.parent = parent
+        atom.successors = successors
         return atom
     }
 

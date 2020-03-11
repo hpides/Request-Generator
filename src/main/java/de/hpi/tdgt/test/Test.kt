@@ -151,7 +151,7 @@ class Test {
             ActiveInstancesThrottler.reset()
             Data_Generation.reset()
             //this resets all state atoms might have
-            stories_clone = cloneStories(stories)
+            stories = cloneStories(stories_clone)
             //do not run another warmup after the last run, because it would not be finished
             if (i < repeat - 1) {
                 threadsFromWarmup = warmup()

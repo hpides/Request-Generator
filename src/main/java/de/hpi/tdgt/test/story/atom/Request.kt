@@ -177,7 +177,7 @@ class Request : Atom() {
     private fun fillEvaluationsInJson(): String? {
         var current = requestJSONObject
         for ((key, value) in knownParams) {
-            current = current!!.replace("\\$" + key.toRegex(), '\"' + value + '\"')
+            current = current!!.replace("$" + key, '\"' + value + '\"')
         }
         //should show a warning
         if (Pattern.matches("\\$[a-zA-Z]*", current)) {

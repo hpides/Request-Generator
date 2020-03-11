@@ -115,7 +115,7 @@ class DeserializeAtomTest {
     fun secondAtomOfSecondStoryHasCorrectResponseParams() {
         val secondAtomOfSecondStory =
             secondAtomOfSecondStory as Request?
-        Assertions.assertArrayEquals(null, secondAtomOfSecondStory!!.responseParams)
+        Assertions.assertArrayEquals(arrayOf(), secondAtomOfSecondStory!!.responseParams)
     }
 
     @Test

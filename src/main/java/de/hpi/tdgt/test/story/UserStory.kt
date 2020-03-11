@@ -38,7 +38,7 @@ class UserStory : Runnable, Cloneable {
         story.parent = parent
         //fix references
         Arrays.stream(story.getAtoms())
-            .forEach(Consumer<Atom> { atom: Atom -> atom.initSuccessors(story) })
+            .forEach { atom: Atom -> atom.initSuccessors(story) }
         return story
     }
 
