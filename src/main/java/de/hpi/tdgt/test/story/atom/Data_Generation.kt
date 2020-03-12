@@ -124,23 +124,23 @@ class Data_Generation : Atom() {
         }
     }
 
-    override fun equals(o: Any?): Boolean {
-        if (o === this) return true
-        if (o !is Data_Generation) return false
-        val other = o
-        if (!other.canEqual(this as Any)) return false
-        if (!super.equals(o)) return false
-        if (!Arrays.deepEquals(data, other.data)) return false
+    override fun equals(other: Any?): Boolean {
+        if (other === this) return true
+        if (other !is Data_Generation) return false
+        val otherObject = other
+        if (!otherObject.canEqual(this as Any)) return false
+        if (!super.equals(otherObject)) return false
+        if (!Arrays.deepEquals(data, otherObject.data)) return false
         val `this$table`: Any? = table
-        val `other$table`: Any? = other.table
+        val `other$table`: Any? = otherObject.table
         if (if (`this$table` == null) `other$table` != null else `this$table` != `other$table`) return false
         val `this$stream`: InputStream? = this.stream
-        val `other$stream`: InputStream? = other.stream
+        val `other$stream`: InputStream? = otherObject.stream
         if (if (`this$stream` == null) `other$stream` != null else `this$stream` != `other$stream`) return false
         val `this$sc`: Scanner? = this.sc
-        val `other$sc`: Scanner? = other.sc
+        val `other$sc`: Scanner? = otherObject.sc
         if (if (`this$sc` == null) `other$sc` != null else `this$sc` != `other$sc`) return false
-        return if (readLines != other.readLines) false else true
+        return if (readLines != otherObject.readLines) false else true
     }
 
     override fun canEqual(other: Any?): Boolean {

@@ -40,7 +40,7 @@ class RestResult {
 
     //parse contenttype header
     private val charset: Charset
-        private get() {
+        get() {
             val contentTypeHeader =
                 contentType!!.toLowerCase().split(";charset=".toRegex()).toTypedArray()
             return if (contentTypeHeader.size == 2) {

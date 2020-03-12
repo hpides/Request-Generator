@@ -473,12 +473,11 @@ class Request : Atom() {
         }
     }
 
-    override fun equals(o: Any?): Boolean {
-        if (o === this) return true
-        if (o !is Request) return false
-        val other = o
+    override fun equals(other: Any?): Boolean {
+        if (other === this) return true
+        if (other !is Request) return false
         if (!other.canEqual(this as Any)) return false
-        if (!super.equals(o)) return false
+        if (!super.equals(other)) return false
         val `this$verb`: Any? = verb
         val `other$verb`: Any? = other.verb
         if (if (`this$verb` == null) `other$verb` != null else `this$verb` != `other$verb`) return false

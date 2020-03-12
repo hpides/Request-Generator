@@ -3,8 +3,6 @@ package de.hpi.tdgt.test.story.atom.assertion
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import de.hpi.tdgt.requesthandling.RestResult
-import de.hpi.tdgt.test.story.atom.assertion.ContentNotEmpty
-import de.hpi.tdgt.test.story.atom.assertion.ResponseCode
 import org.apache.logging.log4j.LogManager
 
 //tell Jackson to use subclasses by type attribute
@@ -29,13 +27,13 @@ abstract class Assertion {
 
     abstract fun check(restResult: RestResult?, testid: Long)
 
-    override fun equals(o: Any?): Boolean {
-        if (o === this) return true
-        if (o !is Assertion) return false
-        val other = o
-        if (!other.canEqual(this as Any)) return false
+    override fun equals(other: Any?): Boolean {
+        if (other === this) return true
+        if (other !is Assertion) return false
+        val otherObject = other
+        if (!otherObject.canEqual(this as Any)) return false
         val `this$name`: Any? = name
-        val `other$name`: Any? = other.name
+        val `other$name`: Any? = otherObject.name
         return if (if (`this$name` == null) `other$name` != null else `this$name` != `other$name`) false else true
     }
 

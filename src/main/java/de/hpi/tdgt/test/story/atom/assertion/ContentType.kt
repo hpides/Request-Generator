@@ -12,13 +12,11 @@ class ContentType : Assertion() {
         }
     }
 
-    override fun equals(o: Any?): Boolean {
-        if (o === this) return true
-        if (o !is ContentType) return false
-        val other =
-            o
+    override fun equals(other: Any?): Boolean {
+        if (other === this) return true
+        if (other !is ContentType) return false
         if (!other.canEqual(this as Any)) return false
-        if (!super.equals(o)) return false
+        if (!super.equals(other)) return false
         val `this$contentType`: Any? = contentType
         val `other$contentType`: Any? = other.contentType
         return if (if (`this$contentType` == null) `other$contentType` != null else `this$contentType` != `other$contentType`) false else true

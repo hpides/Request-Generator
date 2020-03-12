@@ -4,15 +4,11 @@ import de.hpi.tdgt.test.Test
 import de.hpi.tdgt.test.time_measurement.TimeStorage
 import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.future.await
-import org.apache.commons.io.IOUtils
-import org.apache.commons.io.input.CountingInputStream
 import org.apache.logging.log4j.LogManager
 import org.asynchttpclient.DefaultAsyncHttpClientConfig
 import org.asynchttpclient.Dsl
 import org.asynchttpclient.ListenableFuture
 import org.asynchttpclient.Response
-import java.io.BufferedInputStream
-import java.io.FileNotFoundException
 import java.io.IOException
 import java.net.MalformedURLException
 import java.net.URL
@@ -20,7 +16,6 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.zip.GZIPInputStream
 
 class RestClient {
     @Throws(IOException::class)
@@ -251,6 +246,7 @@ class RestClient {
         request.params = getParams
         request.method = HttpConstants.DELETE
         request.testId = testId
+        request.story = story
         return exchangeWithEndpoint(request)
     }
 
@@ -286,7 +282,6 @@ class RestClient {
 
         val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(request.connectTimeout).setReadTimeout(request.responseTimeout).setFollowRedirect(request.isFollowsRedirects).setKeepAlive(request.isSendKeepAlive))
         val preparedRequest = client.prepare(request.method, url.toString())
-        var retry: Int
         val start = System.nanoTime()
         //set auth header if required
         if (request.username != null && request.password != null) {
@@ -313,7 +308,7 @@ class RestClient {
         //got a connection
         val result = RestResult()
         //try to connect
-        retry = -1
+        var retry: Int = -1
 
         var future:ListenableFuture<Response>? = null
 
@@ -357,11 +352,11 @@ class RestClient {
         params: Map<String, String?>?,
         method: String
     ): URL { //add URL parameters
-        var url = url
+        var requestURL = url
         if ((method == HttpConstants.GET || method == HttpConstants.DELETE) && params != null && !params.isEmpty()) {
-            url = URL(url.toString() + "?" + mapToURLEncodedString(params))
+            requestURL = URL(requestURL.toString() + "?" + mapToURLEncodedString(params))
         }
-        return url
+        return requestURL
     }
 
     private fun mapToURLEncodedString(params: Map<String, String?>?): StringBuilder {
@@ -396,7 +391,7 @@ class RestClient {
      * @throws IOException if an I/O exception occurs
      */
     @Throws(IOException::class)
-    private fun readResponse(
+    private suspend fun readResponse(
             response: Response,
             res: RestResult,
             request: Request

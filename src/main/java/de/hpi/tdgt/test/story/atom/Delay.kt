@@ -26,13 +26,13 @@ class Delay : Atom() {
         return ret
     }
 
-    override fun equals(o: Any?): Boolean {
-        if (o === this) return true
-        if (o !is Delay) return false
-        val other = o
-        if (!other.canEqual(this as Any)) return false
-        if (!super.equals(o)) return false
-        return if (delayMs != other.delayMs) false else true
+    override fun equals(other: Any?): Boolean {
+        if (other === this) return true
+        if (other !is Delay) return false
+        val otherObject = other
+        if (!otherObject.canEqual(this as Any)) return false
+        if (!super.equals(otherObject)) return false
+        return if (delayMs != otherObject.delayMs) false else true
     }
 
     override fun canEqual(other: Any?): Boolean {

@@ -15,11 +15,11 @@ class RequestIsSent : Assertion() {
         }
     }
 
-    override fun equals(o: Any?): Boolean {
-        if (o === this) return true
-        if (o !is RequestIsSent) return false
-        if (!o.canEqual(this as Any)) return false
-        return if (!super.equals(o)) false else true
+    override fun equals(other: Any?): Boolean {
+        if (other === this) return true
+        if (other !is RequestIsSent) return false
+        if (!other.canEqual(this as Any)) return false
+        return if (!super.equals(other)) false else true
     }
 
     override fun canEqual(other: Any?): Boolean {

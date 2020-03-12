@@ -2,7 +2,6 @@ package de.hpi.tdgt.test
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import de.hpi.tdgt.test.Test.ActiveInstancesThrottler
 import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.Data_Generation
 import de.hpi.tdgt.test.story.atom.WarmupEnd
@@ -17,11 +16,7 @@ import org.eclipse.paho.client.mqttv3.MqttException
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import java.nio.charset.StandardCharsets
 import java.util.*
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
-import java.util.function.Consumer
-import java.util.function.Predicate
-import java.util.function.ToIntFunction
 import java.util.stream.Collectors
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
@@ -112,7 +107,7 @@ class Test {
      * @throws InterruptedException if interrupted joining threads
      */
     fun start(threadsFromWarmup: MutableCollection<Future<*>>) {
-        var threadsFromWarmup = threadsFromWarmup
+        var threadsFromWarmupReceived = threadsFromWarmup
         prepareMqttClient()
         try { //clear retained messages from last test
             client!!.publish(MQTT_TOPIC, ByteArray(0), 0, true)
@@ -141,7 +136,7 @@ class Test {
                         ).collect(Collectors.toList()).toTypedArray()
                 )
                 //can wait for these threads also
-                threads.addAll(threadsFromWarmup)
+                threads.addAll(threadsFromWarmupReceived)
                 for (thread in threads) { //join thread
                     if(PropertiesReader.AsyncIO() && thread is CompletableFuture){
                         thread.await()
@@ -158,7 +153,7 @@ class Test {
                 stories = cloneStories(stories_clone)
                 //do not run another warmup after the last run, because it would not be finished
                 if (i < repeat - 1) {
-                    threadsFromWarmup = warmup()
+                    threadsFromWarmupReceived = warmup()
                 }
             }
             //make sure all times are sent
@@ -220,7 +215,7 @@ class Test {
             while (j < scaleFactor * stories[i].scalePercentage) {
                 stories[i].parent = this
                 stories[i].isStarted = true
-                var future: Future<*>? = null
+                var future: Future<*>?
                 if(!PropertiesReader.AsyncIO()) {
                     future = ThreadRecycler.instance.executorService.submit {
                         runBlocking {
@@ -341,7 +336,6 @@ class Test {
             }
         }
 
-        @Throws(InterruptedException::class)
         suspend fun allowRequest() {
             synchronized(this) { waiters++ }
             if (maxParallelRequests != null) {
