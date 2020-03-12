@@ -520,19 +520,23 @@ class TestRequestHandling : RequestHandlingFramework() {
         ExecutionControl.NotImplementedException::class
     )
     fun testNoMoreRequestsInParallelThanSetAreFired() = runBlocking {
-        val parallelRequests = 10
-        de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.instance.setMaxParallelRequests(parallelRequests)
-        val futures = Vector<CompletableFuture<*>>()
-        for (i in 0 until parallelRequests * 10) {
-            futures.add(GlobalScope.async { sendRequest.run() }.asCompletableFuture())
+        try {
+            val parallelRequests = 10
+            de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.instance.setMaxParallelRequests(parallelRequests)
+            val futures = Vector<CompletableFuture<*>>()
+            for (i in 0 until parallelRequests * 10) {
+                futures.add(GlobalScope.async { sendRequest.run() }.asCompletableFuture())
+            }
+            for (future in futures) {
+                future.join()
+            }
+            MatcherAssert.assertThat(
+                    de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.instance.maximumParallelRequests,
+                    Matchers.lessThanOrEqualTo(parallelRequests + 1)
+            )
+        } catch (e:Exception){
+            log.error(e)
         }
-        for (future in futures) {
-            future.join()
-        }
-        MatcherAssert.assertThat(
-            de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.instance.maximumParallelRequests,
-            Matchers.lessThanOrEqualTo(parallelRequests + 1)
-        )
     }
 
     @Test
