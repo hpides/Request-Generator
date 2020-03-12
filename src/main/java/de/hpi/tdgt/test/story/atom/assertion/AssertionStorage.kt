@@ -44,7 +44,7 @@ class AssertionStorage private constructor() {
                 log.info("Deleted actuals last second!")
             }
         } catch (e: JsonProcessingException) {
-            log.error(e)
+            //log.error(e)
         }
         val mqttMessage = MqttMessage(message)
         //we want to receive every packet EXACTLY Once
@@ -59,7 +59,7 @@ class AssertionStorage private constructor() {
                 )
             )
         } catch (e: MqttException) {
-            log.error("Error sending mqtt message in Time_Storage: ", e)
+            //log.error("Error sending mqtt message in Time_Storage: ", e)
         }
     }
 
@@ -258,7 +258,7 @@ class AssertionStorage private constructor() {
                             client = MqttClient(PropertiesReader.getMqttHost(), publisherId, MemoryPersistence())
                         }
                     } catch (e: MqttException) {
-                        log.error("Error creating mqttclient in AssertionStorage: ", e)
+                        //log.error("Error creating mqttclient in AssertionStorage: ", e)
                         try {
                             Thread.sleep(1000)
                             continue
@@ -277,7 +277,7 @@ class AssertionStorage private constructor() {
                             client!!.publish(MQTT_TOPIC, ByteArray(0), 0, true)
                         }
                     } catch (e: MqttException) {
-                        log.error(
+                        //log.error(
                             "Could not connect to mqtt broker in AssertionStorage: ",
                             e
                         )
