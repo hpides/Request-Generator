@@ -277,10 +277,10 @@ class AssertionStorage private constructor() {
                             client!!.publish(MQTT_TOPIC, ByteArray(0), 0, true)
                         }
                     } catch (e: MqttException) {
-                        //log.error(
+                        /*log.error(
                             "Could not connect to mqtt broker in AssertionStorage: ",
                             e
-                        )
+                        )*/
                         continue
                     }
                 }
