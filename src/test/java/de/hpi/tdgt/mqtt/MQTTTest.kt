@@ -405,10 +405,18 @@ class MQTTTest : RequestHandlingFramework() {
         actuals.add("UnknownHostException:AHostThatJustCanNotExist")
         MatcherAssert.assertThat(
             allActuals[allActuals.size - 1],
-            Matchers.hasEntry<String, Pair<Int, out Set<String>>?>(
-                failedAssertioNName,
-                Pair(1, actuals)
+            Matchers.hasKey(
+                failedAssertioNName
             )
+        )
+        MatcherAssert.assertThat(
+            allActuals[allActuals.size - 1].get(failedAssertioNName)!!.key,
+            Matchers.`is`(1)
+        )
+        //exception message might be localized by the OS, so we can only assert for the first part
+        MatcherAssert.assertThat(
+            allActuals[allActuals.size - 1].get(failedAssertioNName)!!.value!!.toTypedArray()[0],
+            Matchers.containsString("ExecutionException:java.net.UnknownHostException: AHostThatJustCanNotExist:")
         )
     }
 
