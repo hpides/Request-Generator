@@ -20,6 +20,7 @@ import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.fail
 import java.io.IOException
 import java.net.URL
 import java.nio.charset.StandardCharsets
@@ -536,6 +537,7 @@ class TestRequestHandling : RequestHandlingFramework() {
             )
         } catch (e:Exception){
             log.error(e)
+            fail(e)
         }
     }
 
