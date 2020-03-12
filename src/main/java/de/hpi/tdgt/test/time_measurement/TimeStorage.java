@@ -131,7 +131,7 @@ public class TimeStorage {
         MqttMessage mqttMessage = new MqttMessage(message);
         //we want to receive every packet EXACTLY once
         mqttMessage.setQos(2);
-        mqttMessage.setRetained(true);
+        mqttMessage.setRetained(false);
         try {
             if(client != null) {
                 client.publish(MQTT_TOPIC, mqttMessage);

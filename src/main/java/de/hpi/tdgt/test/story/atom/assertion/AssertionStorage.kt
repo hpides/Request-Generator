@@ -49,7 +49,7 @@ class AssertionStorage private constructor() {
         val mqttMessage = MqttMessage(message)
         //we want to receive every packet EXACTLY Once
         mqttMessage.qos = 2
-        mqttMessage.isRetained = true
+        mqttMessage.isRetained = false
         try {
             client!!.publish(MQTT_TOPIC, mqttMessage)
             log.info(
