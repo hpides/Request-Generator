@@ -1,5 +1,6 @@
 package de.hpi.tdgt.controllers
 
+import com.fasterxml.jackson.core.JsonProcessingException
 import de.hpi.tdgt.deserialisation.Deserializer
 import de.hpi.tdgt.requesthandling.RestClient
 import de.hpi.tdgt.test.Test
@@ -28,9 +29,13 @@ class UploadController {
     )
     fun uploadTestConfig(@RequestBody testToRunAsJSON: String?, @PathVariable(required = false) id: Long): ResponseEntity<String> {
         val testToRun: Test
+        //Jackson might throw different kinds of exceptions, depending on the error
         testToRun = try {
             Deserializer.deserialize(testToRunAsJSON)
         } catch (e: IllegalArgumentException) {
+            log.error(e)
+            return ResponseEntity(HttpStatus.BAD_REQUEST)
+        } catch (e: IOException) {
             log.error(e)
             return ResponseEntity(HttpStatus.BAD_REQUEST)
         }
