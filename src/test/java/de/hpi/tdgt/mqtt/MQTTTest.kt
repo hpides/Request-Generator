@@ -17,6 +17,7 @@ import de.hpi.tdgt.test.time_measurement.MqttTimeMessage
 import de.hpi.tdgt.test.time_measurement.TimeStorage
 import de.hpi.tdgt.util.Pair
 import de.hpi.tdgt.util.PropertiesReader
+import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.LogManager
 import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
@@ -174,7 +175,7 @@ class MQTTTest : RequestHandlingFramework() {
         getWithAuth.setSuccessorLinks(arrayOf())
         val name = mockStoryName
         getWithAuth.setParent(mockParent)
-        getWithAuth.run(params)
+        runBlocking{getWithAuth!!.run(params)}
         Thread.sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
@@ -209,7 +210,7 @@ class MQTTTest : RequestHandlingFramework() {
         getWithAuth.setSuccessorLinks(arrayOf())
         val name = mockStoryName
         getWithAuth.setParent(mockParent)
-        getWithAuth.run(params)
+        runBlocking{getWithAuth!!.run(params)}
         Thread.sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
@@ -244,7 +245,7 @@ class MQTTTest : RequestHandlingFramework() {
         getWithAuth.setSuccessorLinks(arrayOf())
         val name = mockStoryName
         getWithAuth.setParent(mockParent)
-        getWithAuth.run(params)
+        runBlocking{getWithAuth!!.run(params)}
         Thread.sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
@@ -275,7 +276,7 @@ class MQTTTest : RequestHandlingFramework() {
         getWithAuth.setSuccessorLinks(arrayOf())
         val name = mockStoryName
         getWithAuth.setParent(mockParent)
-        getWithAuth.run(params)
+        runBlocking{getWithAuth!!.run(params)}
         Thread.sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
@@ -352,7 +353,7 @@ class MQTTTest : RequestHandlingFramework() {
             deserialize(Utils().requestExampleWithAssertionsJSON).getStories()[0].getAtoms()[3] as Request
         //make sure we do not run successors
         getWithAuth.setSuccessorLinks(arrayOf())
-        getWithAuth.run(params)
+        runBlocking{getWithAuth!!.run(params)}
         Thread.sleep(3000)
         val allActuals =
             getAllActuals(message)
@@ -390,7 +391,7 @@ class MQTTTest : RequestHandlingFramework() {
         getWithAuth.addr = "http://AHostThatJustCanNotExist"
         //make sure we do not run successors
         getWithAuth.setSuccessorLinks(arrayOf())
-        getWithAuth.run(params)
+        runBlocking{getWithAuth!!.run(params)}
         Thread.sleep(3000)
         val allActuals =
             getAllActuals(message)
@@ -416,7 +417,7 @@ class MQTTTest : RequestHandlingFramework() {
         //exception message might be localized by the OS, so we can only assert for the first part
         MatcherAssert.assertThat(
             allActuals[allActuals.size - 1].get(failedAssertioNName)!!.value!!.toTypedArray()[0],
-            Matchers.containsString("ExecutionException:java.net.UnknownHostException: AHostThatJustCanNotExist:")
+            Matchers.containsString("UnknownHostException:AHostThatJustCanNotExist:")
         )
     }
 
@@ -440,7 +441,7 @@ class MQTTTest : RequestHandlingFramework() {
             postWithBodyAndAssertion.assertions[0] as ContentType
         //simulate failure
         assertion.contentType = "application/xml"
-        postWithBodyAndAssertion.run(params)
+        runBlocking{postWithBodyAndAssertion.run(params)}
         Thread.sleep(3000)
         val allActuals =
             getAllActuals(messages)
@@ -491,7 +492,7 @@ class MQTTTest : RequestHandlingFramework() {
             postWithBodyAndAssertion.assertions[0] as ContentType
         //simulate failure
         assertion.contentType = "application/xml"
-        postWithBodyAndAssertion.run(params)
+        runBlocking{postWithBodyAndAssertion.run(params)}
         Thread.sleep(3000)
         var allActuals =
             getAllActuals(messages)
@@ -502,7 +503,7 @@ class MQTTTest : RequestHandlingFramework() {
         //remove existing values
         messages.clear()
         assertion.contentType = "application/json"
-        postWithBodyAndAssertion.run(params)
+        runBlocking{postWithBodyAndAssertion.run(params)}
         Thread.sleep(3000)
         //other failure should be removed now
         allActuals = getAllActuals(messages)
@@ -533,7 +534,7 @@ class MQTTTest : RequestHandlingFramework() {
             postWithBodyAndAssertion.assertions[0] as ContentType
         //simulate failure
         assertion.contentType = "application/xml"
-        postWithBodyAndAssertion.run(params)
+        runBlocking{postWithBodyAndAssertion.run(params)}
         Thread.sleep(3000)
         var allActuals =
             getAllActuals(messages)
@@ -543,7 +544,7 @@ class MQTTTest : RequestHandlingFramework() {
         )
         //remove existing values
         messages.clear()
-        postWithBodyAndAssertion.run(params)
+        runBlocking{postWithBodyAndAssertion.run(params)}
         Thread.sleep(3000)
         //other failure should be removed now
         allActuals = getAllActuals(messages)
@@ -575,7 +576,7 @@ class MQTTTest : RequestHandlingFramework() {
         //do not run successors
         getJsonObjectWithAssertion.setSuccessorLinks(arrayOf())
         getJsonObjectWithAssertion.addr = "http://localhost:9000/empty"
-        getJsonObjectWithAssertion.run(params)
+        runBlocking{getJsonObjectWithAssertion.run(params)}
         Thread.sleep(3000)
         val allActuals =
             getAllActuals(messages)
@@ -612,7 +613,7 @@ class MQTTTest : RequestHandlingFramework() {
         //do not run successors
         getJsonObjectWithAssertion.setSuccessorLinks(arrayOf())
         getJsonObjectWithAssertion.addr = "http://localhost:9000/empty"
-        getJsonObjectWithAssertion.run(params)
+        runBlocking{getJsonObjectWithAssertion.run(params)}
         Thread.sleep(3000)
         val actuals = readAssertion(messages)
         MatcherAssert.assertThat(actuals[0].testId, Matchers.greaterThan(0L))
@@ -626,14 +627,16 @@ class MQTTTest : RequestHandlingFramework() {
         IOException::class
     )
     fun ATestStartMessageIsSent() {
-        val message: Set<String> = prepareClient(Test.MQTT_TOPIC)
-        //test that does not do anything is sufficient, no need to waste resources here
-        val test =
-            deserialize(Utils().noopJson)
-        test.start(test.warmup())
-        val messageStart = "testStart"
-        val hasTestStart = hasMessageStartingWith(message, messageStart)
-        MatcherAssert.assertThat("control topic should have received a \"testStart\"!", hasTestStart)
+        runBlocking {
+            val message: Set<String> = prepareClient(Test.MQTT_TOPIC)
+            //test that does not do anything is sufficient, no need to waste resources here
+            val test =
+                    deserialize(Utils().noopJson)
+            test.start(test.warmup())
+            val messageStart = "testStart"
+            val hasTestStart = hasMessageStartingWith(message, messageStart)
+            MatcherAssert.assertThat("control topic should have received a \"testStart\"!", hasTestStart)
+        }
     }
 
     @org.junit.jupiter.api.Test
@@ -650,7 +653,7 @@ class MQTTTest : RequestHandlingFramework() {
         generation.table = "NotThere"
         generation.data = arrayOf("NotThere")
         generation.name = "generation"
-        generation.perform()
+        runBlocking{generation.perform()}
         val messageStart = "testStart"
         Thread.sleep(3000)
         val actuals = readAssertion(messages)
@@ -682,7 +685,7 @@ class MQTTTest : RequestHandlingFramework() {
         generation.name = "generation"
         //file is only 37 long
         generation.repeat = 40
-        generation.run(HashMap())
+        runBlocking{generation.run(HashMap())}
         val messageStart = "testStart"
         Thread.sleep(3000)
         val actuals = readAssertion(messages)
@@ -726,7 +729,7 @@ class MQTTTest : RequestHandlingFramework() {
             arrayOf("username", "password", "somethingThatMightJustBeEmpty", "somethingNotExisting")
         generation.name = "generation"
         generation.repeat = 1
-        generation.run(HashMap())
+        runBlocking{generation.run(HashMap())}
         val messageStart = "testStart"
         Thread.sleep(3000)
         val actuals = readAssertion(messages)
@@ -762,36 +765,38 @@ class MQTTTest : RequestHandlingFramework() {
         IOException::class
     )
     fun ATestStartMessageWithIdAndConfigIsSent() {
-        val message: Set<String> = prepareClient(Test.MQTT_TOPIC)
-        //test that does not do anything is sufficient, no need to waste resources here
-        val test =
-            deserialize(Utils().noopJson)
-        test.start(test.warmup())
-        val messageStart = "testStart"
-        val startMessage = findMessageStartingWith(message, messageStart)
-        val parts = startMessage!!.split(" ".toRegex()).toTypedArray()
-        //if there are whitespaces in the string, it will be split by them to
-        MatcherAssert.assertThat(parts.size, Matchers.greaterThanOrEqualTo(3))
-        MatcherAssert.assertThat(
-            parts[0],
-            Matchers.equalTo(messageStart)
-        )
-        MatcherAssert.assertThat(parts[1].toLong(), Matchers.greaterThan(0L))
-        //collect potentially split config
-        val sb = StringBuilder()
-        var first = true
-        for (i in 2 until parts.size) {
-            if (!first) {
-                sb.append(' ')
+        runBlocking {
+            val message: Set<String> = prepareClient(Test.MQTT_TOPIC)
+            //test that does not do anything is sufficient, no need to waste resources here
+            val test =
+                    deserialize(Utils().noopJson)
+            test.start(test.warmup())
+            val messageStart = "testStart"
+            val startMessage = findMessageStartingWith(message, messageStart)
+            val parts = startMessage!!.split(" ".toRegex()).toTypedArray()
+            //if there are whitespaces in the string, it will be split by them to
+            MatcherAssert.assertThat(parts.size, Matchers.greaterThanOrEqualTo(3))
+            MatcherAssert.assertThat(
+                    parts[0],
+                    Matchers.equalTo(messageStart)
+            )
+            MatcherAssert.assertThat(parts[1].toLong(), Matchers.greaterThan(0L))
+            //collect potentially split config
+            val sb = StringBuilder()
+            var first = true
+            for (i in 2 until parts.size) {
+                if (!first) {
+                    sb.append(' ')
+                }
+                first = false
+                sb.append(parts[i])
             }
-            first = false
-            sb.append(parts[i])
+            //make sure whitespaces are also preserved
+            MatcherAssert.assertThat(
+                    sb.toString(),
+                    Matchers.equalTo(Utils().noopJson)
+            )
         }
-        //make sure whitespaces are also preserved
-        MatcherAssert.assertThat(
-            sb.toString(),
-            Matchers.equalTo(Utils().noopJson)
-        )
     }
 
     @org.junit.jupiter.api.Test
@@ -842,10 +847,12 @@ class MQTTTest : RequestHandlingFramework() {
         //test that does not do anything is sufficient, no need to waste resources here
         val test =
             deserialize(Utils().noopJson)
-        test.start(test.warmup())
-        val messageEnd = "testEnd"
-        val hasTestEnd = hasMessageStartingWith(messages, messageEnd)
-        MatcherAssert.assertThat("control topic should have received a \"testEnd\"!", hasTestEnd)
+        runBlocking {
+            test.start(test.warmup())
+            val messageEnd = "testEnd"
+            val hasTestEnd = hasMessageStartingWith(messages, messageEnd)
+            MatcherAssert.assertThat("control topic should have received a \"testEnd\"!", hasTestEnd)
+        }
     }
 
     private fun findMessageStartingWith(

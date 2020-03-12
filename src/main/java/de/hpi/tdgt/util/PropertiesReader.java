@@ -35,4 +35,8 @@ public class PropertiesReader {
         }
         return 1;
     }
+
+    public static boolean AsyncIO(){
+        return !(System.getenv("SYNC_IO")!= null && System.getenv("SYNC_IO").equals("true"));
+    }
 }

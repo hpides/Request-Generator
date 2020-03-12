@@ -1,7 +1,11 @@
 package de.hpi.tdgt.test.story.atom
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.withContext
 import org.apache.logging.log4j.LogManager
-import java.util.concurrent.Semaphore
 
 /**
  * This atom signals the end of the warmup phase.
@@ -9,14 +13,16 @@ import java.util.concurrent.Semaphore
  */
 class WarmupEnd : Atom() {
     @Throws(InterruptedException::class)
-    override fun perform() {
+    override suspend fun perform() {
         addWaiter()
         warmupEnd.acquire()
+        log.info("AQUIRED!");
     }
 
     override fun performClone(): Atom {
         return WarmupEnd()
     }
+
 
     companion object {
         private val log =
@@ -24,12 +30,20 @@ class WarmupEnd : Atom() {
 
         //Test knows how many warmupEnds should be waiting for this semaphore.
 //So when this number is reached, it can release all of them and thus continue processing.
-        private val warmupEnd = Semaphore(0)
+        private val warmupEnd = Semaphore(1)
         var waiting = 0
             private set
 
+        var toInitialize = true
         @Synchronized
-        private fun addWaiter() {
+        private suspend fun addWaiter() {
+            //Semaphores can not be created without permits, so build a dummy coroutine that aquires the additional permit
+            if(toInitialize) {
+                withContext(Dispatchers.Default) {
+                    async { warmupEnd.acquire() }
+                }
+                toInitialize = false
+            }
             log.info("Added a waiter to the existing $waiting waiters!")
             waiting++
         }
@@ -38,8 +52,16 @@ class WarmupEnd : Atom() {
          * Let all waiting warmup ends continue.
          */
         fun startTest() {
+            log.info("START TEST!");
             warmupEnd.release(waiting)
             waiting = 0
         }
+
+    }
+}
+
+private fun Semaphore.release(waiting: Int) {
+    for(i in 0 until waiting){
+        release()
     }
 }

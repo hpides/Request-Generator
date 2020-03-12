@@ -2,6 +2,8 @@ package de.hpi.tdgt.requesthandling
 
 import de.hpi.tdgt.test.Test
 import de.hpi.tdgt.test.time_measurement.TimeStorage
+import de.hpi.tdgt.util.PropertiesReader
+import kotlinx.coroutines.future.await
 import org.apache.commons.io.IOUtils
 import org.apache.commons.io.input.CountingInputStream
 import org.apache.logging.log4j.LogManager
@@ -22,7 +24,7 @@ import java.util.zip.GZIPInputStream
 
 class RestClient {
     @Throws(IOException::class)
-    fun getFromEndpoint(
+    suspend fun getFromEndpoint(
         story: String?,
         testId: Long,
         url: URL?,
@@ -38,7 +40,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun getBodyFromEndpoint(
+    suspend fun getBodyFromEndpoint(
         story: String?,
         testId: Long,
         url: URL?,
@@ -55,7 +57,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun postFormToEndpoint(
+    suspend fun postFormToEndpoint(
         story: String?,
         testId: Long,
         url: URL?,
@@ -72,7 +74,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun postBodyToEndpoint(story: String?, testId: Long, url: URL?, body: String?): RestResult? {
+    suspend fun postBodyToEndpoint(story: String?, testId: Long, url: URL?, body: String?): RestResult? {
         val request = Request()
         request.url = url
         request.method = HttpConstants.POST
@@ -84,7 +86,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun putFormToEndpoint(
+    suspend fun putFormToEndpoint(
         story: String?,
         testId: Long,
         url: URL?,
@@ -101,7 +103,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun putBodyToEndpoint(story: String?, testId: Long, url: URL?, body: String?): RestResult? {
+    suspend fun putBodyToEndpoint(story: String?, testId: Long, url: URL?, body: String?): RestResult? {
         val request = Request()
         request.url = url
         request.method = HttpConstants.PUT
@@ -113,7 +115,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun getFromEndpointWithAuth(
+    suspend fun getFromEndpointWithAuth(
         story: String?,
         testId: Long,
         url: URL?,
@@ -133,7 +135,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun getBodyFromEndpointWithAuth(
+    suspend fun getBodyFromEndpointWithAuth(
         story: String?,
         testId: Long,
         url: URL?,
@@ -154,7 +156,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun postFormToEndpointWithAuth(
+    suspend fun postFormToEndpointWithAuth(
         story: String?,
         testId: Long,
         url: URL?,
@@ -175,7 +177,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun postBodyToEndpointWithAuth(
+    suspend fun postBodyToEndpointWithAuth(
         story: String?,
         testId: Long,
         url: URL?,
@@ -196,7 +198,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun putFormToEndpointWithAuth(
+    suspend fun putFormToEndpointWithAuth(
         story: String?,
         testId: Long,
         url: URL?,
@@ -217,7 +219,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun putBodyToEndpointWithAuth(
+    suspend fun putBodyToEndpointWithAuth(
         story: String?,
         testId: Long,
         url: URL?,
@@ -238,7 +240,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun deleteFromEndpoint(
+    suspend fun deleteFromEndpoint(
         story: String?,
         testId: Long,
         url: URL?,
@@ -253,7 +255,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun deleteFromEndpointWithAuth(
+    suspend fun deleteFromEndpointWithAuth(
             story: String?,
             testId: Long,
             url: URL?,
@@ -274,7 +276,7 @@ class RestClient {
 
     //above methods are for user's convenience, this method does the actual request
     @Throws(IOException::class)
-    fun exchangeWithEndpoint(request: Request): RestResult? {
+    suspend fun exchangeWithEndpoint(request: Request): RestResult? {
         //append GET parameters if necessary
         if(request.url == null || request.method == null){
             return null;
@@ -334,7 +336,11 @@ class RestClient {
         result.startTime = start
         val response:Response
         try {
-            response = future.get()
+            if(!PropertiesReader.AsyncIO()) {
+                response = future.get()
+            }else{
+                response = future.toCompletableFuture().await()
+            }
         } catch (e: Exception) {
             log.error("Could not connect to $url", e)
             result.errorCondition = e

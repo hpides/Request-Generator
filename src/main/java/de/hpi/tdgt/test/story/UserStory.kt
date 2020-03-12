@@ -6,13 +6,19 @@ import de.hpi.tdgt.test.Test.ActiveInstancesThrottler
 import de.hpi.tdgt.test.ThreadRecycler
 import de.hpi.tdgt.test.story.atom.Atom
 import de.hpi.tdgt.test.story.atom.WarmupEnd
+import de.hpi.tdgt.util.PropertiesReader
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.LogManager
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.function.Consumer
 
 
-class UserStory : Runnable, Cloneable {
+class UserStory : Cloneable {
     var scalePercentage = 0.0
     var name: String? = null
     private var atoms: Array<Atom> = arrayOf()
@@ -42,40 +48,52 @@ class UserStory : Runnable, Cloneable {
         return story
     }
 
-    override fun run() {
+    suspend fun run() = coroutineScope<Unit>() {
         val storyRunnable = Runnable {
-            try { //get one of the tickets
-                if (ActiveInstancesThrottler.instance != null) {
-                    try {
-                        ActiveInstancesThrottler.instance!!.allowInstanceToRun()
-                    } catch (e: InterruptedException) {
-                        log.error("Interrupted wail waiting to be allowed to send a request, aborting: ", e)
-                        return@Runnable
-                    }
-                } else {
-                    log.warn("Internal error: Can not limit active story instances per second!")
-                }
-                var clone: UserStory
-                synchronized(this) { clone = clone() }
-                log.info("Running story " + clone.name.toString() + " in thread " + Thread.currentThread().id)
-                try {
-                    clone.getAtoms()[0].run(HashMap<String, String>())
-                } catch (e: ExecutionException) {
-                    log.error(e)
-                }
-                log.info("Finished story " + clone.name.toString() + " in thread " + Thread.currentThread().id)
-            } catch (e: InterruptedException) {
-                log.error(e)
+            runBlocking {
+                runAtoms()
             }
         }
         try {
-            ThreadRecycler.instance.executorService.submit(storyRunnable).get()
+            if(!PropertiesReader.AsyncIO()) {
+                ThreadRecycler.instance.executorService.submit(storyRunnable).get()
+            }
+            else{
+                runAtoms()
+            }
         } catch (e: InterruptedException) {
             log.error(e)
         } catch (e: ExecutionException) {
             log.error(e)
         }
     }
+
+    private suspend fun CoroutineScope.runAtoms() {
+        try { //get one of the tickets
+            if (ActiveInstancesThrottler.instance != null) {
+                try {
+                    ActiveInstancesThrottler.instance!!.allowInstanceToRun()
+                } catch (e: InterruptedException) {
+                    log.error("Interrupted wail waiting to be allowed to send a request, aborting: ", e)
+                    return
+                }
+            } else {
+                log.warn("Internal error: Can not limit active story instances per second!")
+            }
+            var clone: UserStory
+            synchronized(this) { clone = clone() }
+            log.info("Running story " + clone.name.toString() + " in thread " + Thread.currentThread().id)
+            try {
+                clone.getAtoms()[0].run(HashMap<String, String>())
+            } catch (e: ExecutionException) {
+                log.error(e)
+            }
+            log.info("Finished story " + clone.name.toString() + " in thread " + Thread.currentThread().id)
+        } catch (e: InterruptedException) {
+            log.error(e)
+        }
+    }
+
     fun hasWarmup(): Boolean {
         for (atom in atoms) {
             if (atom is WarmupEnd) {

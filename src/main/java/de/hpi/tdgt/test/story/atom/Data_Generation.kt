@@ -20,7 +20,7 @@ class Data_Generation : Atom() {
     @JsonIgnore
     private var sc: Scanner? = null
 
-    override fun perform() {
+    override suspend fun perform() {
         val generatedData = readBuffer()
         knownParams.putAll(generatedData)
     }

@@ -6,7 +6,10 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import de.hpi.tdgt.test.ThreadRecycler
 import de.hpi.tdgt.test.story.UserStory
+import de.hpi.tdgt.util.PropertiesReader
+import kotlinx.coroutines.*
 import org.apache.logging.log4j.LogManager
+import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.function.IntConsumer
@@ -49,11 +52,10 @@ abstract class Atom : Cloneable {
     @JsonIgnore
     private var parent: UserStory? = null
 
-    @Throws(InterruptedException::class)
-    abstract fun perform()
+    abstract suspend fun perform()
 
     @Throws(InterruptedException::class, ExecutionException::class)
-    fun run(dataMap: Map<String, String>?) {
+    suspend fun run(dataMap: Map<String, String>?) {
         log.info("Running Atom " + name + " in Thread " + Thread.currentThread().id)
         predecessorsReady = predecessorsReady + 1
         knownParams.putAll(dataMap!!)
@@ -95,26 +97,46 @@ abstract class Atom : Cloneable {
     }
 
     @Throws(InterruptedException::class, ExecutionException::class)
-    private fun runSuccessors() {
-        val threads = Arrays.stream(this.successorLinks).map({ successorLink:Atom -> Runnable {
-            try {
-                val clonedMap: HashMap<String, String> =
-                    HashMap<String, String>(this@Atom.knownParams)
-                try {
-                    successorLink.run(clonedMap)
-                } catch (e: ExecutionException) {
-                    log.error(e)
+    private suspend fun runSuccessors() {
+        if(!PropertiesReader.AsyncIO()) {
+            val threads = Arrays.stream(this.successorLinks).map({ successorLink: Atom ->
+                Runnable {
+                    runBlocking {
+                        runSuccessor(successorLink)
+                    }
                 }
-            } catch (e: InterruptedException) {
+            }).collect(Collectors.toUnmodifiableList());
+            val futures = threads.stream().map({ runnable -> ThreadRecycler.instance.executorService.submit(runnable) }).collect(Collectors.toList());
+            for (thread in futures) {
+                if (!thread.isCancelled()) {
+                    thread.get();
+                }
+            };
+        }else{
+            val jobs = Vector<Deferred<Unit>>()
+            //withContext(Dispatchers.IO) {
+                for (successorLink in successorLinks) {
+                    jobs.add(GlobalScope.async { runSuccessor(successorLink) })
+                }
+            //}
+            for(job in jobs){
+                job.join()
+            }
+        }
+    }
+
+    private suspend fun runSuccessor(successorLink: Atom) {
+        try {
+            val clonedMap: HashMap<String, String> =
+                    HashMap<String, String>(this@Atom.knownParams)
+            try {
+                successorLink.run(clonedMap)
+            } catch (e: ExecutionException) {
                 log.error(e)
             }
-        }}).collect(Collectors.toUnmodifiableList());
-        val futures = threads.stream().map({runnable -> ThreadRecycler.instance.executorService.submit(runnable)}).collect(Collectors.toList());
-        for(thread in futures){
-            if(!thread.isCancelled()) {
-                thread.get();
-            }
-        };
+        } catch (e: InterruptedException) {
+            log.error(e)
+        }
     }
 
     /**
