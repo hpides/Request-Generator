@@ -3,7 +3,7 @@ stages:
 
 junit:
   stage: test
-  image: "maven:3"
+  image: "maven:3-jdk-13"
   # save mosquitto log to debug errors
   artifacts:
       when: on_failure
