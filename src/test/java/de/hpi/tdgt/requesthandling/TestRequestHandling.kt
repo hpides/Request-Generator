@@ -10,6 +10,9 @@ import de.hpi.tdgt.test.story.atom.Request
 import de.hpi.tdgt.util.Pair
 import jdk.jshell.spi.ExecutionControl
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.runBlocking
 import lombok.SneakyThrows
 import org.apache.logging.log4j.LogManager
@@ -21,6 +24,7 @@ import java.io.IOException
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 
@@ -515,15 +519,15 @@ class TestRequestHandling : RequestHandlingFramework() {
         ExecutionException::class,
         ExecutionControl.NotImplementedException::class
     )
-    fun testNoMoreRequestsInParallelThanSetAreFired() {
+    fun testNoMoreRequestsInParallelThanSetAreFired() = runBlocking {
         val parallelRequests = 10
         de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.instance.setMaxParallelRequests(parallelRequests)
-        val futures = Vector<Future<*>>()
+        val futures = Vector<CompletableFuture<*>>()
         for (i in 0 until parallelRequests * 10) {
-            futures.add(instance.executorService.submit(sendRequest))
+            futures.add(GlobalScope.async { sendRequest.run() }.asCompletableFuture())
         }
         for (future in futures) {
-            future.get()
+            future.join()
         }
         MatcherAssert.assertThat(
             de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.instance.maximumParallelRequests,
