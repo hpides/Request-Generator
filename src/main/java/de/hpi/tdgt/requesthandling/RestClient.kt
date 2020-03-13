@@ -269,6 +269,7 @@ class RestClient {
         request.testId = testId
         return exchangeWithEndpoint(request)
     }
+    val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(true))
 
     //above methods are for user's convenience, this method does the actual request
     @Throws(IOException::class)
@@ -280,7 +281,6 @@ class RestClient {
         val url =
             appendGetParametersToUrlIfNecessary(request.url!!, request.params, request.method!!)
 
-        val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(request.connectTimeout).setReadTimeout(request.responseTimeout).setFollowRedirect(request.isFollowsRedirects).setKeepAlive(request.isSendKeepAlive))
         val preparedRequest = client.prepare(request.method, url.toString())
         val start = System.nanoTime()
         //set auth header if required
