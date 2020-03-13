@@ -160,8 +160,8 @@ class Request : Atom() {
                 log.info(result)
             }
         } else {
-            log.warn("Not JSON! Response is ignored.")
-            log.warn(result)
+            log.info("Not JSON! Response is ignored.")
+            log.info(result)
         }
         //in some tests, this might not exist
         if (getParent() != null && getParent()!!.parent != null) { //check assertions after request
