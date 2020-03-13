@@ -11,10 +11,7 @@ import org.apache.logging.log4j.LogManager
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.io.*
 import java.lang.IllegalArgumentException
 import java.nio.charset.StandardCharsets
@@ -139,6 +136,13 @@ class UploadController {
         val endtime = System.currentTimeMillis()
         log.info("---Data Generation finished in " + (endtime - starttime) + " ms.---")
         return ResponseEntity(output.toString(), HttpStatus.OK)
+    }
+    //will return 500 if exception during test occurs
+    @GetMapping(
+        path = ["/exit"]
+    )
+    fun exit(){
+        System.exit(0)
     }
 
     companion object {
