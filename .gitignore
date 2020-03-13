@@ -25,3 +25,5 @@ users.csv
 values.csv
 search.csv
 logs/
+
+*.jar
