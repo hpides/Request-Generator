@@ -320,13 +320,13 @@ class RestClient {
             } catch (e: Exception) {
                 log.error("Could not connect to $url", e)
                 result.errorCondition = e
-                return result
+                retry ++
+                continue
             }
-            retry++
-        }
         if(future == null){
             log.error("Unknown error while sending request!")
-            return result
+            retry++
+            continue
         }
         result.startTime = start
         val response:Response
@@ -339,10 +339,13 @@ class RestClient {
         } catch (e: Exception) {
             log.error("Could not connect to $url", e)
             result.errorCondition = e
-            return result
+            retry ++
+            continue
         }
         readResponse(response, result, request)
         Test.ConcurrentRequestsThrottler.instance.requestDone()
+            return result
+        }
         return result
     }
 

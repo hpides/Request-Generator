@@ -7,11 +7,10 @@ import de.hpi.tdgt.test.ThreadRecycler
 import de.hpi.tdgt.test.story.atom.Atom
 import de.hpi.tdgt.test.story.atom.WarmupEnd
 import de.hpi.tdgt.util.PropertiesReader
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.LogManager
+import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
@@ -84,7 +83,9 @@ class UserStory : Cloneable {
             synchronized(this) { clone = clone() }
             log.info("Running story " + clone.name.toString() + " in thread " + Thread.currentThread().id)
             try {
-                clone.getAtoms()[0].run(HashMap<String, String>())
+                GlobalScope.async{
+                    clone.getAtoms()[0].run(HashMap())
+                }.await()
             } catch (e: ExecutionException) {
                 log.error(e)
             }

@@ -259,9 +259,11 @@ class Test {
             mutex.release()
             log.trace("Released mutex (allowRequest)")
         }
-        override fun run() {
-            runBlocking {
+        override fun run() = runBlocking {
+            try {
                 performAction()
+            } catch(e:InterruptedException){
+                return@runBlocking
             }
         }
         suspend fun performAction() {

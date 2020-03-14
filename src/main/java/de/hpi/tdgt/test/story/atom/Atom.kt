@@ -60,7 +60,11 @@ abstract class Atom : Cloneable {
         knownParams.putAll(dataMap!!)
         if (predecessorsReady >= predecessorCount) { //perform as often as requested
             for (i in 0 until repeat) {
-                perform()
+                try {
+                    perform()
+                } catch(e:Exception){
+                    log.error("Error running atom "+name,e)
+                }
             }
             runSuccessors()
         }

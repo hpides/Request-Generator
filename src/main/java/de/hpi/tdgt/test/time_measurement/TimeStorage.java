@@ -59,7 +59,7 @@ public class TimeStorage {
                             client = new MqttClient(PropertiesReader.getMqttHost(), publisherId, new MemoryPersistence());
                         }
                     } catch (MqttException e) {
-                        //log.error("Error creating mqttclient in TimeStorage: ", e);
+                        log.error("Error creating mqttclient in TimeStorage: ", e);
                         try {
                             Thread.sleep(1000);
                             continue;

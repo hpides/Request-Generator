@@ -16,7 +16,6 @@ class WarmupEnd : Atom() {
     override suspend fun perform() {
         addWaiter()
         warmupEnd.acquire()
-        log.info("AQUIRED!");
     }
 
     override fun performClone(): Atom {
@@ -35,10 +34,14 @@ class WarmupEnd : Atom() {
             private set
 
         var toInitialize = true
-        @Synchronized
+
+        private val mutex = Semaphore(1)
+
         private suspend fun addWaiter() {
+            //need coroutine-aware synchronization method here
+            mutex.acquire()
             //Semaphores can not be created without permits, so build a dummy coroutine that aquires the additional permit
-            if(toInitialize) {
+            if (toInitialize) {
                 withContext(Dispatchers.Default) {
                     async { warmupEnd.acquire() }
                 }
@@ -46,6 +49,7 @@ class WarmupEnd : Atom() {
             }
             log.info("Added a waiter to the existing $waiting waiters!")
             waiting++
+            mutex.release()
         }
 
         /**
