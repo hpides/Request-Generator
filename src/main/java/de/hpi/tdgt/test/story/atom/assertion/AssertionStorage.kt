@@ -59,7 +59,7 @@ class AssertionStorage private constructor() {
                 )
             )
         } catch (e: MqttException) {
-            //log.error("Error sending mqtt message in Time_Storage: ", e)
+            log.error("Error sending mqtt message in Time_Storage: ", e)
         }
     }
 
@@ -146,6 +146,8 @@ class AssertionStorage private constructor() {
         reporter = null
         actuals.clear()
         actualsLastSecond.clear()
+        //there were some race conditions if this did not happen, this fixed them
+        instance = AssertionStorage()
     }
 
     /**
@@ -234,7 +236,7 @@ class AssertionStorage private constructor() {
         )
 
         @JvmStatic
-        val instance = AssertionStorage()
+        var instance = AssertionStorage()
         const val MQTT_TOPIC = "de.hpi.tdgt.assertions"
     }
 
@@ -295,6 +297,7 @@ class AssertionStorage private constructor() {
                         client!!.disconnect()
                         client!!.close()
                         client = null
+                        log.info("Cleaned up AssertionStorage!");
                     }
                 }
             } catch (e: MqttException) {
