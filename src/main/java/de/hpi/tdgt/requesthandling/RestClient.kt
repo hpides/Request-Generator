@@ -2,21 +2,24 @@ package de.hpi.tdgt.requesthandling
 
 import de.hpi.tdgt.test.Test
 import de.hpi.tdgt.test.time_measurement.TimeStorage
-import org.apache.commons.io.IOUtils
-import org.apache.commons.io.input.CountingInputStream
+import de.hpi.tdgt.util.PropertiesReader
+import kotlinx.coroutines.future.await
 import org.apache.logging.log4j.LogManager
-import java.io.BufferedInputStream
-import java.io.FileNotFoundException
+import org.asynchttpclient.DefaultAsyncHttpClientConfig
+import org.asynchttpclient.Dsl
+import org.asynchttpclient.ListenableFuture
+import org.asynchttpclient.Response
 import java.io.IOException
-import java.net.*
+import java.net.MalformedURLException
+import java.net.URL
+import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.zip.GZIPInputStream
 
 class RestClient {
     @Throws(IOException::class)
-    fun getFromEndpoint(
+    suspend fun getFromEndpoint(
         story: String?,
         testId: Long,
         url: URL?,
@@ -32,7 +35,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun getBodyFromEndpoint(
+    suspend fun getBodyFromEndpoint(
         story: String?,
         testId: Long,
         url: URL?,
@@ -49,7 +52,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun postFormToEndpoint(
+    suspend fun postFormToEndpoint(
         story: String?,
         testId: Long,
         url: URL?,
@@ -66,7 +69,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun postBodyToEndpoint(story: String?, testId: Long, url: URL?, body: String?): RestResult? {
+    suspend fun postBodyToEndpoint(story: String?, testId: Long, url: URL?, body: String?): RestResult? {
         val request = Request()
         request.url = url
         request.method = HttpConstants.POST
@@ -78,7 +81,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun putFormToEndpoint(
+    suspend fun putFormToEndpoint(
         story: String?,
         testId: Long,
         url: URL?,
@@ -95,7 +98,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun putBodyToEndpoint(story: String?, testId: Long, url: URL?, body: String?): RestResult? {
+    suspend fun putBodyToEndpoint(story: String?, testId: Long, url: URL?, body: String?): RestResult? {
         val request = Request()
         request.url = url
         request.method = HttpConstants.PUT
@@ -107,7 +110,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun getFromEndpointWithAuth(
+    suspend fun getFromEndpointWithAuth(
         story: String?,
         testId: Long,
         url: URL?,
@@ -127,7 +130,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun getBodyFromEndpointWithAuth(
+    suspend fun getBodyFromEndpointWithAuth(
         story: String?,
         testId: Long,
         url: URL?,
@@ -148,7 +151,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun postFormToEndpointWithAuth(
+    suspend fun postFormToEndpointWithAuth(
         story: String?,
         testId: Long,
         url: URL?,
@@ -169,7 +172,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun postBodyToEndpointWithAuth(
+    suspend fun postBodyToEndpointWithAuth(
         story: String?,
         testId: Long,
         url: URL?,
@@ -190,7 +193,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun putFormToEndpointWithAuth(
+    suspend fun putFormToEndpointWithAuth(
         story: String?,
         testId: Long,
         url: URL?,
@@ -211,7 +214,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun putBodyToEndpointWithAuth(
+    suspend fun putBodyToEndpointWithAuth(
         story: String?,
         testId: Long,
         url: URL?,
@@ -232,7 +235,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    fun deleteFromEndpoint(
+    suspend fun deleteFromEndpoint(
         story: String?,
         testId: Long,
         url: URL?,
@@ -243,17 +246,18 @@ class RestClient {
         request.params = getParams
         request.method = HttpConstants.DELETE
         request.testId = testId
+        request.story = story
         return exchangeWithEndpoint(request)
     }
 
     @Throws(IOException::class)
-    fun deleteFromEndpointWithAuth(
-        story: String?,
-        testId: Long,
-        url: URL?,
-        getParams: Map<String, String>,
-        username: String?,
-        password: String?
+    suspend fun deleteFromEndpointWithAuth(
+            story: String?,
+            testId: Long,
+            url: URL?,
+            getParams: Map<String, String>,
+            username: String?,
+            password: String?
     ): RestResult? {
         val request = Request()
         request.url = url
@@ -265,29 +269,23 @@ class RestClient {
         request.testId = testId
         return exchangeWithEndpoint(request)
     }
+    val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(true))
 
     //above methods are for user's convenience, this method does the actual request
     @Throws(IOException::class)
-    fun exchangeWithEndpoint(request: Request): RestResult? { //append GET parameters if necessary
+    suspend fun exchangeWithEndpoint(request: Request): RestResult? {
+        //append GET parameters if necessary
         if(request.url == null || request.method == null){
             return null;
         }
         val url =
             appendGetParametersToUrlIfNecessary(request.url!!, request.params, request.method!!)
-        //set given properties
-        val httpURLConnection = prepareHttpUrlConnection(
-            url,
-            request.method!!,
-            request.isFollowsRedirects,
-            request.connectTimeout,
-            request.responseTimeout,
-            request.isSendKeepAlive
-        )
-        var retry: Int
+
+        val preparedRequest = client.prepare(request.method, url.toString())
         val start = System.nanoTime()
         //set auth header if required
         if (request.username != null && request.password != null) {
-            httpURLConnection.setRequestProperty(
+            preparedRequest.setHeader(
                 HttpConstants.HEADER_AUTHORIZATION,
                 "Basic " + Base64.getEncoder().encodeToString(
                     (request.username + ":" + request.password).toByteArray(StandardCharsets.UTF_8)
@@ -296,77 +294,59 @@ class RestClient {
         }
         //set POST Body to contain formencoded data
         if (request.isForm && (request.method == HttpConstants.POST || request.method == HttpConstants.PUT)) {
-            httpURLConnection.setRequestProperty("Content-Type", HttpConstants.APPLICATION_X_WWW_FORM_URLENCODED)
+            preparedRequest.setHeader("Content-Type", HttpConstants.APPLICATION_X_WWW_FORM_URLENCODED)
             val body = mapToURLEncodedString(request.params).toString()
-            httpURLConnection.doOutput = true
-            val out = httpURLConnection.outputStream
-            out.write(body.toByteArray(StandardCharsets.UTF_8))
-            out.flush()
-            out.close()
+            preparedRequest.setBody(body)
         }
         //set POST body to what was passed
         if (!request.isForm && (request.method == HttpConstants.POST || request.method == HttpConstants.PUT || request.method == HttpConstants.GET) && request.body != null) {
-            httpURLConnection.setRequestProperty("Content-Type", HttpConstants.CONTENT_TYPE_APPLICATION_JSON)
-            httpURLConnection.doOutput = true
+            preparedRequest.setHeader("Content-Type", HttpConstants.CONTENT_TYPE_APPLICATION_JSON)
             if(request.body != null) {
-                val out = httpURLConnection.outputStream
-                out.write(request.body!!.toByteArray(StandardCharsets.UTF_8))
-                out.flush()
-                out.close()
+                preparedRequest.setBody(request.body!!.toByteArray(StandardCharsets.UTF_8))
             }
         }
         //got a connection
         val result = RestResult()
         //try to connect
-        retry = -1
+        var retry: Int = -1
+
+        var future:ListenableFuture<Response>? = null
+
         while (retry < request.retries) {
+            Test.ConcurrentRequestsThrottler.instance.allowRequest()
+            //Exceptions might be thrown here as well as later when waiting for the response
             try {
-                Test.ConcurrentRequestsThrottler.instance.allowRequest()
-                httpURLConnection.connect()
-                break
-            } catch (s: SocketTimeoutException) {
-                log.warn("Request timeout for URL " + url.toString() + " (connect timeout was " + request.connectTimeout + ").")
-                result.errorCondition = s
+                future = preparedRequest.execute()
             } catch (e: Exception) {
                 log.error("Could not connect to $url", e)
                 result.errorCondition = e
-                return result
+                retry ++
+                continue
             }
+        if(future == null){
+            log.error("Unknown error while sending request!")
             retry++
-        }
-        //exceeded max retries
-        if (retry >= request.retries) {
-            return null
+            continue
         }
         result.startTime = start
-        readResponse(httpURLConnection, result, request)
+        val response:Response
+        try {
+            if(!PropertiesReader.AsyncIO()) {
+                response = future.get()
+            }else{
+                response = future.toCompletableFuture().await()
+            }
+        } catch (e: Exception) {
+            log.error("Could not connect to $url", e)
+            result.errorCondition = e
+            retry ++
+            continue
+        }
+        readResponse(response, result, request)
         Test.ConcurrentRequestsThrottler.instance.requestDone()
+            return result
+        }
         return result
-    }
-
-    @Throws(IOException::class)
-    private fun prepareHttpUrlConnection(
-        url: URL,
-        method: String,
-        followsRedirects: Boolean,
-        connectTimeout: Int,
-        responseTimeout: Int,
-        sendKeepAlive: Boolean
-    ): HttpURLConnection {
-        val httpURLConnection = url.openConnection() as HttpURLConnection
-        httpURLConnection.instanceFollowRedirects = followsRedirects
-        if (connectTimeout > 0) {
-            httpURLConnection.connectTimeout = connectTimeout
-        }
-        if (responseTimeout > 0) {
-            httpURLConnection.readTimeout = responseTimeout
-        }
-        if (sendKeepAlive) {
-            httpURLConnection.setRequestProperty(HttpConstants.HEADER_CONNECTION, HttpConstants.KEEP_ALIVE)
-        }
-        //TODO headers like content type
-        httpURLConnection.requestMethod = method
-        return httpURLConnection
     }
 
     @Throws(MalformedURLException::class)
@@ -375,11 +355,11 @@ class RestClient {
         params: Map<String, String?>?,
         method: String
     ): URL { //add URL parameters
-        var url = url
+        var requestURL = url
         if ((method == HttpConstants.GET || method == HttpConstants.DELETE) && params != null && !params.isEmpty()) {
-            url = URL(url.toString() + "?" + mapToURLEncodedString(params))
+            requestURL = URL(requestURL.toString() + "?" + mapToURLEncodedString(params))
         }
-        return url
+        return requestURL
     }
 
     private fun mapToURLEncodedString(params: Map<String, String?>?): StringBuilder {
@@ -408,96 +388,25 @@ class RestClient {
      * Taken from jmeter.
      * Reads the response from the URL connection.
      *
-     * @param conn URL from which to read response
+     * @param response URL from which to read response
      * @param res  [RestResult] to read response into
      * @return response content
      * @throws IOException if an I/O exception occurs
      */
     @Throws(IOException::class)
-    private fun readResponse(
-        conn: HttpURLConnection,
-        res: RestResult,
-        request: Request
+    private suspend fun readResponse(
+            response: Response,
+            res: RestResult,
+            request: Request
     ) {
-        var `in`: BufferedInputStream? = null
-        //final long contentLength = conn.getContentLength();
-//might return nullbyte here if we do not need actual content
-// works OK even if ContentEncoding is null
-        val gzipped = HttpConstants.ENCODING_GZIP == conn.contentEncoding
-        var instream: CountingInputStream? = null
-        try {
-            instream = CountingInputStream(conn.inputStream)
-            `in` = if (gzipped) {
-                BufferedInputStream(GZIPInputStream(instream))
-            } else {
-                BufferedInputStream(instream)
-            }
-        } catch (e: IOException) {
-            if (e.cause !is FileNotFoundException) {
-                val cause = e.cause
-                if (cause != null) { //log.error("Cause: {}", cause.toString());
-                    if (cause is Error) {
-                        throw (cause as Error?)!!
-                    }
-                }
-            }
-            // Normal InputStream is not available
-            val errorStream = conn.errorStream
-            if (errorStream == null) {
-                res.response = NULL_BA
-                res.endTime = System.nanoTime()
-                res.contentType = conn.contentType
-                res.headers = conn.headerFields
-                res.returnCode = conn.responseCode
-            }
-            if (log.isInfoEnabled) {
-                if (conn.responseCode == 401 || conn.responseCode == 403) {
-                    log.info("Error Response Code: " + conn.responseCode + "for " + request.method + " " + request.url + " for used authentication " + request.username + ":" + request.password)
-                } else {
-                    log.info("Error Response Code: " + conn.responseCode + "for " + request.method + " " + request.url)
-                }
-                if (errorStream != null) {
-                    log.warn(
-                        "Error Response Content: ",
-                        IOUtils.toString(errorStream, "UTF-8")
-                    )
-                }
-            }
-            if (gzipped) {
-                if (errorStream != null) {
-                    `in` = BufferedInputStream(GZIPInputStream(errorStream))
-                }
-            } else {
-                if (errorStream != null) {
-                    `in` = BufferedInputStream(errorStream)
-                }
-            }
-        } catch (e: Exception) {
-            val cause = e.cause
-            if (cause != null) {
-                if (cause is Error) {
-                    throw (cause as Error?)!!
-                }
-            }
-            `in` = BufferedInputStream(conn.errorStream)
-        }
-        // N.B. this closes 'in'
-        var responseData: ByteArray? = NULL_BA
-        if (`in` != null) {
-            responseData = IOUtils.toByteArray(`in`)
-            `in`.close()
-        }
-        instream?.close()
-        if(responseData == null){
-            responseData = ByteArray(0)
-        }
+        val responseData = response.responseBodyAsBytes
         //got results, store them and the time
 //TODO do we want to measure the time to transfer the data? Currently we are, but we could also take the time after retrieving content length
         res.response = responseData
         res.endTime = System.nanoTime()
-        res.contentType = conn.contentType
-        res.headers = conn.headerFields
-        res.returnCode = conn.responseCode
+        res.contentType = response.contentType
+        res.headers = response.headers
+        res.returnCode = response.statusCode
         storage.registerTime(
             request.method,
             request.url.toString(),
@@ -512,7 +421,6 @@ class RestClient {
     companion object {
         private val log =
             LogManager.getLogger(RestClient::class.java)
-        private val NULL_BA = ByteArray(0) // can share these
         private val storage = TimeStorage.getInstance()
         /**
          * Counts how many requests the application as a whole sent. Resetted each time a test is over.

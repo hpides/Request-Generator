@@ -3,6 +3,9 @@ package de.hpi.tdgt;
 import de.hpi.tdgt.controllers.UploadController;
 import de.hpi.tdgt.test.story.atom.Data_Generation;
 import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -29,6 +32,7 @@ public class WebApplication {
     }
 
     public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {
+
         if(args.length < 2){
             log.error("Usage: java -jar "+new java.io.File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getName()+"[cli] <Path to PDGF dir> <Java 7 interpreter path>");
             System.exit(1);

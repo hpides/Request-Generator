@@ -2,6 +2,7 @@ package de.hpi.tdgt.requesthandling
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.netty.handler.codec.http.HttpHeaders
 import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
@@ -12,7 +13,7 @@ class RestResult {
     var endTime: Long = 0
     var response: ByteArray = ByteArray(0)
     var contentType: String? = null
-    var headers: Map<String, List<String>>? = null
+    var headers: HttpHeaders? = null
     var returnCode = 0
     var errorCondition: Exception? = null
     //check content encoding
@@ -39,7 +40,7 @@ class RestResult {
 
     //parse contenttype header
     private val charset: Charset
-        private get() {
+        get() {
             val contentTypeHeader =
                 contentType!!.toLowerCase().split(";charset=".toRegex()).toTypedArray()
             return if (contentTypeHeader.size == 2) {

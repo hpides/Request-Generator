@@ -6,10 +6,12 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import de.hpi.tdgt.test.ThreadRecycler
 import de.hpi.tdgt.test.story.UserStory
+import de.hpi.tdgt.util.PropertiesReader
+import kotlinx.coroutines.*
 import org.apache.logging.log4j.LogManager
+import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.ExecutionException
-import java.util.function.IntConsumer
 import java.util.stream.Collectors
 
 
@@ -49,17 +51,20 @@ abstract class Atom : Cloneable {
     @JsonIgnore
     private var parent: UserStory? = null
 
-    @Throws(InterruptedException::class)
-    abstract fun perform()
+    abstract suspend fun perform()
 
     @Throws(InterruptedException::class, ExecutionException::class)
-    fun run(dataMap: Map<String, String>?) {
+    suspend fun run(dataMap: Map<String, String>?) {
         log.info("Running Atom " + name + " in Thread " + Thread.currentThread().id)
         predecessorsReady = predecessorsReady + 1
         knownParams.putAll(dataMap!!)
         if (predecessorsReady >= predecessorCount) { //perform as often as requested
             for (i in 0 until repeat) {
-                perform()
+                try {
+                    perform()
+                } catch(e:Exception){
+                    log.error("Error running atom "+name,e)
+                }
             }
             runSuccessors()
         }
@@ -95,26 +100,46 @@ abstract class Atom : Cloneable {
     }
 
     @Throws(InterruptedException::class, ExecutionException::class)
-    private fun runSuccessors() {
-        val threads = Arrays.stream(this.successorLinks).map({ successorLink:Atom -> Runnable {
-            try {
-                val clonedMap: HashMap<String, String> =
-                    HashMap<String, String>(this@Atom.knownParams)
-                try {
-                    successorLink.run(clonedMap)
-                } catch (e: ExecutionException) {
-                    log.error(e)
+    private suspend fun runSuccessors() {
+        if(!PropertiesReader.AsyncIO()) {
+            val threads = Arrays.stream(this.successorLinks).map({ successorLink: Atom ->
+                Runnable {
+                    runBlocking {
+                        runSuccessor(successorLink)
+                    }
                 }
-            } catch (e: InterruptedException) {
+            }).collect(Collectors.toUnmodifiableList());
+            val futures = threads.stream().map({ runnable -> ThreadRecycler.instance.executorService.submit(runnable) }).collect(Collectors.toList());
+            for (thread in futures) {
+                if (!thread.isCancelled()) {
+                    thread.get();
+                }
+            };
+        }else{
+            val jobs = Vector<Deferred<Unit>>()
+            //withContext(Dispatchers.IO) {
+                for (successorLink in successorLinks) {
+                    jobs.add(GlobalScope.async { runSuccessor(successorLink) })
+                }
+            //}
+            for(job in jobs){
+                job.join()
+            }
+        }
+    }
+
+    private suspend fun runSuccessor(successorLink: Atom) {
+        try {
+            val clonedMap: HashMap<String, String> =
+                    HashMap<String, String>(this@Atom.knownParams)
+            try {
+                successorLink.run(clonedMap)
+            } catch (e: ExecutionException) {
                 log.error(e)
             }
-        }}).collect(Collectors.toUnmodifiableList());
-        val futures = threads.stream().map({runnable -> ThreadRecycler.instance.executorService.submit(runnable)}).collect(Collectors.toList());
-        for(thread in futures){
-            if(!thread.isCancelled()) {
-                thread.get();
-            }
-        };
+        } catch (e: InterruptedException) {
+            log.error(e)
+        }
     }
 
     /**
@@ -151,23 +176,23 @@ abstract class Atom : Cloneable {
         this.parent = parent
     }
 
-    override fun equals(o: Any?): Boolean {
-        if (o === this) return true
-        if (o !is Atom) return false
-        val other = o
-        if (!other.canEqual(this as Any)) return false
+    override fun equals(other: Any?): Boolean {
+        if (other === this) return true
+        if (other !is Atom) return false
+        val otherObject = other
+        if (!otherObject.canEqual(this as Any)) return false
         val `this$name`: Any? = name
-        val `other$name`: Any? = other.name
+        val `other$name`: Any? = otherObject.name
         if (if (`this$name` == null) `other$name` != null else `this$name` != `other$name`) return false
-        if (id != other.id) return false
-        if (repeat != other.repeat) return false
-        if (!Arrays.equals(this.successorLinks, other.successorLinks)) return false
-        if (predecessorCount != other.predecessorCount) return false
-        if (predecessorsReady != other.predecessorsReady) return false
+        if (id != otherObject.id) return false
+        if (repeat != otherObject.repeat) return false
+        if (!Arrays.equals(this.successorLinks, otherObject.successorLinks)) return false
+        if (predecessorCount != otherObject.predecessorCount) return false
+        if (predecessorsReady != otherObject.predecessorsReady) return false
         val `this$knownParams`: Any = knownParams
-        val `other$knownParams`: Any = other.knownParams
-        if (if (`this$knownParams` == null) `other$knownParams` != null else `this$knownParams` != `other$knownParams`) return false
-        return if (!Arrays.deepEquals(this.successorLinks, other.successorLinks)) false else true
+        val `other$knownParams`: Any = otherObject.knownParams
+        if (`this$knownParams` != `other$knownParams`) return false
+        return if (!Arrays.deepEquals(this.successorLinks, otherObject.successorLinks)) false else true
     }
 
     protected open fun canEqual(other: Any?): Boolean {
@@ -185,7 +210,7 @@ abstract class Atom : Cloneable {
         result = result * PRIME + predecessorCount
         result = result * PRIME + predecessorsReady
         val `$knownParams`: Any = knownParams
-        result = result * PRIME + (`$knownParams`?.hashCode() ?: 43)
+        result = result * PRIME + `$knownParams`.hashCode()
         result = result * PRIME + Arrays.deepHashCode(this.successorLinks)
         return result
     }

@@ -2,7 +2,6 @@ package de.hpi.tdgt.test
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import de.hpi.tdgt.test.Test.ActiveInstancesThrottler
 import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.Data_Generation
 import de.hpi.tdgt.test.story.atom.WarmupEnd
@@ -17,13 +16,13 @@ import org.eclipse.paho.client.mqttv3.MqttException
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import java.nio.charset.StandardCharsets
 import java.util.*
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
-import java.util.concurrent.Semaphore
-import java.util.function.Consumer
-import java.util.function.Predicate
-import java.util.function.ToIntFunction
 import java.util.stream.Collectors
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.sync.Semaphore
+import java.util.concurrent.CompletableFuture
 
 //allow frontend to store additional information
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -67,10 +66,8 @@ class Test {
      * Run all stories that have WarmupEnd until reaching WarmupEnd. Other stories are not run.
      * *ALWAYS* run start after running warmup before you run warmup again, even in tests, to get rid of waiting threads.
      * @return threads in which the stories run to join later
-     * @throws InterruptedException if interrupted in Thread.sleep
      */
-    @Throws(InterruptedException::class)
-    fun warmup(): MutableCollection<Future<Any>> { //preserve stories for test repetition
+    suspend fun warmup(): MutableCollection<Future<*>> { //preserve stories for test repetition
         stories_clone = cloneStories(stories)
         ActiveInstancesThrottler.setInstance(activeInstancesPerSecond)
         val watchdog = Thread(ActiveInstancesThrottler.instance)
@@ -79,19 +76,17 @@ class Test {
         //will run stories with warmup only, so they can run until WarmupEnd is reached
         val threads =
             runTest(
-                Arrays.stream(stories).filter(
-                    { obj: UserStory? -> if(obj!=null){obj.hasWarmup()}else{false} }
-                ).collect(Collectors.toList()).toTypedArray()
+                Arrays.stream(stories).filter { obj: UserStory? -> if(obj!=null){obj.hasWarmup()}else{false} }.collect(Collectors.toList()).toTypedArray()
             )
         //now, wait for all warmups to finish
 //casting to int clears decimals
         val waitersToExpect = Arrays.stream(stories)
-            .mapToInt(ToIntFunction<UserStory> { story: UserStory -> (story.numberOfWarmupEnds() * story.scalePercentage * scaleFactor).toInt() })
-            .sum()
+            .mapToInt { story: UserStory -> (story.numberOfWarmupEnds() * story.scalePercentage * scaleFactor).toInt() }
+                .sum()
         //wait for all warmup ends to be stuck
         while (waitersToExpect > WarmupEnd.waiting) {
             log.info("Waiting for warmup to complete: " + WarmupEnd.waiting + " of " + waitersToExpect + " complete!")
-            Thread.sleep(5000)
+            delay(5000)
         }
         watchdog.interrupt()
         return threads
@@ -101,7 +96,6 @@ class Test {
      * Use this if you do not have threads from warmup.
      * @throws InterruptedException if interrupted joining threads
      */
-    @Throws(InterruptedException::class, ExecutionException::class)
     fun start() { //preserve stories for repeat
         stories_clone = cloneStories(stories)
         start(Vector())
@@ -112,9 +106,8 @@ class Test {
      * @param threadsFromWarmup Collection of threads to wait for
      * @throws InterruptedException if interrupted joining threads
      */
-    @Throws(InterruptedException::class, ExecutionException::class)
-    fun start(threadsFromWarmup: MutableCollection<Future<Any>>) {
-        var threadsFromWarmup = threadsFromWarmup
+    fun start(threadsFromWarmup: MutableCollection<Future<*>>) {
+        var threadsFromWarmupReceived = threadsFromWarmup
         prepareMqttClient()
         try { //clear retained messages from last test
             client!!.publish(MQTT_TOPIC, ByteArray(0), 0, true)
@@ -127,55 +120,62 @@ class Test {
         } catch (e: MqttException) {
             log.error("Could not send control start message: ", e)
         }
-        for (i in 0 until repeat) {
-            log.info("Starting test run $i of $repeat")
-            //start all warmup tasks
-            WarmupEnd.startTest()
-            //this thread makes sure that requests per second get limited
-            ActiveInstancesThrottler.setInstance(activeInstancesPerSecond)
-            val watchdog = Thread(ActiveInstancesThrottler.instance)
-            watchdog.priority = Thread.MAX_PRIORITY
-            watchdog.start()
-            val threads = runTest(
-                Arrays.stream(stories).filter(
-                    Predicate<UserStory> { story: UserStory -> !story.isStarted }
-                ).collect(Collectors.toList()).toTypedArray()
-            )
-            //can wait for these threads also
-            threads.addAll(threadsFromWarmup)
-            for (thread in threads) { //join thread
-                if (!thread.isCancelled) thread.get()
+        runBlocking {
+            for (i in 0 until repeat) {
+                log.info("Starting test run $i of $repeat")
+                //start all warmup tasks
+                WarmupEnd.startTest()
+                //this thread makes sure that requests per second get limited
+                ActiveInstancesThrottler.setInstance(activeInstancesPerSecond)
+                val watchdog = Thread(ActiveInstancesThrottler.instance)
+                watchdog.priority = Thread.MAX_PRIORITY
+                watchdog.start()
+                val threads = runTest(
+                        Arrays.stream(stories).filter(
+                                { story: UserStory -> !story.isStarted }
+                        ).collect(Collectors.toList()).toTypedArray()
+                )
+                //can wait for these threads also
+                threads.addAll(threadsFromWarmupReceived)
+                for (thread in threads) { //join thread
+                    if(PropertiesReader.AsyncIO() && thread is CompletableFuture){
+                        thread.await()
+                    }
+                    else{
+                        if (!thread.isCancelled) thread.get()
+                    }
+                }
+                watchdog.interrupt()
+                //remove global state
+                ActiveInstancesThrottler.reset()
+                Data_Generation.reset()
+                //this resets all state atoms might have
+                stories = cloneStories(stories_clone)
+                //do not run another warmup after the last run, because it would not be finished
+                if (i < repeat - 1) {
+                    threadsFromWarmupReceived = warmup()
+                }
             }
-            watchdog.interrupt()
-            //remove global state
-            ActiveInstancesThrottler.reset()
-            Data_Generation.reset()
-            //this resets all state atoms might have
-            stories = cloneStories(stories_clone)
-            //do not run another warmup after the last run, because it would not be finished
-            if (i < repeat - 1) {
-                threadsFromWarmup = warmup()
+            //make sure all times are sent
+            AssertionStorage.instance.flush()
+            TimeStorage.getInstance().flush()
+            try {
+                client!!.publish(
+                        MQTT_TOPIC,
+                        "testEnd $testId".toByteArray(StandardCharsets.UTF_8),
+                        2,
+                        false
+                )
+                //clear retained messages for next test
+                client!!.publish(MQTT_TOPIC, ByteArray(0), 0, true)
+            } catch (e: MqttException) {
+                log.error("Could not send control end message: ", e)
             }
-        }
-        //make sure all times are sent
-        AssertionStorage.instance.flush()
-        TimeStorage.getInstance().flush()
-        try {
-            client!!.publish(
-                MQTT_TOPIC,
-                "testEnd $testId".toByteArray(StandardCharsets.UTF_8),
-                2,
-                false
-            )
-            //clear retained messages for next test
-            client!!.publish(MQTT_TOPIC, ByteArray(0), 0, true)
-        } catch (e: MqttException) {
-            log.error("Could not send control end message: ", e)
-        }
-        try {
-            client!!.disconnect()
-        } catch (e: MqttException) {
-            log.warn("Could not disconnect client: ", e)
+            try {
+                client!!.disconnect()
+            } catch (e: MqttException) {
+                log.warn("Could not disconnect client: ", e)
+            }
         }
     }
 
@@ -203,20 +203,30 @@ class Test {
     }
 
     @Throws(InterruptedException::class)
-    private fun runTest(stories: Array<UserStory>): MutableCollection<Future<Any>> {
+    private suspend fun runTest(stories: Array<UserStory>): MutableCollection<Future<*>> {
         try {
             ConcurrentRequestsThrottler.instance.setMaxParallelRequests(maximumConcurrentRequests)
         } catch (e: ExecutionControl.NotImplementedException) {
             log.error(e)
         }
-        val futures = Vector<Future<Any>>()
+        val futures = Vector<Future<*>>()
         for (i in stories.indices) { //repeat stories as often as wished
             var j = 0
             while (j < scaleFactor * stories[i].scalePercentage) {
                 stories[i].parent = this
                 stories[i].isStarted = true
-                val future: Future<Any> =
-                    ThreadRecycler.instance.executorService.submit(stories[i]) as Future<Any>
+                var future: Future<*>?
+                if(!PropertiesReader.AsyncIO()) {
+                    future = ThreadRecycler.instance.executorService.submit {
+                        runBlocking {
+                            stories[i].run()
+                        }
+                    }
+                }else{
+                    //withContext(Dispatchers.IO) {
+                        future = GlobalScope.async { stories[i].run() }.asCompletableFuture()
+                    //}
+                }
                 futures.add(future)
                 j++
             }
@@ -240,7 +250,7 @@ class Test {
         private val mutex = Semaphore(1)
         private val requestLimiter: Semaphore
         @Throws(InterruptedException::class)
-        fun allowInstanceToRun() {
+        suspend fun allowInstanceToRun() {
             log.trace("Waiting for requestLimiter...")
             requestLimiter.acquire()
             log.trace("Waiting for mutex (allowRequest)...")
@@ -249,8 +259,14 @@ class Test {
             mutex.release()
             log.trace("Released mutex (allowRequest)")
         }
-
-        override fun run() {
+        override fun run() = runBlocking {
+            try {
+                performAction()
+            } catch(e:InterruptedException){
+                return@runBlocking
+            }
+        }
+        suspend fun performAction() {
             while (!Thread.interrupted()) {
                 val instancesLastSecond = instancesPerSecond
                 log.trace("Waiting for mutex (run)...")
@@ -261,7 +277,7 @@ class Test {
                     instancesPerSecond = 0
                     mutex.release()
                     log.trace("Released mutex (run)")
-                    Thread.sleep(1000)
+                    delay(1000)
                 } catch (e: InterruptedException) {
                     return
                 }
@@ -289,7 +305,7 @@ class Test {
         }
 
         init {
-            requestLimiter = Semaphore(instancesPerSecond, true)
+            requestLimiter = Semaphore(instancesPerSecond)
         }
     }
 
@@ -322,8 +338,7 @@ class Test {
             }
         }
 
-        @Throws(InterruptedException::class)
-        fun allowRequest() {
+        suspend fun allowRequest() {
             synchronized(this) { waiters++ }
             if (maxParallelRequests != null) {
                 maxParallelRequests!!.acquire()
@@ -366,5 +381,11 @@ class Test {
             LogManager.getLogger(Test::class.java)
         const val DEFAULT_CONCURRENT_REQUEST_LIMIT = 100
         const val DEFAULT_ACTIVE_INSTANCES_PER_SECOND_LIMIT = 10000
+    }
+}
+
+private fun Semaphore.release(instancesPerSecond: Int) {
+    for(i in 0 until instancesPerSecond){
+        release()
     }
 }
