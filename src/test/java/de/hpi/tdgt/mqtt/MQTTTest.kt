@@ -417,7 +417,7 @@ class MQTTTest : RequestHandlingFramework() {
         //exception message might be localized by the OS, so we can only assert for the first part
         MatcherAssert.assertThat(
             allActuals[allActuals.size - 1].get(failedAssertioNName)!!.value!!.toTypedArray()[0],
-            Matchers.containsString("UnknownHostException:AHostThatJustCanNotExist:")
+            Matchers.containsString("UnknownHostException")
         )
     }
 
@@ -665,7 +665,7 @@ class MQTTTest : RequestHandlingFramework() {
             actuals[0].actuals["Data Generation \"generation\" loads data"]!!.value?:HashSet()
         MatcherAssert.assertThat(
             reason,
-            Matchers.hasItem(Matchers.containsStringIgnoringCase("./src/test/resources/de/hpi/tdgt/NotThere.csv"))
+            Matchers.hasItem(Matchers.containsStringIgnoringCase("NotThere.csv"))
         )
     }
 
@@ -708,7 +708,7 @@ class MQTTTest : RequestHandlingFramework() {
             message.actuals["Data Generation \"generation\" has no data remaining"]!!.value?:HashSet()
         MatcherAssert.assertThat(
             reason,
-            Matchers.hasItem(Matchers.containsStringIgnoringCase("read 37 lines from file ./src/test/resources/de/hpi/tdgt/values.csv"))
+            Matchers.hasItem(Matchers.containsStringIgnoringCase("read 37 lines from file"))
         )
     }
 
@@ -752,7 +752,7 @@ class MQTTTest : RequestHandlingFramework() {
             message.actuals["Data Generation \"generation\" has too few columns"]!!.value?:HashSet()
         MatcherAssert.assertThat(
             reason,
-            Matchers.hasItem(Matchers.containsStringIgnoringCase("4 columns requested but only 2 found in file ./src/test/resources/de/hpi/tdgt/values.csv"))
+            Matchers.hasItem(Matchers.containsStringIgnoringCase("4 columns requested but only 2 found in file"))
         )
     }
 
