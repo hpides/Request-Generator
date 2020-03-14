@@ -4,6 +4,7 @@ import de.hpi.tdgt.Utils
 import de.hpi.tdgt.test.story.atom.Atom
 import de.hpi.tdgt.test.story.atom.Data_Generation
 import de.hpi.tdgt.test.story.atom.Data_Generation.Companion.reset
+import kotlinx.coroutines.runBlocking
 import org.apache.commons.io.IOUtils
 import org.apache.logging.log4j.LogManager
 import org.hamcrest.MatcherAssert
@@ -61,7 +62,7 @@ class TestDataGeneration {
     @Throws(InterruptedException::class, ExecutionException::class)
     fun firstGenerationShouldContainFirstElementOfUsersCSV() {
         var params: Map<String, String> = HashMap()
-        firstGeneration!!.run(params)
+        runBlocking{firstGeneration!!.run(params)}
         params = firstGeneration!!.knownParams
         MatcherAssert.assertThat<Map<String, String>>(
             params,
@@ -77,8 +78,8 @@ class TestDataGeneration {
     @Throws(InterruptedException::class, ExecutionException::class)
     fun firstGenerationShouldContainSecondElementOfUsersCSV() {
         var params: Map<String, String> = HashMap()
-        firstGeneration!!.run(params)
-        firstGeneration!!.run(params)
+        runBlocking{firstGeneration!!.run(params)}
+        runBlocking{firstGeneration!!.run(params)}
         params = firstGeneration!!.knownParams
         MatcherAssert.assertThat<Map<String, String>>(
             params,
@@ -96,7 +97,7 @@ class TestDataGeneration {
         var params: Map<String, String> = HashMap()
         var otherParams: Map<String, String> =
             HashMap()
-        firstGeneration!!.run(params)
+        runBlocking{firstGeneration!!.run(params)}
         params = firstGeneration!!.knownParams
         //pointer to thread-local storage that will be overwritten immediately
         MatcherAssert.assertThat<Map<String, String>>(
@@ -107,7 +108,7 @@ class TestDataGeneration {
             params,
             Matchers.hasEntry("password", "Dsa9h")
         )
-        secondGeneration!!.run(otherParams)
+        runBlocking{secondGeneration!!.run(params)}
         otherParams = secondGeneration!!.knownParams
         MatcherAssert.assertThat<Map<String, String>>(
             otherParams,
@@ -127,7 +128,9 @@ class TestDataGeneration {
 
         override fun run() {
             try {
-                gen!!.run(HashMap())
+                runBlocking {
+                    gen!!.run(HashMap())
+                }
             } catch (e: InterruptedException) {
                 log.error(e)
             } catch (e: ExecutionException) {
@@ -220,7 +223,7 @@ class TestDataGeneration {
     fun testClone() {
         val params: Map<String, String> = HashMap()
         val clone = firstGeneration!!.clone()
-        firstGeneration!!.run(params)
+        runBlocking{firstGeneration!!.run(params)}
         MatcherAssert.assertThat<Map<String, String>>(
             clone.knownParams,
             Matchers.anEmptyMap()
@@ -238,7 +241,7 @@ class TestDataGeneration {
     @Throws(InterruptedException::class, ExecutionException::class)
     fun dataGenerationCanHandleEmptyValuesInLastCSVColumn() {
         for (i in 0..16) {
-            firstGeneration!!.run(HashMap())
+            runBlocking{firstGeneration!!.run(HashMap())}
         }
         //17th line is "Abdul-Nour.Abdallah;"
         val params: Map<String, String>
@@ -261,7 +264,9 @@ class TestDataGeneration {
         dataGeneration.table = ""
         dataGeneration.predecessorCount = 0
         dataGeneration.repeat = 1
-        dataGeneration.run(HashMap())
+        runBlocking {
+            dataGeneration.run(HashMap())
+        }
     }
 
     companion object {

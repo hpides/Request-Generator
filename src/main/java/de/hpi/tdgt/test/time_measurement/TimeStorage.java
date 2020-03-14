@@ -79,7 +79,7 @@ public class TimeStorage {
                             client.publish(MQTT_TOPIC, new byte[0], 0, true);
                         }
                     } catch (MqttException e) {
-                        log.error("Could not connect to mqtt broker in TimeStorage: ", e);
+                        //log.error("Could not connect to mqtt broker in TimeStorage: ", e);
                         continue;
                     }
                     try {
@@ -126,19 +126,19 @@ public class TimeStorage {
                 registeredTimesLastSecond.clear();
             }
         } catch (JsonProcessingException e) {
-            log.error(e);
+            //log.error(e);
         }
         MqttMessage mqttMessage = new MqttMessage(message);
         //we want to receive every packet EXACTLY once
         mqttMessage.setQos(2);
-        mqttMessage.setRetained(true);
+        mqttMessage.setRetained(false);
         try {
             if(client != null) {
                 client.publish(MQTT_TOPIC, mqttMessage);
             }
             log.trace(String.format("Transferred %d bytes via mqtt!", message.length));
         } catch (MqttException e) {
-            log.error("Error sending mqtt message in Time_Storage: ", e);
+            //log.error("Error sending mqtt message in Time_Storage: ", e);
         }
     }
 

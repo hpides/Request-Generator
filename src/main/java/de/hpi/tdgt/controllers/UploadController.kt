@@ -6,14 +6,12 @@ import de.hpi.tdgt.requesthandling.RestClient
 import de.hpi.tdgt.test.Test
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.test.time_measurement.TimeStorage
+import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.LogManager
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.io.*
 import java.lang.IllegalArgumentException
 import java.nio.charset.StandardCharsets
@@ -28,6 +26,7 @@ class UploadController {
         InterruptedException::class, ExecutionException::class
     )
     fun uploadTestConfig(@RequestBody testToRunAsJSON: String?, @PathVariable(required = false) id: Long): ResponseEntity<String> {
+
         val testToRun: Test
         //Jackson might throw different kinds of exceptions, depending on the error
         testToRun = try {
@@ -42,8 +41,10 @@ class UploadController {
         testToRun.testId = id
         val ret = ResponseEntity<String>(HttpStatus.OK)
         val starttime = System.currentTimeMillis()
-        val threads: MutableCollection<Future<Any>> = testToRun.warmup()
-        testToRun.start(threads)
+        runBlocking {
+            val threads: MutableCollection<Future<*>> = testToRun.warmup()
+            testToRun.start(threads)
+        }
         val endtime = System.currentTimeMillis()
         log.info("---Test finished in " + (endtime - starttime) + " ms.---")
         log.info("---Times---")
@@ -135,6 +136,13 @@ class UploadController {
         val endtime = System.currentTimeMillis()
         log.info("---Data Generation finished in " + (endtime - starttime) + " ms.---")
         return ResponseEntity(output.toString(), HttpStatus.OK)
+    }
+    //will return 500 if exception during test occurs
+    @GetMapping(
+        path = ["/exit"]
+    )
+    fun exit(){
+        System.exit(0)
     }
 
     companion object {

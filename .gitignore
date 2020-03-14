@@ -21,7 +21,9 @@ log/
 target/
 
 #created in tests
-users.csv
-values.csv
-search.csv
+/users.csv
+/values.csv
+/search.csv
 logs/
+
+*.jar

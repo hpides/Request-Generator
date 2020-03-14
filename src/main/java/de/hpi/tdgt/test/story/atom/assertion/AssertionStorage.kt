@@ -44,12 +44,12 @@ class AssertionStorage private constructor() {
                 log.info("Deleted actuals last second!")
             }
         } catch (e: JsonProcessingException) {
-            log.error(e)
+            //log.error(e)
         }
         val mqttMessage = MqttMessage(message)
         //we want to receive every packet EXACTLY Once
         mqttMessage.qos = 2
-        mqttMessage.isRetained = true
+        mqttMessage.isRetained = false
         try {
             client!!.publish(MQTT_TOPIC, mqttMessage)
             log.info(
@@ -146,6 +146,8 @@ class AssertionStorage private constructor() {
         reporter = null
         actuals.clear()
         actualsLastSecond.clear()
+        //there were some race conditions if this did not happen, this fixed them
+        instance = AssertionStorage()
     }
 
     /**
@@ -234,7 +236,7 @@ class AssertionStorage private constructor() {
         )
 
         @JvmStatic
-        val instance = AssertionStorage()
+        var instance = AssertionStorage()
         const val MQTT_TOPIC = "de.hpi.tdgt.assertions"
     }
 
@@ -258,7 +260,7 @@ class AssertionStorage private constructor() {
                             client = MqttClient(PropertiesReader.getMqttHost(), publisherId, MemoryPersistence())
                         }
                     } catch (e: MqttException) {
-                        log.error("Error creating mqttclient in AssertionStorage: ", e)
+                        //log.error("Error creating mqttclient in AssertionStorage: ", e)
                         try {
                             Thread.sleep(1000)
                             continue
@@ -277,10 +279,10 @@ class AssertionStorage private constructor() {
                             client!!.publish(MQTT_TOPIC, ByteArray(0), 0, true)
                         }
                     } catch (e: MqttException) {
-                        log.error(
+                        /*log.error(
                             "Could not connect to mqtt broker in AssertionStorage: ",
                             e
-                        )
+                        )*/
                         continue
                     }
                 }
@@ -295,6 +297,7 @@ class AssertionStorage private constructor() {
                         client!!.disconnect()
                         client!!.close()
                         client = null
+                        log.info("Cleaned up AssertionStorage!");
                     }
                 }
             } catch (e: MqttException) {

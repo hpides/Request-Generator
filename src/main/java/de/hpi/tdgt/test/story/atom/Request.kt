@@ -46,7 +46,7 @@ class Request : Atom() {
     var assertions = arrayOfNulls<Assertion>(0)
     var implicitNotFailedAssertion: Assertion? = null
     @Throws(InterruptedException::class)
-    override fun perform() {
+    override suspend fun perform() {
         log.info("Sending request " + addr + " in Thread " + Thread.currentThread().id + "with attributes: " + knownParams)
         if (implicitNotFailedAssertion == null) {
             implicitNotFailedAssertion = RequestIsSent()
@@ -75,7 +75,7 @@ class Request : Atom() {
         return ret
     }
 
-    private fun handlePost() {
+    private suspend fun handlePost() {
         if (requestJSONObject != null) {
             handlePostWithBody()
         } else {
@@ -83,7 +83,7 @@ class Request : Atom() {
         }
     }
 
-    private fun handlePostWithForm() {
+    private suspend fun handlePostWithForm() {
         val params = HashMap<String, String>()
         for (key in requestParams) {
             if(knownParams[key] != null) {
@@ -145,7 +145,7 @@ class Request : Atom() {
     }
 
     @Throws(IOException::class, JsonParseException::class, JsonMappingException::class)
-    private fun extractResponseParams(result: RestResult?) {
+    private suspend fun extractResponseParams(result: RestResult?) {
         if (result != null && result.isJSON) {
             if (result.toJson()!!.isObject) {
                 val json = String(result.response, StandardCharsets.UTF_8)
@@ -160,8 +160,8 @@ class Request : Atom() {
                 log.info(result)
             }
         } else {
-            log.warn("Not JSON! Response is ignored.")
-            log.warn(result)
+            log.info("Not JSON! Response is ignored.")
+            log.info(result)
         }
         //in some tests, this might not exist
         if (getParent() != null && getParent()!!.parent != null) { //check assertions after request
@@ -201,7 +201,7 @@ class Request : Atom() {
         return current
     }
 
-    private fun handlePostWithBody() {
+    private suspend fun handlePostWithBody() {
         var jsonParams: String? = ""
         if (requestJSONObject != null) {
             jsonParams = fillEvaluationsInJson()
@@ -241,7 +241,7 @@ class Request : Atom() {
         }
     }
 
-    private fun handlePut() {
+    private suspend fun handlePut() {
         if (requestJSONObject != null) {
             handlePutWithBody()
         } else {
@@ -249,7 +249,7 @@ class Request : Atom() {
         }
     }
 
-    private fun handlePutWithForm() {
+    private suspend fun handlePutWithForm() {
         val params = HashMap<String, String>()
         for (key in requestParams) {
             if(knownParams[key]!=null) {
@@ -291,7 +291,7 @@ class Request : Atom() {
         }
     }
 
-    private fun handlePutWithBody() {
+    private suspend fun handlePutWithBody() {
         val params = HashMap<String, String>()
         if (requestJSONObject != null) { //fill out template
         }
@@ -336,7 +336,7 @@ class Request : Atom() {
         }
     }
 
-    private fun handleDelete() {
+    private suspend fun handleDelete() {
         val params = HashMap<String, String>()
         for (key in requestParams) {
             if(knownParams[key]!=null) {
@@ -378,7 +378,7 @@ class Request : Atom() {
         }
     }
 
-    private fun handleGet() {
+    private suspend fun handleGet() {
         if (requestJSONObject != null) {
             handleGetWithBody()
         } else {
@@ -386,7 +386,7 @@ class Request : Atom() {
         }
     }
 
-    private fun handleGetWithForm() {
+    private suspend fun handleGetWithForm() {
         val params = HashMap<String, String>()
         for (key in requestParams) {
             if(knownParams[key]!=null) {
@@ -428,7 +428,7 @@ class Request : Atom() {
         }
     }
 
-    private fun handleGetWithBody() {
+    private suspend fun handleGetWithBody() {
         val params = HashMap<String, String>()
         if (requestJSONObject != null) { //fill out template
         }
@@ -473,12 +473,11 @@ class Request : Atom() {
         }
     }
 
-    override fun equals(o: Any?): Boolean {
-        if (o === this) return true
-        if (o !is Request) return false
-        val other = o
+    override fun equals(other: Any?): Boolean {
+        if (other === this) return true
+        if (other !is Request) return false
         if (!other.canEqual(this as Any)) return false
-        if (!super.equals(o)) return false
+        if (!super.equals(other)) return false
         val `this$verb`: Any? = verb
         val `other$verb`: Any? = other.verb
         if (if (`this$verb` == null) `other$verb` != null else `this$verb` != `other$verb`) return false

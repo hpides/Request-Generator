@@ -12,10 +12,9 @@ class ResponseCode : Assertion() {
         }
     }
 
-    override fun equals(o: Any?): Boolean {
-        if (o === this) return true
-        if (o !is ResponseCode) return false
-        val other = o
+    override fun equals(other: Any?): Boolean {
+        if (other === this) return true
+        if (other !is ResponseCode) return false
         if (!other.canEqual(this as Any)) return false
         if (!super.equals(other)) return false
         return if (responseCode != other.responseCode) false else true

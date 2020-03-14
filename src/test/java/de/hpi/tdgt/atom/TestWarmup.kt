@@ -5,6 +5,7 @@ import de.hpi.tdgt.RequestHandlingFramework
 import de.hpi.tdgt.Utils
 import de.hpi.tdgt.deserialisation.Deserializer.deserialize
 import de.hpi.tdgt.test.Test
+import kotlinx.coroutines.runBlocking
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.BeforeEach
@@ -24,28 +25,34 @@ class TestWarmup : RequestHandlingFramework() {
     @org.junit.jupiter.api.Test
     @Throws(InterruptedException::class, ExecutionException::class)
     fun testWarmupCallsPreparationActivities() {
-        val threads = warmupTest!!.warmup()
-        MatcherAssert.assertThat(postBodyHandler.requests_total, Matchers.`is`(7))
-        warmupTest!!.start(threads)
+        runBlocking {
+            val threads = warmupTest!!.warmup()
+            MatcherAssert.assertThat(postBodyHandler.requests_total, Matchers.`is`(7))
+            warmupTest!!.start(threads)
+        }
     }
 
     @org.junit.jupiter.api.Test
     @Throws(InterruptedException::class, ExecutionException::class)
     fun testWarmupCallsNoOtherActivities() {
-        val threads = warmupTest!!.warmup()
-        for (handler in handlers) {
-            if (handler !is PostBodyHandler) {
-                MatcherAssert.assertThat(handler.requests_total, Matchers.`is`(0))
+        runBlocking {
+            val threads = warmupTest!!.warmup()
+            for (handler in handlers) {
+                if (handler !is PostBodyHandler) {
+                    MatcherAssert.assertThat(handler.requests_total, Matchers.`is`(0))
+                }
             }
+            warmupTest!!.start(threads)
         }
-        warmupTest!!.start(threads)
     }
 
     @org.junit.jupiter.api.Test
     @Throws(InterruptedException::class, ExecutionException::class)
     fun testStoriesAreCompletedAfterWarmup() {
-        val threads = warmupTest!!.warmup()
-        warmupTest!!.start(threads)
+        runBlocking {
+            val threads = warmupTest!!.warmup()
+            warmupTest!!.start(threads)
+        }
         //7 in first story, 30 in second story
         MatcherAssert.assertThat(authHandler.requests_total, Matchers.`is`(37))
     }
@@ -54,8 +61,10 @@ class TestWarmup : RequestHandlingFramework() {
     @Throws(InterruptedException::class, ExecutionException::class)
     fun testStoriesAreCompletedAfterWarmupWithRepeat() {
         warmupTest!!.repeat = 3
-        val threads = warmupTest!!.warmup()
-        warmupTest!!.start(threads)
+        runBlocking {
+            val threads = warmupTest!!.warmup()
+            warmupTest!!.start(threads)
+        }
         //7 in first story, 30 in second story
         MatcherAssert.assertThat(authHandler.requests_total, Matchers.`is`(3 * 37))
     }
