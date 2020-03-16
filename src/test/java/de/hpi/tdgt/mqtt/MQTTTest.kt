@@ -34,6 +34,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.RequestEntity
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import java.io.IOException
+import java.lang.Thread.sleep
 import java.net.URL
 import java.util.*
 import java.util.concurrent.ExecutionException
@@ -809,7 +810,11 @@ class MQTTTest : RequestHandlingFramework() {
                 .body(Utils().noopJson)
         restTemplate!!.exchange(requestEntity, String::class.java)
         val messageStart = "testStart"
-        val startMessage = findMessageStartingWith(message, messageStart)
+        var startMessage = findMessageStartingWith(message, messageStart)
+        while(startMessage == null){
+            startMessage = findMessageStartingWith(message, messageStart)
+            sleep(1000)
+        }
         val parts = startMessage!!.split(" ".toRegex()).toTypedArray()
         //if there are whitespaces in the string, it will be split by them to
         MatcherAssert.assertThat(parts.size, Matchers.greaterThanOrEqualTo(3))

@@ -38,8 +38,13 @@ class UploadController {
             log.error(e)
             return ResponseEntity(HttpStatus.BAD_REQUEST)
         }
-        testToRun.testId = id
         val ret = ResponseEntity<String>(HttpStatus.OK)
+        Thread {runTest(testToRun, id)}.start()
+        return ret
+    }
+
+    private fun runTest(testToRun: Test, id: Long) {
+        testToRun.testId = id
         val starttime = System.currentTimeMillis()
         runBlocking {
             val threads: MutableCollection<Future<*>> = testToRun.warmup()
@@ -55,7 +60,6 @@ class UploadController {
         AssertionStorage.instance.reset()
         log.info(RestClient.requestsSent.get().toString() + " requests sent.")
         RestClient.requestsSent.set(0)
-        return ret
     }
 
     //will return 500 if exception during test occurs
