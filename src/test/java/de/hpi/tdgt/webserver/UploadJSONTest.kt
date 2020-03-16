@@ -3,7 +3,14 @@ package de.hpi.tdgt.webserver
 import de.hpi.tdgt.RequestHandlingFramework
 import de.hpi.tdgt.Utils
 import de.hpi.tdgt.WebApplication
+import de.hpi.tdgt.mqtt.MQTTTest
+import de.hpi.tdgt.util.PropertiesReader
 import org.apache.logging.log4j.LogManager
+import org.eclipse.paho.client.mqttv3.IMqttMessageListener
+import org.eclipse.paho.client.mqttv3.MqttClient
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions
+import org.eclipse.paho.client.mqttv3.MqttMessage
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.BeforeEach
@@ -18,7 +25,9 @@ import org.springframework.http.MediaType
 import org.springframework.http.RequestEntity
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import java.io.IOException
+import java.lang.Thread.sleep
 import java.net.URL
+import java.util.*
 
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(classes = [WebApplication::class], webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -49,6 +58,27 @@ class UploadJSONTest : RequestHandlingFramework() {
         )
     }
 
+    private fun waitForTestEnd(){
+        var finished = false;
+        val publisherId = UUID.randomUUID().toString()
+        val publisher = MqttClient(PropertiesReader.getMqttHost(), publisherId, MemoryPersistence())
+        val options = MqttConnectOptions()
+        options.isAutomaticReconnect = true
+        options.isCleanSession = true
+        options.connectionTimeout = 10
+        (publisher as MqttClient).connect(options)
+        publisher.subscribe(de.hpi.tdgt.test.Test.MQTT_TOPIC, IMqttMessageListener { s: String, mqttMessage: MqttMessage ->
+            //hamcrest can't handle empty sets in the list for contains, so filter them out
+            if(String(mqttMessage.payload).startsWith("testEnd")){
+                finished = true
+            }
+        })
+
+        while(!finished){
+            sleep(1000)
+        }
+    }
+
     @Test
     @Throws(Exception::class)
     fun runsUserStoryAgainstTestServerRunsActualTest() {
@@ -56,6 +86,8 @@ class UploadJSONTest : RequestHandlingFramework() {
             RequestEntity.post(URL("http://localhost:" + port + "/upload/" + System.currentTimeMillis()).toURI())
                 .contentType(MediaType.APPLICATION_JSON).body(exampleStory)
         restTemplate!!.exchange(requestEntity, String::class.java)
+        //test is run async
+        waitForTestEnd()
         //requests to this handler are sent
         MatcherAssert.assertThat(authHandler.numberFailedLogins, Matchers.greaterThan(0))
     }
@@ -71,6 +103,8 @@ class UploadJSONTest : RequestHandlingFramework() {
             "./src/test/resources/de/hpi/tdgt"
         )
         WebApplication.main(args)
+        //test is run async
+        waitForTestEnd()
         //requests to this handler are sent
         MatcherAssert.assertThat(authHandler.numberFailedLogins, Matchers.greaterThan(0))
     }
