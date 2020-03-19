@@ -135,6 +135,12 @@
             <artifactId>kotlin-maven-allopen</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
+        <!-- Used to clean invalid HTML into valid XML-->
+        <dependency>
+            <groupId>net.sourceforge.htmlcleaner</groupId>
+            <artifactId>htmlcleaner</artifactId>
+            <version>2.23</version>
+        </dependency>
     </dependencies>
     <reporting>
 	    <plugins>

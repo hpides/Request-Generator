@@ -329,5 +329,36 @@ class TestRequest : RequestHandlingFramework() {
         )
 
     }
+    @Test
+    public fun parsesHTML(){
+        val tokens = HashMap<String, String>()
+        tokens.put("_csrf","token")
+        requestAtom!!.tokenNames = tokens
+        requestAtom!!.extractCSRFTokens(String(Utils().signupHtml.readAllBytes()))
+        MatcherAssert.assertThat(requestAtom!!.knownParams,  Matchers.hasEntry(Matchers.equalTo("token"), Matchers.equalTo("90730144-6e10-4f94-8f6a-8de3353f40f5")))
+    }
+
+    @Test
+    public fun parsesHTMLFromEndpoint(){
+        val tokens = HashMap<String, String>()
+        tokens.put("_csrf","token")
+        requestAtom!!.tokenNames = tokens
+        val story = UserStory()
+        story.name = "story"
+        val test = de.hpi.tdgt.test.Test()
+        story.parent = test
+        requestAtom!!.verb = "GET"
+        requestAtom!!.addr = "http://localhost:9000/html"
+        val cookies = HashMap<String, String>()
+        cookies.put("cookie","JSESSIONID");
+        cookies.put("cookie2","JSESSIONID2");
+        requestAtom!!.sendCookies = cookies
+        requestAtom!!.setSuccessors(IntArray(0))
+        requestAtom!!.predecessorCount = 0
+        requestAtom!!.repeat = 1
+        requestAtom!!.setParent(story)
+        runBlocking {requestAtom!!.run(HashMap())}
+        MatcherAssert.assertThat(requestAtom!!.knownParams,  Matchers.hasEntry(Matchers.equalTo("token"), Matchers.equalTo("90730144-6e10-4f94-8f6a-8de3353f40f5")))
+    }
 
 }

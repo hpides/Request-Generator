@@ -455,4 +455,24 @@ object HttpHandlers {
             os.close()
         }
     }
+
+    /**
+     * Makes request URL Parameters to a JSON Object with the Request keys as keys and their values as values.
+     */
+    class HTMLHandler : HttpHandlerBase(), HttpHandler {
+        @Throws(IOException::class)
+        override fun handle(he: HttpExchange) {
+            super.handle(he)
+
+            // send response
+            val response = String(Utils().signupHtml.readAllBytes())
+            val headers = he.responseHeaders
+            headers[HttpConstants.HEADER_CONTENT_TYPE] = listOf(HttpConstants.CONTENT_TYPE_TEXT_HTML)
+            he.sendResponseHeaders(200, response.length.toLong())
+            val os = he.responseBody
+            os.write(response.toByteArray())
+            os.close()
+        }
+
+    }
 }

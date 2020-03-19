@@ -34,6 +34,12 @@ class RestResult {
             ""
         ).toLowerCase().startsWith(HttpConstants.CONTENT_TYPE_APPLICATION_JSON)
 
+    val isHtml: Boolean
+        get() = contentType != null && contentType!!.replace(
+            "\\s+".toRegex(),
+            ""
+        ).toLowerCase().contains("html")
+
     //use directly or deserialize
     override fun toString(): String {
         return if (isPlainText || isJSON) {

@@ -69,6 +69,7 @@ public class HttpConstants {
     public static final String DATE = "Date";  //e.g. Date Header of response
     public static final String VARY = "Vary"; // $NON-NLS-1$
     public static final String CONTENT_TYPE_TEXT_PLAIN = "text/plain";
+    public static final String CONTENT_TYPE_TEXT_HTML= "text/html";
     public static final String CONTENT_TYPE_APPLICATION_JSON = "application/json";
     public static final String CONTENT_TYPE_TEXT_PLAIN_UTF8 = CONTENT_TYPE_TEXT_PLAIN+ ";charset=utf-8";
 }

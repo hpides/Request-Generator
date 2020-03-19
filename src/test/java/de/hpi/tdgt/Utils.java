@@ -55,14 +55,18 @@ public class Utils {
     public static void assertInstanceOf(Object o, Class c){
         Assertions.assertTrue(c.isInstance(o), "First atom of first story should be a data generation atom and not a "+o.getClass().getName());
     }
-    public InputStream getUsersCSV() throws IOException {
+    public InputStream getUsersCSV() {
         return getClass().getResourceAsStream("users.csv");
     }
-    public InputStream getPostsCSV() throws IOException {
+    public InputStream getPostsCSV() {
         return getClass().getResourceAsStream("posts.csv");
     }
 
-    public InputStream getValuesCSV() throws IOException {
+    public InputStream getValuesCSV() {
         return getClass().getResourceAsStream("values.csv");
+    }
+
+    public InputStream getSignupHtml() {
+        return getClass().getResourceAsStream("signup.html");
     }
 }
