@@ -30,6 +30,7 @@ open class RequestHandlingFramework {
     @JvmField
     protected val authHandler = HttpHandlers.AuthHandler()
     protected val emptyResponseHandler = HttpHandlers.EmptyResponseHandler()
+    protected val cookiehandler = HttpHandlers.CookieResponseHandler()
     protected lateinit var server: HttpServer
     @JvmField
     protected var handlers: MutableList<HttpHandlers.HttpHandlerBase> = ArrayList()
@@ -49,6 +50,7 @@ open class RequestHandlingFramework {
         server.createContext("/putWithBody", putBodyHandler)
         server.createContext("/auth", authHandler)
         server.createContext("/empty", emptyResponseHandler)
+        server.createContext("/cookie", cookiehandler)
         server.setExecutor(null)
         server.start()
         handlers.add(getHandler)

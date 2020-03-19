@@ -23,10 +23,12 @@ class RestClient {
         story: String?,
         testId: Long,
         url: URL?,
+        receiveCookies: Array<String>,
         getParams: Map<String, String>
     ): RestResult? {
         val request = Request()
         request.url = url
+        request.receiveCookies = receiveCookies
         request.params = getParams
         request.method = HttpConstants.GET
         request.story = story
@@ -39,6 +41,7 @@ class RestClient {
         story: String?,
         testId: Long,
         url: URL?,
+        receiveCookies: Array<String>,
         body: String?
     ): RestResult? {
         val request = Request()
@@ -56,6 +59,7 @@ class RestClient {
         story: String?,
         testId: Long,
         url: URL?,
+        receiveCookies: Array<String>,
         getParams: Map<String, String>
     ): RestResult? {
         val request = Request()
@@ -69,7 +73,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun postBodyToEndpoint(story: String?, testId: Long, url: URL?, body: String?): RestResult? {
+    suspend fun postBodyToEndpoint(story: String?, testId: Long, url: URL?, receiveCookies: Array<String>, body: String?): RestResult? {
         val request = Request()
         request.url = url
         request.method = HttpConstants.POST
@@ -85,6 +89,7 @@ class RestClient {
         story: String?,
         testId: Long,
         url: URL?,
+        receiveCookies: Array<String>,
         getParams: Map<String, String>
     ): RestResult? {
         val request = Request()
@@ -98,7 +103,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun putBodyToEndpoint(story: String?, testId: Long, url: URL?, body: String?): RestResult? {
+    suspend fun putBodyToEndpoint(story: String?, testId: Long, url: URL?, receiveCookies: Array<String>, body: String?): RestResult? {
         val request = Request()
         request.url = url
         request.method = HttpConstants.PUT
@@ -114,6 +119,7 @@ class RestClient {
         story: String?,
         testId: Long,
         url: URL?,
+        receiveCookies: Array<String>,
         getParams: Map<String, String>,
         username: String?,
         password: String?
@@ -134,6 +140,7 @@ class RestClient {
         story: String?,
         testId: Long,
         url: URL?,
+        receiveCookies: Array<String>,
         body: String?,
         username: String?,
         password: String?
@@ -155,6 +162,7 @@ class RestClient {
         story: String?,
         testId: Long,
         url: URL?,
+        receiveCookies: Array<String>,
         getParams: Map<String, String>,
         username: String?,
         password: String?
@@ -176,6 +184,7 @@ class RestClient {
         story: String?,
         testId: Long,
         url: URL?,
+        receiveCookies: Array<String>,
         body: String?,
         username: String?,
         password: String?
@@ -197,6 +206,7 @@ class RestClient {
         story: String?,
         testId: Long,
         url: URL?,
+        receiveCookies: Array<String>,
         getParams: Map<String, String>,
         username: String?,
         password: String?
@@ -218,6 +228,7 @@ class RestClient {
         story: String?,
         testId: Long,
         url: URL?,
+        receiveCookies: Array<String>,
         body: String?,
         username: String?,
         password: String?
@@ -239,6 +250,7 @@ class RestClient {
         story: String?,
         testId: Long,
         url: URL?,
+        receiveCookies: Array<String>,
         getParams: Map<String, String>
     ): RestResult? {
         val request = Request()
@@ -255,6 +267,7 @@ class RestClient {
             story: String?,
             testId: Long,
             url: URL?,
+            receiveCookies: Array<String>,
             getParams: Map<String, String>,
             username: String?,
             password: String?
@@ -407,6 +420,19 @@ class RestClient {
         res.contentType = response.contentType
         res.headers = response.headers
         res.returnCode = response.statusCode
+        for(cookie in request.receiveCookies){
+            var foundCookie = false;
+            for(responseCookie in response.cookies){
+                //accept first cookie, second one is probably a mistake
+                if(cookie == responseCookie.name() && !foundCookie){
+                    res.receivedCookies.put(cookie, responseCookie.value())
+                    foundCookie = true;
+                }
+                if(cookie == responseCookie.name() && foundCookie){
+                    log.warn("Duplicate cookie key $cookie")
+                }
+            }
+        }
         storage.registerTime(
             request.method,
             request.url.toString(),

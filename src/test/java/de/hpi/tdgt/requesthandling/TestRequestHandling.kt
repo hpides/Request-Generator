@@ -38,7 +38,7 @@ class TestRequestHandling : RequestHandlingFramework() {
         val result = rc.getFromEndpoint(
             "TestRequestHandling",
             0,
-            URL("http://localhost:9000/"),
+            URL("http://localhost:9000/"), emptyArray(),
             HashMap()
         )
         val response = String(result!!.response, StandardCharsets.UTF_8)
@@ -52,7 +52,7 @@ class TestRequestHandling : RequestHandlingFramework() {
         val params = HashMap<String, String>()
         params["key"] = "It is what it is...and does what it offers"
         val result =
-            rc.getFromEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/"), params)
+            rc.getFromEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/"), emptyArray(), params)
         val response = String(result!!.response, StandardCharsets.UTF_8)
         MatcherAssert.assertThat(
             getHandler.request,
@@ -67,7 +67,7 @@ class TestRequestHandling : RequestHandlingFramework() {
         val result = rc.getFromEndpoint(
             "TestRequestHandling",
             0,
-            URL("http://localhost:9000/"),
+            URL("http://localhost:9000/"), emptyArray(),
             HashMap()
         )
         MatcherAssert.assertThat(result!!.isPlainText, Matchers.`is`(true))
@@ -80,7 +80,7 @@ class TestRequestHandling : RequestHandlingFramework() {
         val result = rc.getFromEndpoint(
             "TestRequestHandling",
             0,
-            URL("http://localhost:9000/"),
+            URL("http://localhost:9000/"), emptyArray(),
             HashMap()
         )
         MatcherAssert.assertThat(
@@ -96,7 +96,7 @@ class TestRequestHandling : RequestHandlingFramework() {
         val params = HashMap<String, String>()
         params["param"] = "value"
         val result =
-            rc.getFromEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/"), params)
+            rc.getFromEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/"), emptyArray(), params)
         MatcherAssert.assertThat(
             result.toString(),
             Matchers.stringContainsInOrder("param", "value")
@@ -109,7 +109,7 @@ class TestRequestHandling : RequestHandlingFramework() {
         val rc = RestClient()
         val body = "{\"param\":\"value\"}"
         val result =
-            rc.getBodyFromEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/getWithBody"), body)
+            rc.getBodyFromEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/getWithBody"), emptyArray(), body)
         MatcherAssert.assertThat(result.toString(), Matchers.equalTo(body))
     }
 
@@ -120,7 +120,7 @@ class TestRequestHandling : RequestHandlingFramework() {
         val params = HashMap<String, String>()
         params["param"] = "value"
         val result =
-            rc.deleteFromEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/"), params)
+            rc.deleteFromEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/"), emptyArray(), params)
         MatcherAssert.assertThat(
             result.toString(),
             Matchers.stringContainsInOrder("param", "value")
@@ -134,7 +134,7 @@ class TestRequestHandling : RequestHandlingFramework() {
         val params = HashMap<String, String>()
         params["param"] = "value"
         val result =
-            rc.getFromEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/jsonObject"), params)
+            rc.getFromEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/jsonObject"), emptyArray(), params)
         MatcherAssert.assertThat(result!!.toJson()!!.isObject, Matchers.`is`(true))
     }
 
@@ -164,7 +164,7 @@ class TestRequestHandling : RequestHandlingFramework() {
         val params = HashMap<String, String>()
         params["param"] = "value"
         val result =
-            rc.getFromEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/jsonArray"), params)
+            rc.getFromEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/jsonArray"), emptyArray(), params)
         MatcherAssert.assertThat(result!!.toJson()!!.isArray, Matchers.`is`(true))
     }
 
@@ -175,7 +175,7 @@ class TestRequestHandling : RequestHandlingFramework() {
         val params = HashMap<String, String>()
         params["param"] = "value"
         val result =
-            rc.getFromEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/jsonArray"), params)
+            rc.getFromEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/jsonArray"), emptyArray(), params)
         MatcherAssert.assertThat(
             result!!.durationMillis(),
             Matchers.`is`(
@@ -195,7 +195,7 @@ class TestRequestHandling : RequestHandlingFramework() {
         val params = HashMap<String, String>()
         params["param"] = "value"
         val result =
-            rc.postFormToEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/echoPost"), params)
+            rc.postFormToEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/echoPost"), emptyArray(), params)
         MatcherAssert.assertThat(
             result.toString(),
             Matchers.stringContainsInOrder("param = value")
@@ -209,7 +209,7 @@ class TestRequestHandling : RequestHandlingFramework() {
         val params = HashMap<String, String>()
         params["param"] = "value"
         val result =
-            rc.putFormToEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/echoPost"), params)
+            rc.putFormToEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/echoPost"), emptyArray(), params)
         MatcherAssert.assertThat(
             result.toString(),
             Matchers.stringContainsInOrder("param = value")
@@ -222,7 +222,7 @@ class TestRequestHandling : RequestHandlingFramework() {
         val rc = RestClient()
         val body = "{\"param\":\"value\"}"
         val result =
-            rc.postBodyToEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/postWithBody"), body)
+            rc.postBodyToEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/postWithBody"), emptyArray(), body)
         MatcherAssert.assertThat(result.toString(), Matchers.equalTo(body))
     }
 
@@ -232,7 +232,7 @@ class TestRequestHandling : RequestHandlingFramework() {
         val rc = RestClient()
         val body = "{\"param\":\"value\"}"
         val result =
-            rc.putBodyToEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/postWithBody"), body)
+            rc.putBodyToEndpoint("TestRequestHandling", 0, URL("http://localhost:9000/postWithBody"), emptyArray(), body)
         MatcherAssert.assertThat(result.toString(), Matchers.equalTo(body))
     }
 
@@ -244,6 +244,7 @@ class TestRequestHandling : RequestHandlingFramework() {
             "TestRequestHandling",
             0,
             URL("http://localhost:9000/auth"),
+            emptyArray(),
             HashMap(),
             HttpHandlers.AuthHandler.username,
             HttpHandlers.AuthHandler.password
@@ -259,6 +260,7 @@ class TestRequestHandling : RequestHandlingFramework() {
             "TestRequestHandling",
             0,
             URL("http://localhost:9000/auth"),
+            emptyArray(),
             "\"Something\"",
             HttpHandlers.AuthHandler.username,
             HttpHandlers.AuthHandler.password
@@ -273,6 +275,7 @@ class TestRequestHandling : RequestHandlingFramework() {
             "TestRequestHandling",
             0,
             URL("http://localhost:9000/auth"),
+            emptyArray(),
             HashMap(),
             HttpHandlers.AuthHandler.username,
             HttpHandlers.AuthHandler.password
@@ -289,6 +292,7 @@ class TestRequestHandling : RequestHandlingFramework() {
             "TestRequestHandling",
             0,
             URL("http://localhost:9000/auth"),
+            emptyArray(),
             "\"Something\"",
             HttpHandlers.AuthHandler.username,
             HttpHandlers.AuthHandler.password
@@ -304,6 +308,7 @@ class TestRequestHandling : RequestHandlingFramework() {
             "TestRequestHandling",
             0,
             URL("http://localhost:9000/auth"),
+            emptyArray(),
             HashMap(),
             HttpHandlers.AuthHandler.username,
             HttpHandlers.AuthHandler.password
@@ -319,6 +324,7 @@ class TestRequestHandling : RequestHandlingFramework() {
             "TestRequestHandling",
             0,
             URL("http://localhost:9000/auth"),
+            emptyArray(),
             "\"Something\"",
             HttpHandlers.AuthHandler.username,
             HttpHandlers.AuthHandler.password
@@ -334,6 +340,7 @@ class TestRequestHandling : RequestHandlingFramework() {
             "TestRequestHandling",
             0,
             URL("http://localhost:9000/auth"),
+            emptyArray(),
             HashMap(),
             HttpHandlers.AuthHandler.username,
             HttpHandlers.AuthHandler.password
@@ -506,6 +513,7 @@ class TestRequestHandling : RequestHandlingFramework() {
                         "TestRequestHandling",
                         0,
                         URL("http://localhost:9000/auth"),
+                        emptyArray(),
                         HashMap(),
                         HttpHandlers.AuthHandler.username,
                         HttpHandlers.AuthHandler.password

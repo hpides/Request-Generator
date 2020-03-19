@@ -64,6 +64,7 @@ object Main {
                         "REST Test",
                         0,
                         URL("http://users/users/new"),
+                        emptyArray(),
                         ObjectMapper().writeValueAsString(params)
                 )
                 log.info("Create user: " + result.toString() + " and code: " + result!!.returnCode + " in: " + result.durationMillis() + " ms.")
@@ -71,6 +72,7 @@ object Main {
                         "REST Test",
                         0,
                         URL("http://users/users/all"),
+                        emptyArray(),
                         HashMap(),
                         USERNAME,
                         PASSWORD
@@ -80,6 +82,7 @@ object Main {
                         "REST Test",
                         0,
                         URL("http://users/users/update"),
+                        emptyArray(),
                         params,
                         USERNAME,
                         PASSWORD
@@ -93,6 +96,7 @@ object Main {
                         "REST Test",
                         0,
                         URL("http://posts/posts/new"),
+                        emptyArray(),
                         params,
                         USERNAME,
                         PASSWORD
@@ -102,6 +106,7 @@ object Main {
                         "REST Test",
                         0,
                         URL("http://posts/posts/all"),
+                        emptyArray(),
                         HashMap(),
                         USERNAME,
                         PASSWORD
@@ -114,6 +119,7 @@ object Main {
                         "REST Test",
                         0,
                         URL("http://search/posts/search"),
+                        emptyArray(),
                         params,
                         USERNAME,
                         PASSWORD
@@ -124,6 +130,7 @@ object Main {
                         "REST Test",
                         0,
                         URL("http://users/users/delete"),
+                        emptyArray(),
                         HashMap(),
                         USERNAME,
                         PASSWORD

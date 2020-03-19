@@ -36,6 +36,8 @@ class Request {
      */
     var testId: Long = 0
 
+    var receiveCookies: Array<String> = emptyArray()
+
     constructor(
         url: URL?,
         params: Map<String, String>?,

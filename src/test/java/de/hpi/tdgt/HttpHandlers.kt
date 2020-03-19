@@ -417,4 +417,32 @@ object HttpHandlers {
             os.close()
         }
     }
+
+    /**
+     * Simulates a session cookie.
+     */
+    class CookieResponseHandler : HttpHandlerBase(), HttpHandler {
+        @Throws(IOException::class)
+        override fun handle(he: HttpExchange) {
+            super.handle(he)
+            val response = ""
+            val headers = he.responseHeaders
+            headers[HttpConstants.HEADER_CONTENT_TYPE] = listOf(HttpConstants.CONTENT_TYPE_TEXT_PLAIN)
+            val parameters: MutableMap<String, Any> =
+                HashMap()
+            val requestedUri = he.requestURI
+            val query = requestedUri.rawQuery
+            parseQuery(query, parameters)
+            if(parameters.get("multiple")!= null){
+                headers[HttpConstants.HEADER_SET_COOKIE] = listOf("JSESSIONID=1234567890; HttpOnly","SomethingElse=abc; Secure")
+            }
+            else {
+                headers[HttpConstants.HEADER_SET_COOKIE] = listOf("JSESSIONID=1234567890; HttpOnly")
+            }
+            he.sendResponseHeaders(200, response.length.toLong())
+            val os = he.responseBody
+            os.write(response.toByteArray())
+            os.close()
+        }
+    }
 }

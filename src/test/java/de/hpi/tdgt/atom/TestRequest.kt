@@ -4,6 +4,7 @@ import de.hpi.tdgt.HttpHandlers
 import de.hpi.tdgt.RequestHandlingFramework
 import de.hpi.tdgt.Utils
 import de.hpi.tdgt.deserialisation.Deserializer.deserialize
+import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.Atom
 import de.hpi.tdgt.test.story.atom.Request
 import de.hpi.tdgt.test.story.atom.Request.BasicAuth
@@ -18,8 +19,8 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.IOException
-import java.util.*
 import java.util.concurrent.ExecutionException
+import kotlin.collections.HashMap
 
 class TestRequest : RequestHandlingFramework() {
     private var requestAtom: Request? = null
@@ -226,5 +227,51 @@ class TestRequest : RequestHandlingFramework() {
             AssertionStorage.instance.getActual("auth does not return 401"),
             Matchers.empty()
         )
+    }
+    @Test
+    fun readsCookie(){
+        val story = UserStory()
+        story.name = "story"
+        val test = de.hpi.tdgt.test.Test()
+        story.parent = test
+        requestAtom!!.verb = "GET"
+        requestAtom!!.addr = "http://localhost:9000/cookie"
+        val cookies = HashMap<String, String>()
+        cookies.put("JSESSIONID","id");
+        requestAtom!!.receiveCookies = cookies
+        requestAtom!!.setSuccessors(IntArray(0))
+        requestAtom!!.predecessorCount = 0
+        requestAtom!!.repeat = 1
+        requestAtom!!.setParent(story)
+        runBlocking {requestAtom!!.run(HashMap())}
+        MatcherAssert.assertThat(
+            requestAtom!!.knownParams,
+            Matchers.hasEntry(Matchers.equalTo("id"), Matchers.equalTo("1234567890"))
+        )
+
+    }
+
+    @Test
+    fun readsMultipleCookies(){
+        val story = UserStory()
+        story.name = "story"
+        val test = de.hpi.tdgt.test.Test()
+        story.parent = test
+        requestAtom!!.verb = "GET"
+        requestAtom!!.addr = "http://localhost:9000/cookie?multiple=true"
+        val cookies = HashMap<String, String>()
+        cookies.put("JSESSIONID","id");
+        cookies.put("SomethingElse","something");
+        requestAtom!!.receiveCookies = cookies
+        requestAtom!!.setSuccessors(IntArray(0))
+        requestAtom!!.predecessorCount = 0
+        requestAtom!!.repeat = 1
+        requestAtom!!.setParent(story)
+        runBlocking {requestAtom!!.run(HashMap())}
+        MatcherAssert.assertThat(
+            requestAtom!!.knownParams,
+            Matchers.hasEntry(Matchers.equalTo("something"), Matchers.equalTo("abc"))
+        )
+
     }
 }
