@@ -6,6 +6,8 @@ import io.netty.handler.codec.http.HttpHeaders
 import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
+import java.util.*
+import kotlin.collections.HashMap
 
 class RestResult {
     //parameters for httpurlconnection
@@ -16,6 +18,9 @@ class RestResult {
     var headers: HttpHeaders? = null
     var returnCode = 0
     var errorCondition: Exception? = null
+
+    var receivedCookies:MutableMap<String,String> = HashMap()
+
     //check content encoding
     val isPlainText: Boolean
         get() = contentType != null && contentType!!.replace(
@@ -28,6 +33,12 @@ class RestResult {
             "\\s+".toRegex(),
             ""
         ).toLowerCase().startsWith(HttpConstants.CONTENT_TYPE_APPLICATION_JSON)
+
+    val isHtml: Boolean
+        get() = contentType != null && contentType!!.replace(
+            "\\s+".toRegex(),
+            ""
+        ).toLowerCase().contains("html")
 
     //use directly or deserialize
     override fun toString(): String {

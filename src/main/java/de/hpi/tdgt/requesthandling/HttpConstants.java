@@ -45,7 +45,7 @@ public class HttpConstants {
     public static final String TRANSFER_ENCODING = "transfer-encoding"; // $NON-NLS-1$
     public static final String HEADER_CONTENT_ENCODING = "content-encoding"; // $NON-NLS-1$
     public static final String HTTP_1_1 = "HTTP/1.1"; // $NON-NLS-1$
-    public static final String HEADER_SET_COOKIE = "set-cookie"; // $NON-NLS-1$
+    public static final String HEADER_SET_COOKIE = "Set-Cookie"; // $NON-NLS-1$
     // Brotli compression not supported yet by HC4 4.5.2 , but to be added
     public static final String ENCODING_BROTLI = "br"; // $NON-NLS-1$
     public static final String ENCODING_DEFLATE = "deflate"; // $NON-NLS-1$
@@ -69,6 +69,7 @@ public class HttpConstants {
     public static final String DATE = "Date";  //e.g. Date Header of response
     public static final String VARY = "Vary"; // $NON-NLS-1$
     public static final String CONTENT_TYPE_TEXT_PLAIN = "text/plain";
+    public static final String CONTENT_TYPE_TEXT_HTML= "text/html";
     public static final String CONTENT_TYPE_APPLICATION_JSON = "application/json";
     public static final String CONTENT_TYPE_TEXT_PLAIN_UTF8 = CONTENT_TYPE_TEXT_PLAIN+ ";charset=utf-8";
 }
