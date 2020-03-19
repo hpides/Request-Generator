@@ -30,6 +30,8 @@ open class RequestHandlingFramework {
     @JvmField
     protected val authHandler = HttpHandlers.AuthHandler()
     protected val emptyResponseHandler = HttpHandlers.EmptyResponseHandler()
+    protected val cookiehandler = HttpHandlers.CookieResponseHandler()
+    protected val htmlHandler = HttpHandlers.HTMLHandler()
     protected lateinit var server: HttpServer
     @JvmField
     protected var handlers: MutableList<HttpHandlers.HttpHandlerBase> = ArrayList()
@@ -49,6 +51,8 @@ open class RequestHandlingFramework {
         server.createContext("/putWithBody", putBodyHandler)
         server.createContext("/auth", authHandler)
         server.createContext("/empty", emptyResponseHandler)
+        server.createContext("/cookie", cookiehandler)
+        server.createContext("/html", htmlHandler)
         server.setExecutor(null)
         server.start()
         handlers.add(getHandler)
@@ -60,6 +64,8 @@ open class RequestHandlingFramework {
         handlers.add(putBodyHandler)
         handlers.add(authHandler)
         handlers.add(emptyResponseHandler)
+        handlers.add(cookiehandler)
+        handlers.add(htmlHandler)
         val values = File("values.csv")
         values.deleteOnExit()
         val os = FileOutputStream(values)

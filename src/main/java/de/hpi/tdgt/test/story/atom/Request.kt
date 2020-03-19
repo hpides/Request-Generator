@@ -10,12 +10,20 @@ import de.hpi.tdgt.requesthandling.RestResult
 import de.hpi.tdgt.test.story.atom.assertion.Assertion
 import de.hpi.tdgt.test.story.atom.assertion.RequestIsSent
 import org.apache.logging.log4j.LogManager
+import org.htmlcleaner.CleanerProperties
+import org.htmlcleaner.DomSerializer
+import org.htmlcleaner.HtmlCleaner
 import java.io.IOException
 import java.net.MalformedURLException
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.regex.Pattern
+import javax.xml.xpath.XPath
+import javax.xml.xpath.XPathConstants
+import javax.xml.xpath.XPathFactory
+import kotlin.collections.HashMap
+
 
 class Request : Atom() {
     var verb: String? = null
@@ -42,9 +50,62 @@ class Request : Atom() {
      * successors.
      */
     var responseJSONObject: Array<String> = arrayOf()
+    /**
+     * Contains names of cookies to extract on the left and names to put their respective values under in the token knownParams in the right.
+     */
+    var receiveCookies: Map<String, String> = HashMap()
+
+    /**
+     * Contains names of cookies to extract from the knownParams map on the left and names to put them in HTTP Cookie Header on the right
+     */
+    var sendCookies: Map<String, String> = HashMap()
+
+    /**
+     * Left side is a name of a hidden input that should be looked for. Right is a key under which it should be saved in the knownParams list
+     */
+    var tokenNames: Map<String, String> = HashMap()
+
     var basicAuth: BasicAuth? = null
     var assertions = arrayOfNulls<Assertion>(0)
     var implicitNotFailedAssertion: Assertion? = null
+
+
+    /**
+     * Extracts all hidden inputs whose name is one of the keys in tokenNames and stores their values in knownParams
+     */
+    public fun extractCSRFTokens(returnedPage: String){
+        if(tokenNames.isEmpty()){
+            return
+        }
+        //turns HTML into valid xml
+        val tagNode = HtmlCleaner().clean(returnedPage)
+        val doc = DomSerializer(
+            CleanerProperties()
+        ).createDOM(tagNode)
+        val xpath: XPath = XPathFactory.newInstance().newXPath()
+        for(entry in tokenNames.entries) {
+
+            val str = xpath.evaluate(
+                "//input[@type = 'hidden'][@name = '${entry.key}']/@value",
+                doc, XPathConstants.STRING
+            ) as String
+            knownParams.put(entry.value, str)
+        }
+    }
+
+    private fun prepareCookies():Map<String, String>{
+        val ret = HashMap<String, String>()
+        for(cookie in this.sendCookies.entries){
+            val value = this.knownParams.get(cookie.key);
+            if(value == null){
+                log.warn("Cookie "+cookie.key+" not known!")
+                continue
+            }
+            ret.put(cookie.value, value)
+        }
+        return ret
+    }
+    
     @Throws(InterruptedException::class)
     override suspend fun perform() {
         log.info("Sending request " + addr + " in Thread " + Thread.currentThread().id + "with attributes: " + knownParams)
@@ -98,6 +159,8 @@ class Request : Atom() {
                             getParent()!!.name,
                             getParent()!!.parent!!.testId,
                             URL(addr),
+                            receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                             params
                         )
                     )
@@ -107,6 +170,8 @@ class Request : Atom() {
                             "unknown",
                             0,
                             URL(addr),
+                            receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                             params
                         )
                     )
@@ -123,6 +188,8 @@ class Request : Atom() {
                         getParent()!!.name,
                         getParent()!!.parent!!.testId,
                         URL(addr),
+                            receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         params,
                         knownParams[basicAuth!!.user],
                         knownParams[basicAuth!!.password]
@@ -163,6 +230,18 @@ class Request : Atom() {
             log.info("Not JSON! Response is ignored.")
             log.info(result)
         }
+
+        if(result != null && result.isHtml){
+            extractCSRFTokens(String(result.response))
+        }
+
+        //given cookie map is indirection between cookie name and name to put it into because of namespacing
+        for(cookie in receiveCookies.keys){
+            if (result != null && result.receivedCookies.get(cookie) != null) {
+                knownParams.put(receiveCookies.get(cookie)!!, result.receivedCookies.get(cookie)!!)
+            }
+        }
+
         //in some tests, this might not exist
         if (getParent() != null && getParent()!!.parent != null) { //check assertions after request
             for (assertion in assertions) {
@@ -213,6 +292,8 @@ class Request : Atom() {
                         getParent()!!.name,
                         getParent()!!.parent!!.testId,
                         URL(addr),
+                            receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         jsonParams
                     )
                 )
@@ -228,6 +309,8 @@ class Request : Atom() {
                         getParent()!!.name,
                         getParent()!!.parent!!.testId,
                         URL(addr),
+                            receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         jsonParams,
                         knownParams[basicAuth!!.user],
                         knownParams[basicAuth!!.password]
@@ -263,6 +346,8 @@ class Request : Atom() {
                         getParent()!!.name,
                         getParent()!!.parent!!.testId,
                         URL(addr),
+                            receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         params
                     )
                 )
@@ -278,6 +363,8 @@ class Request : Atom() {
                         getParent()!!.name,
                         getParent()!!.parent!!.testId,
                         URL(addr),
+                            receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         params,
                         knownParams[basicAuth!!.user],
                         knownParams[basicAuth!!.password]
@@ -308,6 +395,8 @@ class Request : Atom() {
                         getParent()!!.name,
                         getParent()!!.parent!!.testId,
                         URL(addr),
+                            receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         jsonParams
                     )
                 )
@@ -323,6 +412,8 @@ class Request : Atom() {
                         getParent()!!.name,
                         getParent()!!.parent!!.testId,
                         URL(addr),
+                            receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         jsonParams,
                         knownParams[basicAuth!!.user],
                         knownParams[basicAuth!!.password]
@@ -350,6 +441,8 @@ class Request : Atom() {
                         getParent()!!.name,
                         getParent()!!.parent!!.testId,
                         URL(addr),
+                            receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         params
                     )
                 )
@@ -365,6 +458,8 @@ class Request : Atom() {
                         getParent()!!.name,
                         getParent()!!.parent!!.testId,
                         URL(addr),
+                            receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         params,
                         knownParams[basicAuth!!.user],
                         knownParams[basicAuth!!.password]
@@ -400,6 +495,8 @@ class Request : Atom() {
                         getParent()!!.name,
                         getParent()!!.parent!!.testId,
                         URL(addr),
+                            receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         params
                     )
                 )
@@ -415,6 +512,8 @@ class Request : Atom() {
                         getParent()!!.name,
                         getParent()!!.parent!!.testId,
                         URL(addr),
+                            receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         params,
                         knownParams[basicAuth!!.user],
                         knownParams[basicAuth!!.password]
@@ -445,6 +544,8 @@ class Request : Atom() {
                         getParent()!!.name,
                         getParent()!!.parent!!.testId,
                         URL(addr),
+                            receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         jsonParams
                     )
                 )
@@ -460,6 +561,8 @@ class Request : Atom() {
                         getParent()!!.name,
                         getParent()!!.parent!!.testId,
                         URL(addr),
+                            receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         jsonParams,
                         knownParams[basicAuth!!.user],
                         knownParams[basicAuth!!.password]
