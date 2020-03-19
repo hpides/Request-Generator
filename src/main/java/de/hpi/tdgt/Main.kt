@@ -16,6 +16,7 @@ import java.net.URISyntaxException
 import java.net.URL
 import java.util.*
 import java.util.concurrent.ExecutionException
+import kotlin.collections.HashMap
 
 object Main {
     const val USERNAME = "superuser"
@@ -65,6 +66,7 @@ object Main {
                         0,
                         URL("http://users/users/new"),
                         emptyArray(),
+                        HashMap(),
                         ObjectMapper().writeValueAsString(params)
                 )
                 log.info("Create user: " + result.toString() + " and code: " + result!!.returnCode + " in: " + result.durationMillis() + " ms.")
@@ -73,6 +75,7 @@ object Main {
                         0,
                         URL("http://users/users/all"),
                         emptyArray(),
+                        HashMap(),
                         HashMap(),
                         USERNAME,
                         PASSWORD
@@ -84,6 +87,7 @@ object Main {
                         URL("http://users/users/update"),
                         emptyArray(),
                         params,
+                        HashMap(),
                         USERNAME,
                         PASSWORD
                 )
@@ -98,6 +102,7 @@ object Main {
                         URL("http://posts/posts/new"),
                         emptyArray(),
                         params,
+                        HashMap(),
                         USERNAME,
                         PASSWORD
                 )
@@ -107,6 +112,7 @@ object Main {
                         0,
                         URL("http://posts/posts/all"),
                         emptyArray(),
+                        HashMap(),
                         HashMap(),
                         USERNAME,
                         PASSWORD
@@ -121,6 +127,7 @@ object Main {
                         URL("http://search/posts/search"),
                         emptyArray(),
                         params,
+                        HashMap(),
                         USERNAME,
                         PASSWORD
                 )
@@ -131,6 +138,7 @@ object Main {
                         0,
                         URL("http://users/users/delete"),
                         emptyArray(),
+                        HashMap(),
                         HashMap(),
                         USERNAME,
                         PASSWORD

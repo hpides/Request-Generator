@@ -422,9 +422,19 @@ object HttpHandlers {
      * Simulates a session cookie.
      */
     class CookieResponseHandler : HttpHandlerBase(), HttpHandler {
+
+        public var lastCookie = "";
+
         @Throws(IOException::class)
         override fun handle(he: HttpExchange) {
             super.handle(he)
+
+            val requestHeaders = he.requestHeaders
+            val sb = java.lang.StringBuilder();
+            for( cookie in requestHeaders[HttpConstants.HEADER_COOKIE]?: emptyList<String>()){
+                sb.append(cookie)
+            }
+            lastCookie = sb.toString()
             val response = ""
             val headers = he.responseHeaders
             headers[HttpConstants.HEADER_CONTENT_TYPE] = listOf(HttpConstants.CONTENT_TYPE_TEXT_PLAIN)

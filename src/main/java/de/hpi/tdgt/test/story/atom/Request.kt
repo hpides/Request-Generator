@@ -47,9 +47,28 @@ class Request : Atom() {
      */
     var receiveCookies: Map<String, String> = HashMap();
 
+    /**
+     * Contains names of cookies to extract from the knownParams map on the left and names to put them in HTTP Cookie Header on the right
+     */
+    var sendCookies: Map<String, String> = HashMap();
+
     var basicAuth: BasicAuth? = null
     var assertions = arrayOfNulls<Assertion>(0)
     var implicitNotFailedAssertion: Assertion? = null
+    
+    private fun prepareCookies():Map<String, String>{
+        val ret = HashMap<String, String>()
+        for(cookie in this.sendCookies.entries){
+            val value = this.knownParams.get(cookie.key);
+            if(value == null){
+                log.warn("Cookie "+cookie.key+" not known!")
+                continue
+            }
+            ret.put(cookie.value, value)
+        }
+        return ret
+    }
+    
     @Throws(InterruptedException::class)
     override suspend fun perform() {
         log.info("Sending request " + addr + " in Thread " + Thread.currentThread().id + "with attributes: " + knownParams)
@@ -104,6 +123,7 @@ class Request : Atom() {
                             getParent()!!.parent!!.testId,
                             URL(addr),
                             receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                             params
                         )
                     )
@@ -114,6 +134,7 @@ class Request : Atom() {
                             0,
                             URL(addr),
                             receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                             params
                         )
                     )
@@ -131,6 +152,7 @@ class Request : Atom() {
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         params,
                         knownParams[basicAuth!!.user],
                         knownParams[basicAuth!!.password]
@@ -229,6 +251,7 @@ class Request : Atom() {
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         jsonParams
                     )
                 )
@@ -245,6 +268,7 @@ class Request : Atom() {
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         jsonParams,
                         knownParams[basicAuth!!.user],
                         knownParams[basicAuth!!.password]
@@ -281,6 +305,7 @@ class Request : Atom() {
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         params
                     )
                 )
@@ -297,6 +322,7 @@ class Request : Atom() {
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         params,
                         knownParams[basicAuth!!.user],
                         knownParams[basicAuth!!.password]
@@ -328,6 +354,7 @@ class Request : Atom() {
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         jsonParams
                     )
                 )
@@ -344,6 +371,7 @@ class Request : Atom() {
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         jsonParams,
                         knownParams[basicAuth!!.user],
                         knownParams[basicAuth!!.password]
@@ -372,6 +400,7 @@ class Request : Atom() {
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         params
                     )
                 )
@@ -388,6 +417,7 @@ class Request : Atom() {
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         params,
                         knownParams[basicAuth!!.user],
                         knownParams[basicAuth!!.password]
@@ -424,6 +454,7 @@ class Request : Atom() {
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         params
                     )
                 )
@@ -440,6 +471,7 @@ class Request : Atom() {
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         params,
                         knownParams[basicAuth!!.user],
                         knownParams[basicAuth!!.password]
@@ -471,6 +503,7 @@ class Request : Atom() {
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         jsonParams
                     )
                 )
@@ -487,6 +520,7 @@ class Request : Atom() {
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
+                            prepareCookies(),
                         jsonParams,
                         knownParams[basicAuth!!.user],
                         knownParams[basicAuth!!.password]

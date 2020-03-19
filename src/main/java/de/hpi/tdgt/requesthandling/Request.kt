@@ -1,6 +1,7 @@
 package de.hpi.tdgt.requesthandling
 
 import java.net.URL
+import java.util.HashMap
 
 /**
  * Represents a HTTP Request.
@@ -37,6 +38,13 @@ class Request {
     var testId: Long = 0
 
     var receiveCookies: Array<String> = emptyArray()
+
+
+    /**
+     * Contains cookie name (left) and value(right)
+     */
+    var sendCookies: Map<String, String> = HashMap();
+
 
     constructor(
         url: URL?,
