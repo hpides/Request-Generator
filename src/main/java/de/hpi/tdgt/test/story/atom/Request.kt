@@ -131,6 +131,9 @@ class Request : Atom() {
         ret.requestJSONObject = requestJSONObject
         ret.responseJSONObject = responseJSONObject
         ret.responseParams = responseParams
+        ret.sendCookies = sendCookies
+        ret.receiveCookies = receiveCookies
+        ret.tokenNames = tokenNames
         //also stateless
         ret.assertions = assertions
         return ret
@@ -147,9 +150,12 @@ class Request : Atom() {
     private suspend fun handlePostWithForm() {
         val params = HashMap<String, String>()
         for (key in requestParams) {
-            if(knownParams[key] != null) {
-                params[key] = knownParams[key]!!
+            log.info("Key "+key+" known "+knownParams.get(key))
+            // sometimes, a space sneaks in
+            if(knownParams.get(key.trim()) != null) {
+                params[key.trim()] = knownParams[key.trim()]!!
             }
+
         }
         if (basicAuth == null) {
             try { //a few tests trigger the alternative case

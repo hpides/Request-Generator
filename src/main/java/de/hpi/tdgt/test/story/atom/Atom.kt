@@ -41,7 +41,7 @@ abstract class Atom : Cloneable {
     var predecessorsReady = 0
     @JsonIgnore
     val knownParams: MutableMap<String, String> =
-        HashMap()
+        TreeMap()
     //use this method to get successors of this atom
     //do not try to read this from json, no accessors --> only used internally
     @JsonIgnore //should only be set by tests

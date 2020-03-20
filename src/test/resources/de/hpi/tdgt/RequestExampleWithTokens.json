@@ -1,0 +1,149 @@
+{
+  "repeat": "1",
+  "scaleFactor": "10",
+  "activeInstancesPerSecond": "100",
+  "maximumConcurrentRequests": "100",
+  "stories": [
+    {
+      "atoms": [
+        {
+          "id": 1,
+          "name": "Start",
+          "repeat": 1,
+          "successors": [
+            0
+          ],
+          "type": "START",
+          "x": -241.25925925925924,
+          "y": 144.18138651471983
+        },
+        {
+          "id": 0,
+          "name": "Data Generation",
+          "repeat": 1,
+          "successors": [
+            2
+          ],
+          "type": "DATA_GENERATION",
+          "x": -137,
+          "y": 164.3000030517578,
+          "data": [
+            "password",
+            "email"
+          ],
+          "dataToGenerate": "{\"value\":{\"password\":{\"__type\":\"RANDOM_STRING\",\"attributes\":{\"characters\":\"abcdefghijklmnopqrstuvwxyz\",\"maxChars\":\"10\",\"minChars\":\"10\"},\"_keyhandler\":{}},\"email\":{\"__type\":\"RANDOM_STRING\",\"attributes\":{\"characters\":\"abcdefghijklmnopqrstuvwxyz\",\"maxChars\":\"10\",\"minChars\":\"10\"},\"_keyhandler\":{}}}}",
+          "table": "_v83dlrf8m"
+        },
+        {
+          "id": 2,
+          "name": "Request",
+          "repeat": 1,
+          "successors": [
+            3
+          ],
+          "type": "REQUEST",
+          "x": 70,
+          "y": 507.3000030517578,
+          "addr": "http://10.0.2.15:4080/signup",
+          "verb": "GET",
+          "assertions": [],
+          "receiveCookies": {
+            "JSESSIONID": "JSESSIONID"
+          },
+          "sendCookies": {},
+          "tokenNames": {
+            "_csrf": "_csrf"
+          }
+        },
+        {
+          "id": 3,
+          "name": "Request",
+          "repeat": 1,
+          "successors": [
+            4
+          ],
+          "type": "REQUEST",
+          "x": 571,
+          "y": 150.3000030517578,
+          "addr": "http://10.0.2.15:4080/signup",
+          "verb": "POST",
+          "requestParams": [
+            "email",
+            "password",
+            " _csrf"
+          ],
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "Can signup",
+              "responseCode": 200
+            }
+          ],
+          "receiveCookies": {
+            "JSESSIONID": "JSESSIONID"
+          },
+          "sendCookies": {
+            "JSESSIONID": "JSESSIONID"
+          },
+          "tokenNames": {}
+        },
+        {
+          "id": 4,
+          "name": "Request",
+          "repeat": 1,
+          "successors": [
+            5
+          ],
+          "type": "REQUEST",
+          "x": 663.5739041718698,
+          "y": 88.60537327492024,
+          "addr": "http://10.0.2.15:4080/login",
+          "verb": "GET",
+          "assertions": [],
+          "receiveCookies": {
+            "JSESSIONID": "JSESSIONID"
+          },
+          "sendCookies": {
+            "JSESSIONID": "JSESSIONID"
+          },
+          "tokenNames": {}
+        },
+        {
+          "id": 5,
+          "name": "Request",
+          "repeat": 1,
+          "successors": [],
+          "type": "REQUEST",
+          "x": 849.1816914463237,
+          "y": 265.57878258166284,
+          "addr": "http://10.0.2.15:4080/login",
+          "verb": "POST",
+          "requestParams": [
+            "email",
+            "password",
+            " _csrf"
+          ],
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "Can login",
+              "responseCode": 200
+            }
+          ],
+          "receiveCookies": {
+            "JSESSIONID": "JSESSIONID"
+          },
+          "sendCookies": {},
+          "tokenNames": {}
+        }
+      ],
+      "name": "Story #0",
+      "scalePercentage": 1
+    }
+  ],
+  "existingXMLs": {
+    "uploadedFiles": {},
+    "lastError": "",
+    "allTables": []
+  }
+}

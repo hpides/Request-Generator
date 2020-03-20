@@ -199,4 +199,9 @@ class DeserializeAtomTest {
             Matchers.instanceOf(Start::class.java)
         )
     }
+    @Test
+    fun canDeseserializeTokens(){
+        val test = deserialize(Utils().getRequestExampleWithTokens())
+        MatcherAssert.assertThat((test.getStories()[0].getAtoms()[2] as Request).tokenNames, Matchers.hasEntry(Matchers.equalTo("_csrf"), Matchers.equalTo("_csrf")))
+    }
 }
