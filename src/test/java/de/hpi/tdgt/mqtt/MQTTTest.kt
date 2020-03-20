@@ -38,6 +38,7 @@ import java.lang.Thread.sleep
 import java.net.URL
 import java.util.*
 import java.util.concurrent.ExecutionException
+import kotlin.collections.HashMap
 
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(classes = [WebApplication::class], webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -857,6 +858,29 @@ class MQTTTest : RequestHandlingFramework() {
         }
         MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("XPATH failed: \"Bjärk!\"")))
         MatcherAssert.assertThat(message.actuals.get("XPATH failed: \"Bjärk!\"")!!.value, Matchers.hasItem(Matchers.containsString("Exception")))
+    }
+
+    @org.junit.jupiter.api.Test
+    public fun StringReplacementWithUnescapedRelacementThrowsError(){
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
+        val requestAtom = Request()
+        requestAtom.name = "request"
+        requestAtom.addr = "http://localhost:9000\$part1\$part2"
+        val params = HashMap<String, String>()
+        params.put("part1","/")
+        requestAtom.predecessorCount = 0
+        requestAtom.repeat = 1
+        runBlocking { requestAtom.run(params) }
+        sleep(2000)
+        val actuals = readAssertion(messages)
+        var message: MqttAssertionMessage? = null
+        for (assertion in actuals) {
+            if (!assertion.actuals.isEmpty()) {
+                message = assertion
+            }
+        }
+        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("Request request: Could not replace variable(s)  part2")))
+        MatcherAssert.assertThat(message.actuals.get("Request request: Could not replace variable(s)  part2")!!.value, Matchers.hasItem(Matchers.containsString("http://localhost:9000/\$part2")))
     }
 
 
