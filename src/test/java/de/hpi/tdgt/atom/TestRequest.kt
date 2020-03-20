@@ -361,4 +361,19 @@ class TestRequest : RequestHandlingFramework() {
         MatcherAssert.assertThat(requestAtom!!.knownParams,  Matchers.hasEntry(Matchers.equalTo("token"), Matchers.equalTo("90730144-6e10-4f94-8f6a-8de3353f40f5")))
     }
 
+    @Test
+    fun canCloneTokens(){
+        val test = deserialize(Utils().getRequestExampleWithTokens())
+        MatcherAssert.assertThat((test.getStories()[0].getAtoms()[2].clone() as Request).tokenNames, Matchers.hasEntry(Matchers.equalTo("_csrf"), Matchers.equalTo("_csrf")))
+    }
+    @Test
+    fun canCloneReceiveCookies(){
+        val test = deserialize(Utils().getRequestExampleWithTokens())
+        MatcherAssert.assertThat((test.getStories()[0].getAtoms()[2].clone() as Request).receiveCookies, Matchers.hasEntry(Matchers.equalTo("JSESSIONID"), Matchers.equalTo("JSESSIONID")))
+    }
+    @Test
+    fun canCloneSendCookies(){
+        val test = deserialize(Utils().getRequestExampleWithTokens())
+        MatcherAssert.assertThat((test.getStories()[0].getAtoms()[3].clone() as Request).sendCookies, Matchers.hasEntry(Matchers.equalTo("JSESSIONID"), Matchers.equalTo("JSESSIONID")))
+    }
 }
