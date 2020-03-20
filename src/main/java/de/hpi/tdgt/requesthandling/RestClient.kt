@@ -7,10 +7,7 @@ import io.netty.handler.codec.http.cookie.Cookie
 import io.netty.handler.codec.http.cookie.DefaultCookie
 import kotlinx.coroutines.future.await
 import org.apache.logging.log4j.LogManager
-import org.asynchttpclient.DefaultAsyncHttpClientConfig
-import org.asynchttpclient.Dsl
-import org.asynchttpclient.ListenableFuture
-import org.asynchttpclient.Response
+import org.asynchttpclient.*
 import java.io.IOException
 import java.net.MalformedURLException
 import java.net.URL
@@ -18,6 +15,7 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.stream.Collectors
 
 class RestClient {
     @Throws(IOException::class)
@@ -31,6 +29,8 @@ class RestClient {
     ): RestResult? {
         val request = Request()
         request.url = url
+        request.receiveCookies = receiveCookies
+        request.sendCookies = sendCookies
         request.receiveCookies = receiveCookies
         request.sendCookies = sendCookies
         request.params = getParams
@@ -51,6 +51,8 @@ class RestClient {
     ): RestResult? {
         val request = Request()
         request.url = url
+        request.receiveCookies = receiveCookies
+        request.sendCookies = sendCookies
         request.method = HttpConstants.GET
         request.body = body
         request.isForm = false
@@ -70,6 +72,8 @@ class RestClient {
     ): RestResult? {
         val request = Request()
         request.url = url
+        request.receiveCookies = receiveCookies
+        request.sendCookies = sendCookies
         request.params = getParams
         request.method = HttpConstants.POST
         request.isForm = true
@@ -83,6 +87,8 @@ class RestClient {
         sendCookies: Map<String, String>, body: String?): RestResult? {
         val request = Request()
         request.url = url
+        request.receiveCookies = receiveCookies
+        request.sendCookies = sendCookies
         request.method = HttpConstants.POST
         request.isForm = false
         request.body = body
@@ -102,6 +108,8 @@ class RestClient {
     ): RestResult? {
         val request = Request()
         request.url = url
+        request.receiveCookies = receiveCookies
+        request.sendCookies = sendCookies
         request.params = getParams
         request.method = HttpConstants.PUT
         request.isForm = true
@@ -115,6 +123,8 @@ class RestClient {
         sendCookies: Map<String, String>, body: String?): RestResult? {
         val request = Request()
         request.url = url
+        request.receiveCookies = receiveCookies
+        request.sendCookies = sendCookies
         request.method = HttpConstants.PUT
         request.isForm = false
         request.body = body
@@ -136,6 +146,8 @@ class RestClient {
     ): RestResult? {
         val request = Request()
         request.url = url
+        request.receiveCookies = receiveCookies
+        request.sendCookies = sendCookies
         request.params = getParams
         request.method = HttpConstants.GET
         request.username = username
@@ -158,6 +170,8 @@ class RestClient {
     ): RestResult? {
         val request = Request()
         request.url = url
+        request.receiveCookies = receiveCookies
+        request.sendCookies = sendCookies
         request.method = HttpConstants.GET
         request.body = body
         request.isForm = false
@@ -181,6 +195,8 @@ class RestClient {
     ): RestResult? {
         val request = Request()
         request.url = url
+        request.receiveCookies = receiveCookies
+        request.sendCookies = sendCookies
         request.params = getParams
         request.method = HttpConstants.POST
         request.isForm = true
@@ -204,6 +220,8 @@ class RestClient {
     ): RestResult? {
         val request = Request()
         request.url = url
+        request.receiveCookies = receiveCookies
+        request.sendCookies = sendCookies
         request.method = HttpConstants.POST
         request.isForm = false
         request.body = body
@@ -227,6 +245,8 @@ class RestClient {
     ): RestResult? {
         val request = Request()
         request.url = url
+        request.receiveCookies = receiveCookies
+        request.sendCookies = sendCookies
         request.params = getParams
         request.method = HttpConstants.PUT
         request.isForm = true
@@ -250,6 +270,8 @@ class RestClient {
     ): RestResult? {
         val request = Request()
         request.url = url
+        request.receiveCookies = receiveCookies
+        request.sendCookies = sendCookies
         request.method = HttpConstants.PUT
         request.isForm = false
         request.body = body
@@ -271,6 +293,8 @@ class RestClient {
     ): RestResult? {
         val request = Request()
         request.url = url
+        request.receiveCookies = receiveCookies
+        request.sendCookies = sendCookies
         request.params = getParams
         request.method = HttpConstants.DELETE
         request.testId = testId
@@ -291,6 +315,8 @@ class RestClient {
     ): RestResult? {
         val request = Request()
         request.url = url
+        request.receiveCookies = receiveCookies
+        request.sendCookies = sendCookies
         request.params = getParams
         request.method = HttpConstants.DELETE
         request.username = username
@@ -325,8 +351,8 @@ class RestClient {
         //set POST Body to contain formencoded data
         if (request.isForm && (request.method == HttpConstants.POST || request.method == HttpConstants.PUT)) {
             preparedRequest.setHeader("Content-Type", HttpConstants.APPLICATION_X_WWW_FORM_URLENCODED)
-            val body = mapToURLEncodedString(request.params).toString()
-            preparedRequest.setBody(body)
+            val body = request.params?.entries?.stream()?.map { entry -> Param(entry.key, entry.value) }?.collect(Collectors.toList())
+            preparedRequest.setFormParams(body)
         }
         //set POST body to what was passed
         if (!request.isForm && (request.method == HttpConstants.POST || request.method == HttpConstants.PUT || request.method == HttpConstants.GET) && request.body != null) {
