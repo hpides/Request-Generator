@@ -376,5 +376,4 @@ class TestRequest : RequestHandlingFramework() {
         val test = deserialize(Utils().getRequestExampleWithTokens())
         MatcherAssert.assertThat((test.getStories()[0].getAtoms()[3].clone() as Request).sendCookies, Matchers.hasEntry(Matchers.equalTo("JSESSIONID"), Matchers.equalTo("JSESSIONID")))
     }
-
 }
