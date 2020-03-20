@@ -140,7 +140,7 @@ abstract class Atom : Cloneable {
     private suspend fun runSuccessor(successorLink: Atom) {
         try {
             val clonedMap: HashMap<String, String> =
-                    HashMap<String, String>(this@Atom.knownParams)
+                    HashMap(this@Atom.knownParams)
             try {
                 successorLink.run(clonedMap)
             } catch (e: ExecutionException) {

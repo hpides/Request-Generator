@@ -90,13 +90,14 @@ class Request : Atom() {
         val xpath: XPath = XPathFactory.newInstance().newXPath()
         for(entry in xpaths) {
             var str:String;
+            val expression = replaceWithKnownParams(entry.key,true);
             try {
                 str = xpath.evaluate(
-                        entry.key,
+                        expression,
                         doc, XPathConstants.STRING
                 ) as String
             } catch (e:Exception){
-                reportFailureToUser("XPATH failed: \"${entry.key}\"", e.message)
+                reportFailureToUser("XPATH failed: \"${expression}\"", e.message)
                 continue
             }
             knownParams.put(entry.value, str)
@@ -148,7 +149,13 @@ class Request : Atom() {
         }
     }
 
+    /**
+     * During cloning, replacement will not work. This Flag disables it so the user does not get confised with warning messages.
+     */
+    private var cloning = false;
+
     public override fun performClone(): Atom {
+        cloning = true;
         val ret = Request()
         ret.addr = addr
         ret.verb = verb
@@ -164,6 +171,7 @@ class Request : Atom() {
         ret.xpaths = xpaths
         //also stateless
         ret.assertions = assertions
+        cloning = false;
         return ret
     }
 
@@ -299,7 +307,8 @@ class Request : Atom() {
         }
         //should show a warning
         //need to consider surrounding characters in both direction, else it does not match...
-        if (Pattern.matches(".*"+"\\"+"\$"+"[a-zA-Z0-9]*.*", current)) {
+        //method might be called during cloning (usage in setters). In this case, we do not want it to report failed assertions
+        if (Pattern.matches(".*"+"\\"+"\$"+"[a-zA-Z0-9]*.*", current) && !cloning) {
             val p = Pattern.compile("\\$[a-zA-Z0-9]*")
             val m = p.matcher(current)
             val allUncompiled = HashSet<String>()

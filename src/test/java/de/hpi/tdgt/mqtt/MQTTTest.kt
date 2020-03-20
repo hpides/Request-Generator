@@ -883,6 +883,26 @@ class MQTTTest : RequestHandlingFramework() {
         MatcherAssert.assertThat(message.actuals.get("Request request: Could not replace variable(s)  part2")!!.value, Matchers.hasItem(Matchers.containsString("http://localhost:9000/\$part2")))
     }
 
+    @org.junit.jupiter.api.Test
+    public fun noAssertionErrorForReplacementIsThrownDuringClone(){
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
+        val requestAtom = Request()
+        requestAtom.name = "request"
+        requestAtom.addr = "http://localhost:9000\$part1\$part2"
+        requestAtom.predecessorCount = 0
+        requestAtom.repeat = 1
+        requestAtom.clone()
+        sleep(2000)
+        val actuals = readAssertion(messages)
+        var message: MqttAssertionMessage? = null
+        for (assertion in actuals) {
+            if (!assertion.actuals.isEmpty()) {
+                message = assertion
+            }
+        }
+        MatcherAssert.assertThat(message, Matchers.nullValue())
+    }
+
 
     @org.junit.jupiter.api.Test
     @Throws(
