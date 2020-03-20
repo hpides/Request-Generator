@@ -362,6 +362,34 @@ class TestRequest : RequestHandlingFramework() {
     }
 
     @Test
+    public fun parsesHTMLWithCustomXPATH(){
+        val xpaths = HashMap<String, String>()
+        xpaths.put("//input[@id='email']/@placeholder","user")
+        requestAtom!!.xpaths = xpaths
+        requestAtom!!.extractCSRFTokens(String(Utils().signupHtml.readAllBytes()))
+        MatcherAssert.assertThat(requestAtom!!.knownParams,  Matchers.hasEntry(Matchers.equalTo("user"), Matchers.equalTo("username@jackrutorial.com")))
+    }
+
+
+    @Test
+    public fun parsesHTMLWithCustomXPATHFromEndpoint(){
+        val xpaths = HashMap<String, String>()
+        xpaths.put("//input[@id='email']/@placeholder","user")
+        requestAtom!!.xpaths = xpaths
+        val story = UserStory()
+        story.name = "story"
+        val test = de.hpi.tdgt.test.Test()
+        story.parent = test
+        requestAtom!!.verb = "GET"
+        requestAtom!!.addr = "http://localhost:9000/html"
+        requestAtom!!.setSuccessors(IntArray(0))
+        requestAtom!!.predecessorCount = 0
+        requestAtom!!.repeat = 1
+        requestAtom!!.setParent(story)
+        runBlocking {requestAtom!!.run(HashMap())}
+        MatcherAssert.assertThat(requestAtom!!.knownParams,  Matchers.hasEntry(Matchers.equalTo("user"), Matchers.equalTo("username@jackrutorial.com")))    }
+
+    @Test
     fun canCloneTokens(){
         val test = deserialize(Utils().getRequestExampleWithTokens())
         MatcherAssert.assertThat((test.getStories()[0].getAtoms()[2].clone() as Request).tokenNames, Matchers.hasEntry(Matchers.equalTo("_csrf"), Matchers.equalTo("_csrf")))
@@ -375,5 +403,13 @@ class TestRequest : RequestHandlingFramework() {
     fun canCloneSendCookies(){
         val test = deserialize(Utils().getRequestExampleWithTokens())
         MatcherAssert.assertThat((test.getStories()[0].getAtoms()[3].clone() as Request).sendCookies, Matchers.hasEntry(Matchers.equalTo("JSESSIONID"), Matchers.equalTo("JSESSIONID")))
+    }
+
+    @Test
+    fun canCloneXPaths(){
+        val xpaths = HashMap<String, String>()
+        xpaths.put("//input[@id='email']/@placeholder","user")
+        requestAtom!!.xpaths = xpaths
+        MatcherAssert.assertThat((requestAtom!!.clone() as Request).xpaths, Matchers.equalToObject(xpaths))
     }
 }

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import de.hpi.tdgt.test.ThreadRecycler
 import de.hpi.tdgt.test.story.UserStory
+import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.*
 import org.apache.logging.log4j.LogManager
@@ -52,6 +53,14 @@ abstract class Atom : Cloneable {
     private var parent: UserStory? = null
 
     abstract suspend fun perform()
+
+    protected fun reportFailureToUser(assertionName: String, message: String?) {
+        var testId: Long = 0
+        if (getParent() != null && getParent()!!.parent != null) {
+            testId = getParent()!!.parent!!.testId
+        }
+        AssertionStorage.instance.addFailure(assertionName, message!!, testId)
+    }
 
     @Throws(InterruptedException::class, ExecutionException::class)
     suspend fun run(dataMap: Map<String, String>?) {

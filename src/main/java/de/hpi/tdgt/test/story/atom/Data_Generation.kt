@@ -97,17 +97,9 @@ class Data_Generation : Atom() {
             } catch (e: FileNotFoundException) {
                 log.error(e)
                 val message = e.message
-                reportFailureToUser("Data Generation \"" + name + "\" loads data", message)
+                reportFailureToUser("Data Generation \"$name\" loads data", message)
             }
         }
-    }
-
-    private fun reportFailureToUser(assertionName: String, message: String?) {
-        var testId: Long = 0
-        if (getParent() != null && getParent()!!.parent != null) {
-            testId = getParent()!!.parent!!.testId
-        }
-        AssertionStorage.instance.addFailure(assertionName, message!!, testId)
     }
 
     private fun initScanner() { //only one Thread is allowed to add a scanner at the same time; only need to synchronise scanner creation and retrieval

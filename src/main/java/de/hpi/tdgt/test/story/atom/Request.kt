@@ -65,32 +65,53 @@ class Request : Atom() {
      */
     var tokenNames: Map<String, String> = HashMap()
 
+    /**
+     * Left side is a valid XPATH expression, right side is the name under which the result shall be placed in a token
+     */
+    var xpaths: Map<String, String> = HashMap()
+
     var basicAuth: BasicAuth? = null
     var assertions = arrayOfNulls<Assertion>(0)
     var implicitNotFailedAssertion: Assertion? = null
 
 
-    /**
-     * Extracts all hidden inputs whose name is one of the keys in tokenNames and stores their values in knownParams
-     */
-    public fun extractCSRFTokens(returnedPage: String){
-        if(tokenNames.isEmpty()){
-            return
-        }
+    fun parseXPaths(returnedPage: String, xpaths:Map<String,String>){
         //turns HTML into valid xml
         val tagNode = HtmlCleaner().clean(returnedPage)
         val doc = DomSerializer(
-            CleanerProperties()
+                CleanerProperties()
         ).createDOM(tagNode)
         val xpath: XPath = XPathFactory.newInstance().newXPath()
-        for(entry in tokenNames.entries) {
-
-            val str = xpath.evaluate(
-                "//input[@type = 'hidden'][@name = '${entry.key}']/@value",
-                doc, XPathConstants.STRING
-            ) as String
+        for(entry in xpaths) {
+            var str:String;
+            try {
+                str = xpath.evaluate(
+                        entry.key,
+                        doc, XPathConstants.STRING
+                ) as String
+            } catch (e:Exception){
+                reportFailureToUser("XPATH failed: \"${entry.key}\"", e.message)
+                continue
+            }
             knownParams.put(entry.value, str)
         }
+    }
+
+    /**
+     * Extracts all hidden inputs whose name is one of the keys in tokenNames and stores their values in knownParams
+     */
+    fun extractCSRFTokens(returnedPage: String){
+        if(tokenNames.isEmpty()&& xpaths.isEmpty()){
+            return
+        }
+        val allXPaths = HashMap<String, String>()
+        allXPaths.putAll(xpaths)
+        for(entry in tokenNames.entries) {
+
+            val expression = "//input[@type = 'hidden'][@name = '${entry.key}']/@value"
+            allXPaths.put(expression, entry.value)
+        }
+        parseXPaths(returnedPage, allXPaths)
     }
 
     private fun prepareCookies():Map<String, String>{
@@ -134,6 +155,7 @@ class Request : Atom() {
         ret.sendCookies = sendCookies
         ret.receiveCookies = receiveCookies
         ret.tokenNames = tokenNames
+        ret.xpaths = xpaths
         //also stateless
         ret.assertions = assertions
         return ret

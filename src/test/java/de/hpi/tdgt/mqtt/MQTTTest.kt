@@ -731,7 +731,6 @@ class MQTTTest : RequestHandlingFramework() {
         generation.name = "generation"
         generation.repeat = 1
         runBlocking{generation.run(HashMap())}
-        val messageStart = "testStart"
         Thread.sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
@@ -839,6 +838,27 @@ class MQTTTest : RequestHandlingFramework() {
             Matchers.equalTo(Utils().noopJson)
         )
     }
+
+    @org.junit.jupiter.api.Test
+    public fun parsesHTMLWithCustomXPATHThrowsAssertionError(){
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
+        val requestAtom = Request()
+        val xpaths = HashMap<String, String>()
+        xpaths.put("Bjärk!","user")
+        requestAtom.xpaths = xpaths
+        requestAtom.extractCSRFTokens(String(Utils().signupHtml.readAllBytes()))
+        sleep(2000)
+        val actuals = readAssertion(messages)
+        var message: MqttAssertionMessage? = null
+        for (assertion in actuals) {
+            if (!assertion.actuals.isEmpty()) {
+                message = assertion
+            }
+        }
+        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("XPATH failed: \"Bjärk!\"")))
+        MatcherAssert.assertThat(message.actuals.get("XPATH failed: \"Bjärk!\"")!!.value, Matchers.hasItem(Matchers.containsString("Exception")))
+    }
+
 
     @org.junit.jupiter.api.Test
     @Throws(
