@@ -28,6 +28,12 @@ import kotlin.collections.HashMap
 class Request : Atom() {
     var verb: String? = null
     var addr: String? = null
+        get() {
+            if(field != null) {
+                return replaceWithKnownParams(field!!,false)
+            }
+            return field
+        }
     /**
      * Expected usage: values of this arrays are keys. Use them as keys in a HTTP
      * Form in a Request Body, get values for these keys from passed dict.
@@ -281,14 +287,20 @@ class Request : Atom() {
         }
     }
 
-    private fun fillEvaluationsInJson(): String? {
-        var current = requestJSONObject
+    private fun replaceWithKnownParams(toReplace: String, enquoteInsertedValue:Boolean): String? {
+        var current = toReplace
         for ((key, value) in knownParams) {
-            current = current!!.replace("$" + key, '\"' + value + '\"')
+            if(enquoteInsertedValue) {
+                current = current.replace("$$key", '\"' + value + '\"')
+            }
+            else{
+                current = current.replace("$$key", value)
+            }
         }
         //should show a warning
-        if (Pattern.matches("\\$[a-zA-Z]*", current)) {
-            val p = Pattern.compile("\\$[a-zA-Z]*")
+        //need to consider surrounding characters in both direction, else it does not match...
+        if (Pattern.matches(".*"+"\\"+"\$"+"[a-zA-Z0-9]*.*", current)) {
+            val p = Pattern.compile("\\$[a-zA-Z0-9]*")
             val m = p.matcher(current)
             val allUncompiled = HashSet<String>()
             while (m.find()) {
@@ -301,9 +313,11 @@ class Request : Atom() {
                     builder.append(',')
                 }
                 first = false
-                builder.append(' ').append(unmatched)
+                //we want to show the "pure" variable names
+                builder.append(' ').append(unmatched.replace("\$",""))
             }
             log.warn("Request $name: Could not replace variable(s) $builder")
+            reportFailureToUser("Request $name: Could not replace variable(s) $builder", current)
         }
         return current
     }
@@ -311,7 +325,7 @@ class Request : Atom() {
     private suspend fun handlePostWithBody() {
         var jsonParams: String? = ""
         if (requestJSONObject != null) {
-            jsonParams = fillEvaluationsInJson()
+            jsonParams = replaceWithKnownParams(requestJSONObject!!, true)
         }
         if (basicAuth == null) {
             try {

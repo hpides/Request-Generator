@@ -412,4 +412,30 @@ class TestRequest : RequestHandlingFramework() {
         requestAtom!!.xpaths = xpaths
         MatcherAssert.assertThat((requestAtom!!.clone() as Request).xpaths, Matchers.equalToObject(xpaths))
     }
+
+    @Test
+    @Throws(InterruptedException::class, ExecutionException::class)
+    fun canReplaceInAdress() {
+        val params = HashMap<String, String>()
+        params["key"] = "wrong"
+        params["value"] = "wrong"
+        params["endpoint"] = "/auth"
+        getWithAuth!!.addr = "http://localhost:9000\$endpoint"
+        runBlocking{getWithAuth!!.run(params)}
+        MatcherAssert.assertThat(authHandler.totalRequests, Matchers.greaterThan(0))
+    }
+
+    @Test
+    @Throws(InterruptedException::class, ExecutionException::class)
+    fun canReplaceInAdressWithoutSeparator() {
+        val params = HashMap<String, String>()
+        params["key"] = "wrong"
+        params["value"] = "wrong"
+        params["endpoint1"] = "/"
+        params["endpoint2"] = "auth"
+        getWithAuth!!.addr = "http://localhost:9000\$endpoint1\$endpoint2"
+        runBlocking{getWithAuth!!.run(params)}
+        MatcherAssert.assertThat(authHandler.totalRequests, Matchers.greaterThan(0))
+    }
+
 }
