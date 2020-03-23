@@ -13,6 +13,7 @@ import de.hpi.tdgt.test.story.atom.Request
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.test.story.atom.assertion.ContentType
 import de.hpi.tdgt.test.story.atom.assertion.MqttAssertionMessage
+import de.hpi.tdgt.test.story.atom.assertion.XPATHAssertion
 import de.hpi.tdgt.test.time_measurement.MqttTimeMessage
 import de.hpi.tdgt.test.time_measurement.TimeStorage
 import de.hpi.tdgt.util.Pair
@@ -922,6 +923,96 @@ class MQTTTest : RequestHandlingFramework() {
             val hasTestEnd = hasMessageStartingWith(messages, messageEnd)
             MatcherAssert.assertThat("control topic should have received a \"testEnd\"!", hasTestEnd)
         }
+    }
+
+    @org.junit.jupiter.api.Test
+    public fun assertionErrorIsThrownIfXPATHIsNotFound(){
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
+        val test = de.hpi.tdgt.test.Test()
+        val story = UserStory()
+        story.parent = test
+        val requestAtom = Request()
+        requestAtom.setParent(story)
+        requestAtom.name = "request"
+        requestAtom.verb = "GET"
+        requestAtom.addr = "http://localhost:9000/html"
+        requestAtom.predecessorCount = 0
+        requestAtom.repeat = 1
+        val xpathAssertion= XPATHAssertion()
+        val xpath = "//h2[text() = 'SomethingThatIsNOTHere']"
+        xpathAssertion.xPath = xpath
+        xpathAssertion.name = "Has some text"
+        requestAtom.assertions = requestAtom.assertions + arrayOf(xpathAssertion)
+        runBlocking {requestAtom.run(HashMap())}
+        sleep(2000)
+        val actuals = readAssertion(messages)
+        var message: MqttAssertionMessage? = null
+        for (assertion in actuals) {
+            if (!assertion.actuals.isEmpty()) {
+                message = assertion
+            }
+        }
+        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("Has some text")))
+        MatcherAssert.assertThat(message.actuals.get("Has some text")!!.value, Matchers.hasItem(Matchers.equalTo("xpath \"${xpath}\" returned empty result")))
+    }
+
+    @org.junit.jupiter.api.Test
+    public fun assertionErrorIsThrownIfXPATHIsInvalid(){
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
+        val test = de.hpi.tdgt.test.Test()
+        val story = UserStory()
+        story.parent = test
+        val requestAtom = Request()
+        requestAtom.setParent(story)
+        requestAtom.name = "request"
+        requestAtom.verb = "GET"
+        requestAtom.addr = "http://localhost:9000/html"
+        requestAtom.predecessorCount = 0
+        requestAtom.repeat = 1
+        val xpathAssertion= XPATHAssertion()
+        val xpath = "Bjärk!']"
+        xpathAssertion.xPath = xpath
+        xpathAssertion.name = "Has some text"
+        requestAtom.assertions = requestAtom.assertions + arrayOf(xpathAssertion)
+        runBlocking {requestAtom.run(HashMap())}
+        sleep(2000)
+        val actuals = readAssertion(messages)
+        var message: MqttAssertionMessage? = null
+        for (assertion in actuals) {
+            if (!assertion.actuals.isEmpty()) {
+                message = assertion
+            }
+        }
+        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("Has some text")))
+        MatcherAssert.assertThat(message.actuals.get("Has some text")!!.value, Matchers.hasItem(Matchers.containsString("xpath \"${xpath}\" is invalid")))
+    }
+
+    @org.junit.jupiter.api.Test
+    public fun noAssertionErrorIsThrownIfXPATHIsFound(){
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
+        val test = de.hpi.tdgt.test.Test()
+        val story = UserStory()
+        story.parent = test
+        val requestAtom = Request()
+        requestAtom.setParent(story)
+        requestAtom.name = "request"
+        requestAtom.verb = "GET"
+        requestAtom.addr = "http://localhost:9000/html"
+        requestAtom.predecessorCount = 0
+        requestAtom.repeat = 1
+        val xpathAssertion= XPATHAssertion()
+        xpathAssertion.xPath = "//h2[text() = 'Register New User']"
+        requestAtom.assertions = requestAtom.assertions + arrayOf(xpathAssertion)
+        runBlocking {requestAtom.run(HashMap())}
+        sleep(2000)
+        val actuals = readAssertion(messages)
+        var message: MqttAssertionMessage? = null
+        for (assertion in actuals) {
+            if (!assertion.actuals.isEmpty()) {
+                message = assertion
+            }
+        }
+        MatcherAssert.assertThat(message, Matchers.nullValue())
     }
 
     private fun findMessageStartingWith(
