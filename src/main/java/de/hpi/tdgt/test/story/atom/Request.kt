@@ -543,8 +543,8 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.getFromEndpoint(
-                        getParent()!!.name,
-                        getParent()!!.parent!!.testId,
+                        if(getParent() != null){getParent()!!.name}else{""}, 
+                        if(getParent() != null && getParent()!!.parent != null){getParent()!!.parent!!.testId}else{0},
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
                             prepareCookies(),
@@ -592,8 +592,8 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.getBodyFromEndpoint(
-                        getParent()!!.name,
-                        getParent()!!.parent!!.testId,
+                        if(getParent() != null){getParent()!!.name}else{""}, 
+                        if(getParent() != null && getParent()!!.parent != null){getParent()!!.parent!!.testId}else{0},
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
                             prepareCookies(),
