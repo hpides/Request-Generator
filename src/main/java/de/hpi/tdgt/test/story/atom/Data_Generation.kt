@@ -9,10 +9,14 @@ import java.io.FileNotFoundException
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
 import java.util.*
+import kotlin.collections.HashMap
 
 class Data_Generation : Atom() {
     var data: Array<String> = arrayOf()
     var table: String? = null
+
+    var staticValues: Map<String,String> = HashMap()
+
     //should not be serialized or accessible from other classes
     @JsonIgnore
     private var stream: InputStream? = null
@@ -22,6 +26,7 @@ class Data_Generation : Atom() {
 
     override suspend fun perform() {
         val generatedData = readBuffer()
+        knownParams.putAll(staticValues)
         knownParams.putAll(generatedData)
     }
 
