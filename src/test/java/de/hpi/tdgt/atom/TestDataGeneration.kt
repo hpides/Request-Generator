@@ -8,7 +8,9 @@ import kotlinx.coroutines.runBlocking
 import org.apache.commons.io.IOUtils
 import org.apache.logging.log4j.LogManager
 import org.hamcrest.MatcherAssert
+import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
+import org.hamcrest.Matchers.equalTo
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -267,6 +269,24 @@ class TestDataGeneration {
         runBlocking {
             dataGeneration.run(HashMap())
         }
+    }
+
+    @Test
+    @Throws(InterruptedException::class, ExecutionException::class)
+    fun dataGenerationCanGenerateStaticValues() {
+        val dataGeneration = Data_Generation()
+        dataGeneration.data = arrayOf()
+        val valuesToGenerate:MutableMap<String,String> = HashMap<String, String>()
+        valuesToGenerate["val1"] = "abc"
+        valuesToGenerate["val2"] = "def"
+        dataGeneration.staticValues = valuesToGenerate
+        dataGeneration.table = ""
+        dataGeneration.predecessorCount = 0
+        dataGeneration.repeat = 1
+        runBlocking {
+            dataGeneration.run(HashMap())
+        }
+        assertThat(dataGeneration.knownParams, equalTo(valuesToGenerate))
     }
 
     companion object {
