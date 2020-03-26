@@ -387,7 +387,28 @@ class TestRequest : RequestHandlingFramework() {
         requestAtom!!.repeat = 1
         requestAtom!!.setParent(story)
         runBlocking {requestAtom!!.run(HashMap())}
-        MatcherAssert.assertThat(requestAtom!!.knownParams,  Matchers.hasEntry(Matchers.equalTo("user"), Matchers.equalTo("username@jackrutorial.com")))    }
+        MatcherAssert.assertThat(requestAtom!!.knownParams,  Matchers.hasEntry(Matchers.equalTo("user"), Matchers.equalTo("username@jackrutorial.com")))
+    }
+    @Test
+    public fun parsesHTMLWithCustomXPATHEnquotedFromEndpoint(){
+        val xpaths = HashMap<String, String>()
+        xpaths.put("//ul[li=\$val]//a/@href","abc")
+        requestAtom!!.xpaths = xpaths
+        val story = UserStory()
+        story.name = "story"
+        val test = de.hpi.tdgt.test.Test()
+        story.parent = test
+        requestAtom!!.verb = "GET"
+        requestAtom!!.addr = "http://localhost:9000/html"
+        requestAtom!!.setSuccessors(IntArray(0))
+        requestAtom!!.predecessorCount = 0
+        requestAtom!!.repeat = 1
+        requestAtom!!.setParent(story)
+        var params = HashMap<String, String>()
+        params.put("val","I've not done any javascript at all and I' trying to sum up values from the select class. can get both of them displayed, but not summed up. Could anyone explain why I'm getting the \"[object HTMLParagraphElement]\" as the answer? Thank you")
+        runBlocking {requestAtom!!.run(params)}
+        MatcherAssert.assertThat(requestAtom!!.knownParams,  Matchers.hasEntry(Matchers.equalTo("abc"), Matchers.equalTo("/posts/30/delete")))
+    }
 
     @Test
     fun canCloneTokens(){
