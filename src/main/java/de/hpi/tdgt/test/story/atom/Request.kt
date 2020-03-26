@@ -81,6 +81,7 @@ class Request : Atom() {
     var implicitNotFailedAssertion: Assertion? = null
 
 
+
     fun parseXPaths(returnedPage: String, xpaths:Map<String,String>){
         //turns HTML into valid xml
         val tagNode = HtmlCleaner().clean(returnedPage)
@@ -90,7 +91,8 @@ class Request : Atom() {
         val xpath: XPath = XPathFactory.newInstance().newXPath()
         for(entry in xpaths) {
             var str:String;
-            val expression = replaceWithKnownParams(entry.key,true);
+            val expression = replaceWithKnownParams(entry.key, enquoteInsertedValue = true, sanitizeXPATH = true)
+            log.info(expression)
             try {
                 str = xpath.evaluate(
                         expression,
@@ -287,22 +289,27 @@ class Request : Atom() {
         //in some tests, this might not exist
         if (getParent() != null && getParent()!!.parent != null) { //check assertions after request
             for (assertion in assertions) {
-                assertion!!.check(result, getParent()!!.parent!!.testId)
+                assertion!!.check(result, getParent()!!.parent!!.testId, this)
             }
-            implicitNotFailedAssertion!!.check(result, getParent()!!.parent!!.testId)
+            implicitNotFailedAssertion!!.check(result, getParent()!!.parent!!.testId, this)
         } else {
             log.error("Can not check assertions because I do not have a parent or grandparent: $name")
         }
     }
 
-    private fun replaceWithKnownParams(toReplace: String, enquoteInsertedValue:Boolean): String? {
+    public fun replaceWithKnownParams(toReplace: String, enquoteInsertedValue:Boolean,sanitizeXPATH:Boolean = false): String? {
         var current = toReplace
         for ((key, value) in knownParams) {
-            if(enquoteInsertedValue) {
-                current = current.replace("$$key", '\"' + value + '\"')
+            var useValue=value
+            if(sanitizeXPATH){
+                useValue = sanitizeXPATH(value)
+            }
+            //sanitizeXPATH takes care of quotes
+        if(enquoteInsertedValue && !sanitizeXPATH) {
+                current = current.replace("$$key", '\"' + useValue + '\"')
             }
             else{
-                current = current.replace("$$key", value)
+                current = current.replace("$$key", useValue)
             }
         }
         //should show a warning
@@ -698,5 +705,22 @@ class Request : Atom() {
         private val rc = RestClient()
         @JsonIgnore
         private val om = ObjectMapper()
+        @JvmStatic
+        public fun sanitizeXPATH(expression:String):String{
+            //HTMLCleaner does the same with the HTML input
+            val expressionToUse = expression.replace("\"","&quot;")
+            val builder = StringBuilder("concat(\"")
+            //still need to replace single quotes
+            for(character in expressionToUse.toCharArray()){
+                if (character == '\''){
+                    builder.append("\",\"'\",\"")
+                }
+                else {
+                    builder.append(character)
+                }
+            }
+            builder.append("\",\"\")")
+            return builder.toString()
+        }
     }
 }
