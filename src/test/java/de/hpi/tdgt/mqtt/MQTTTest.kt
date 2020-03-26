@@ -1029,9 +1029,11 @@ class MQTTTest : RequestHandlingFramework() {
         requestAtom.predecessorCount = 0
         requestAtom.repeat = 1
         val xpathAssertion= XPATHAssertion()
-        xpathAssertion.xPath = "//ul[li=\"I've not done any javascript at all and I' trying to sum up values from the select class. can get both of them displayed, but not summed up. Could anyone explain why I'm getting the \"[object HTMLParagraphElement]\" as the answer? Thank you\"]//a/@href"
+        xpathAssertion.xPath = ("//ul[li=\$val]//a/@href")
         requestAtom.assertions = requestAtom.assertions + arrayOf(xpathAssertion)
-        runBlocking {requestAtom.run(HashMap())}
+        var params = HashMap<String, String>()
+        params.put("val","I've not done any javascript at all and I' trying to sum up values from the select class. can get both of them displayed, but not summed up. Could anyone explain why I'm getting the \"[object HTMLParagraphElement]\" as the answer? Thank you")
+        runBlocking {requestAtom.run(params)}
         sleep(2000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null

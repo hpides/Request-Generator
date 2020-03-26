@@ -1,10 +1,11 @@
 package de.hpi.tdgt.test.story.atom.assertion
 
 import de.hpi.tdgt.requesthandling.RestResult
+import de.hpi.tdgt.test.story.atom.Request
 import org.apache.logging.log4j.LogManager
 
 class RequestIsSent : Assertion() {
-    override fun check(restResult: RestResult?, testid: Long) {
+    override fun check(restResult: RestResult?, testid: Long, parent: Request) {
         if (restResult != null && restResult.errorCondition != null) {
             log.error("Failed request is sent assertion\"" + name + "\": " + restResult.errorCondition!!.message)
             AssertionStorage.instance.addFailure(

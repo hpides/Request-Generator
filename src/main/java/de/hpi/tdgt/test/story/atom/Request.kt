@@ -289,15 +289,15 @@ class Request : Atom() {
         //in some tests, this might not exist
         if (getParent() != null && getParent()!!.parent != null) { //check assertions after request
             for (assertion in assertions) {
-                assertion!!.check(result, getParent()!!.parent!!.testId)
+                assertion!!.check(result, getParent()!!.parent!!.testId, this)
             }
-            implicitNotFailedAssertion!!.check(result, getParent()!!.parent!!.testId)
+            implicitNotFailedAssertion!!.check(result, getParent()!!.parent!!.testId, this)
         } else {
             log.error("Can not check assertions because I do not have a parent or grandparent: $name")
         }
     }
 
-    private fun replaceWithKnownParams(toReplace: String, enquoteInsertedValue:Boolean,sanitizeXPATH:Boolean = false): String? {
+    public fun replaceWithKnownParams(toReplace: String, enquoteInsertedValue:Boolean,sanitizeXPATH:Boolean = false): String? {
         var current = toReplace
         for ((key, value) in knownParams) {
             var useValue=value
