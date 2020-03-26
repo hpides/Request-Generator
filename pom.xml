@@ -141,6 +141,18 @@
             <artifactId>htmlcleaner</artifactId>
             <version>2.23</version>
         </dependency>
+
+        <!-- Java XPATH seems buggy with complex examples -->
+        <dependency>
+            <groupId>jaxen</groupId>
+            <artifactId>jaxen</artifactId>
+            <version>1.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.dom4j</groupId>
+            <artifactId>dom4j</artifactId>
+            <version>2.1.1</version>
+        </dependency>
     </dependencies>
     <reporting>
 	    <plugins>

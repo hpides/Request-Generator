@@ -1014,6 +1014,36 @@ class MQTTTest : RequestHandlingFramework() {
         }
         MatcherAssert.assertThat(message, Matchers.nullValue())
     }
+    //regression test, this failed in production
+    @org.junit.jupiter.api.Test
+    public fun noAssertionErrorIsThrownIfXPATHIsFoundAndCorrectlyEscaped(){
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
+        val test = de.hpi.tdgt.test.Test()
+        val story = UserStory()
+        story.parent = test
+        val requestAtom = Request()
+        requestAtom.setParent(story)
+        requestAtom.name = "request"
+        requestAtom.verb = "GET"
+        requestAtom.addr = "http://localhost:9000/html"
+        requestAtom.predecessorCount = 0
+        requestAtom.repeat = 1
+        val xpathAssertion= XPATHAssertion()
+        xpathAssertion.xPath = ("//ul[li=\$val]//a/@href")
+        requestAtom.assertions = requestAtom.assertions + arrayOf(xpathAssertion)
+        var params = HashMap<String, String>()
+        params.put("val","I've not done any javascript at all and I' trying to sum up values from the select class. can get both of them displayed, but not summed up. Could anyone explain why I'm getting the \"[object HTMLParagraphElement]\" as the answer? Thank you")
+        runBlocking {requestAtom.run(params)}
+        sleep(2000)
+        val actuals = readAssertion(messages)
+        var message: MqttAssertionMessage? = null
+        for (assertion in actuals) {
+            if (!assertion.actuals.isEmpty()) {
+                message = assertion
+            }
+        }
+        MatcherAssert.assertThat(message, Matchers.nullValue())
+    }
 
     private fun findMessageStartingWith(
         messages: Set<String>,

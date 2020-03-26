@@ -1,6 +1,7 @@
 package de.hpi.tdgt.test.story.atom.assertion
 
 import de.hpi.tdgt.requesthandling.RestResult
+import de.hpi.tdgt.test.story.atom.Request
 import org.apache.logging.log4j.LogManager
 import org.htmlcleaner.CleanerProperties
 import org.htmlcleaner.DomSerializer
@@ -11,7 +12,7 @@ import javax.xml.xpath.XPathFactory
 
 class XPATHAssertion : Assertion() {
     var xPath: String? = null
-    override fun check(restResult: RestResult?, testid: Long) {
+    override fun check(restResult: RestResult?, testid: Long, parent: Request) {
         if(restResult!=null) {
             val tagNode = HtmlCleaner().clean(String(restResult.response))
             val doc = DomSerializer(
@@ -20,7 +21,7 @@ class XPATHAssertion : Assertion() {
             val xPathInterpreter: XPath = XPathFactory.newInstance().newXPath()
                 try {
                     val str = xPathInterpreter.evaluate(
-                            xPath,
+                            parent.replaceWithKnownParams(xPath?:"", enquoteInsertedValue = true, sanitizeXPATH = true),
                             doc, XPathConstants.STRING
                     ) as String
                     if(str.isBlank()){
