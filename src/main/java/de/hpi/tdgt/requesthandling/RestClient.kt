@@ -326,11 +326,10 @@ class RestClient {
         request.testId = testId
         return exchangeWithEndpoint(request)
     }
-    val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(true))
-
-    //above methods are for user's convenience, this method does the actual request
+     //above methods are for user's convenience, this method does the actual request
     @Throws(IOException::class)
     suspend fun exchangeWithEndpoint(request: Request): RestResult? {
+         val client = (request.story?:UserStory()).client
         //append GET parameters if necessary
         if(request.url == null || request.method == null){
             return null;
@@ -338,7 +337,7 @@ class RestClient {
         val url =
             appendGetParametersToUrlIfNecessary(request.url!!, request.params, request.method!!)
 
-        val preparedRequest = client.prepare(request.method, url.toString())
+        val preparedRequest = Dsl.request(request.method, url.toString())
         val start = System.nanoTime()
         //set auth header if required
         if (request.username != null && request.password != null) {
@@ -378,7 +377,7 @@ class RestClient {
             Test.ConcurrentRequestsThrottler.instance.allowRequest()
             //Exceptions might be thrown here as well as later when waiting for the response
             try {
-                future = preparedRequest.execute()
+                future = client.executeRequest(preparedRequest)
             } catch (e: Exception) {
                 log.error("Could not connect to $url", e)
                 result.errorCondition = e

@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutionException
 class UserStory : Cloneable {
     var scalePercentage = 0.0
     var name: String? = null
-    val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(false).setSoReuseAddress(false))
+    val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(true))
 
 
 
