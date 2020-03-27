@@ -1,6 +1,7 @@
 package de.hpi.tdgt.requesthandling
 
 import de.hpi.tdgt.test.Test
+import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.time_measurement.TimeStorage
 import de.hpi.tdgt.util.PropertiesReader
 import io.netty.handler.codec.http.cookie.Cookie
@@ -20,7 +21,7 @@ import java.util.stream.Collectors
 class RestClient {
     @Throws(IOException::class)
     suspend fun getFromEndpoint(
-        story: String?,
+        story: UserStory?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -42,7 +43,7 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun getBodyFromEndpoint(
-        story: String?,
+        story: UserStory?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -63,7 +64,7 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun postFormToEndpoint(
-        story: String?,
+        story: UserStory?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -83,7 +84,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun postBodyToEndpoint(story: String?, testId: Long, url: URL?, receiveCookies: Array<String>,
+    suspend fun postBodyToEndpoint(story: UserStory?, testId: Long, url: URL?, receiveCookies: Array<String>,
         sendCookies: Map<String, String>, body: String?): RestResult? {
         val request = Request()
         request.url = url
@@ -99,7 +100,7 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun putFormToEndpoint(
-        story: String?,
+        story: UserStory?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -119,7 +120,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun putBodyToEndpoint(story: String?, testId: Long, url: URL?, receiveCookies: Array<String>,
+    suspend fun putBodyToEndpoint(story: UserStory?, testId: Long, url: URL?, receiveCookies: Array<String>,
         sendCookies: Map<String, String>, body: String?): RestResult? {
         val request = Request()
         request.url = url
@@ -135,7 +136,7 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun getFromEndpointWithAuth(
-        story: String?,
+        story: UserStory?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -159,7 +160,7 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun getBodyFromEndpointWithAuth(
-        story: String?,
+        story: UserStory?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -184,7 +185,7 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun postFormToEndpointWithAuth(
-        story: String?,
+        story: UserStory?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -209,7 +210,7 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun postBodyToEndpointWithAuth(
-        story: String?,
+        story: UserStory?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -234,7 +235,7 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun putFormToEndpointWithAuth(
-        story: String?,
+        story: UserStory?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -259,7 +260,7 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun putBodyToEndpointWithAuth(
-        story: String?,
+        story: UserStory?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -284,7 +285,7 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun deleteFromEndpoint(
-        story: String?,
+        story: UserStory?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -304,11 +305,11 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun deleteFromEndpointWithAuth(
-            story: String?,
+            story: UserStory?,
             testId: Long,
             url: URL?,
             receiveCookies: Array<String>,
-        sendCookies: Map<String, String>,
+            sendCookies: Map<String, String>,
             getParams: Map<String, String>,
             username: String?,
             password: String?
@@ -485,7 +486,7 @@ class RestClient {
             request.method,
             request.url.toString(),
             res.durationNanos(),
-            request.story,
+            request.story?.name,
             request.testId
         )
         log.info("Request took " + res.durationMillis() + " ms.")

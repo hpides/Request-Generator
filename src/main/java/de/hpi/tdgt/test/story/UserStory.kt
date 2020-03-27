@@ -8,18 +8,21 @@ import de.hpi.tdgt.test.story.atom.Atom
 import de.hpi.tdgt.test.story.atom.WarmupEnd
 import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.await
 import org.apache.logging.log4j.LogManager
+import org.asynchttpclient.DefaultAsyncHttpClientConfig
+import org.asynchttpclient.Dsl
 import java.lang.Runnable
 import java.util.*
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
-import java.util.function.Consumer
 
 
 class UserStory : Cloneable {
     var scalePercentage = 0.0
     var name: String? = null
+    val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(false).setSoReuseAddress(false))
+
+
+
     private var atoms: Array<Atom> = arrayOf()
     @JsonIgnore
     var parent: Test? = null
