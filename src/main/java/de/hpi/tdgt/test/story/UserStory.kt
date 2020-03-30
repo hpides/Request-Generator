@@ -21,8 +21,6 @@ import java.util.concurrent.ExecutionException
 class UserStory : Cloneable {
     var scalePercentage = 0.0
     var name: String? = null
-    val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(true).setChannelPool(pool).setNettyTimer(timer))
-
 
 
     private var atoms: Array<Atom> = arrayOf()
@@ -142,10 +140,12 @@ class UserStory : Cloneable {
 
     companion object {
         private val log =
-            LogManager.getLogger(UserStory::class.java)
+                LogManager.getLogger(UserStory::class.java)
         @JvmStatic
         val timer = HashedWheelTimer()
         @JvmStatic
-        val pool= DefaultChannelPool(0,-1, DefaultChannelPool.PoolLeaseStrategy.FIFO, timer, 2147483647)
+        val pool= DefaultChannelPool(60000,-1, DefaultChannelPool.PoolLeaseStrategy.LIFO, timer, 1000)
     }
+
+    val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(false).setNettyTimer(timer).setChannelPool(pool))
 }
