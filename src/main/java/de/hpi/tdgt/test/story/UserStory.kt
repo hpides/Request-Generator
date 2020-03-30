@@ -96,6 +96,9 @@ class UserStory : Cloneable {
         } catch (e: InterruptedException) {
             log.error(e)
         }
+        finally {
+            client.close()
+        }
     }
 
     fun hasWarmup(): Boolean {
