@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import de.hpi.tdgt.controllers.UploadController
 import de.hpi.tdgt.deserialisation.Deserializer.deserialize
 import de.hpi.tdgt.requesthandling.RestClient
+import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.Data_Generation
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.io.IOUtils
@@ -62,7 +63,7 @@ object Main {
                 params["password"] = PASSWORD
                 log.info("--- Testing user creation and update ---")
                 var result = rc.postBodyToEndpoint(
-                        "REST Test",
+                        UserStory(),
                         0,
                         URL("http://users/users/new"),
                         emptyArray(),
@@ -71,7 +72,7 @@ object Main {
                 )
                 log.info("Create user: " + result.toString() + " and code: " + result!!.returnCode + " in: " + result.durationMillis() + " ms.")
                 result = rc.getFromEndpointWithAuth(
-                        "REST Test",
+                        UserStory(),
                         0,
                         URL("http://users/users/all"),
                         emptyArray(),
@@ -82,7 +83,7 @@ object Main {
                 )
                 log.info("Get all users: " + result.toString() + " and code: " + result!!.returnCode + " in: " + result.durationMillis() + " ms.")
                 result = rc.putFormToEndpointWithAuth(
-                        "REST Test",
+                        UserStory(),
                         0,
                         URL("http://users/users/update"),
                         emptyArray(),
@@ -97,7 +98,7 @@ object Main {
                 params["title"] = "A very good post"
                 params["text"] = "because it is rather short."
                 result = rc.postFormToEndpointWithAuth(
-                        "REST Test",
+                        UserStory(),
                         0,
                         URL("http://posts/posts/new"),
                         emptyArray(),
@@ -108,7 +109,7 @@ object Main {
                 )
                 log.info("Create post: " + result.toString() + " and code: " + result!!.returnCode + " in: " + result.durationMillis() + " ms.")
                 result = rc.getFromEndpointWithAuth(
-                        "REST Test",
+                        UserStory(),
                         0,
                         URL("http://posts/posts/all"),
                         emptyArray(),
@@ -122,7 +123,7 @@ object Main {
                 params.clear()
                 params["key"] = "short"
                 result = rc.getFromEndpointWithAuth(
-                        "REST Test",
+                        UserStory(),
                         0,
                         URL("http://search/posts/search"),
                         emptyArray(),
@@ -134,7 +135,7 @@ object Main {
                 log.info("Search: " + result.toString() + " and code: " + result!!.returnCode + " in: " + result.durationMillis() + " ms.")
                 log.info("--- Deleting user ---")
                 result = rc.deleteFromEndpointWithAuth(
-                        "REST Test",
+                        UserStory(),
                         0,
                         URL("http://users/users/delete"),
                         emptyArray(),

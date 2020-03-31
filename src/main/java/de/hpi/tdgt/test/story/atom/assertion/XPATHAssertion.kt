@@ -14,7 +14,8 @@ class XPATHAssertion : Assertion() {
     var xPath: String? = null
     override fun check(restResult: RestResult?, testid: Long, parent: Request) {
         if(restResult!=null) {
-            val tagNode = HtmlCleaner().clean(String(restResult.response))
+            val response = String(restResult.response)
+            val tagNode = HtmlCleaner().clean(response)
             val doc = DomSerializer(
                     CleanerProperties()
             ).createDOM(tagNode)

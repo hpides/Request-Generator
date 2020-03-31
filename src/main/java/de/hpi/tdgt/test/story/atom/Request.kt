@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import de.hpi.tdgt.requesthandling.RestClient
 import de.hpi.tdgt.requesthandling.RestResult
+import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.assertion.Assertion
 import de.hpi.tdgt.test.story.atom.assertion.RequestIsSent
 import org.apache.logging.log4j.LogManager
@@ -92,7 +93,6 @@ class Request : Atom() {
         for(entry in xpaths) {
             var str:String;
             val expression = replaceWithKnownParams(entry.key, enquoteInsertedValue = true, sanitizeXPATH = true)
-            log.info(expression)
             try {
                 str = xpath.evaluate(
                         expression,
@@ -200,7 +200,7 @@ class Request : Atom() {
                 if (getParent() != null && getParent()!!.parent != null) {
                     extractResponseParams(
                         rc.postFormToEndpoint(
-                            getParent()!!.name,
+                            getParent(),
                             getParent()!!.parent!!.testId,
                             URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -211,7 +211,7 @@ class Request : Atom() {
                 } else {
                     extractResponseParams(
                         rc.postFormToEndpoint(
-                            "unknown",
+                            UserStory(),
                             0,
                             URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -229,7 +229,7 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.postFormToEndpointWithAuth(
-                        getParent()!!.name,
+                        getParent(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -347,7 +347,7 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.postBodyToEndpoint(
-                        getParent()!!.name,
+                        getParent(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -364,7 +364,7 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.postBodyToEndpointWithAuth(
-                        getParent()!!.name,
+                        getParent(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -401,7 +401,7 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.putFormToEndpoint(
-                        getParent()!!.name,
+                        getParent(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -418,7 +418,7 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.putFormToEndpointWithAuth(
-                        getParent()!!.name,
+                        getParent(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -450,7 +450,7 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.putBodyToEndpoint(
-                        getParent()!!.name,
+                        getParent(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -467,7 +467,7 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.putBodyToEndpointWithAuth(
-                        getParent()!!.name,
+                        getParent(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -496,7 +496,7 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.deleteFromEndpoint(
-                        getParent()!!.name,
+                        getParent(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -513,7 +513,7 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.deleteFromEndpointWithAuth(
-                        getParent()!!.name,
+                        getParent(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -550,7 +550,7 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.getFromEndpoint(
-                        if(getParent() != null){getParent()!!.name}else{""}, 
+                        getParent(),
                         if(getParent() != null && getParent()!!.parent != null){getParent()!!.parent!!.testId}else{0},
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -567,7 +567,7 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.getFromEndpointWithAuth(
-                        getParent()!!.name,
+                        getParent(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -599,7 +599,7 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.getBodyFromEndpoint(
-                        if(getParent() != null){getParent()!!.name}else{""}, 
+                        getParent(),
                         if(getParent() != null && getParent()!!.parent != null){getParent()!!.parent!!.testId}else{0},
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -616,7 +616,7 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.getBodyFromEndpointWithAuth(
-                        getParent()!!.name,
+                        getParent(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
