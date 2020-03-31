@@ -20,12 +20,20 @@ import java.util.concurrent.ExecutionException
 
 class UserStory : Cloneable {
     var scalePercentage = 0.0
-    var name: String? = null
-    val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(true).setChannelPool(pool).setNettyTimer(timer))
-
-
-
     private var atoms: Array<Atom> = arrayOf()
+    var name: String? = null
+
+    /**
+     * Holds connections to be shared for every atom
+     */
+    @JsonIgnore
+    val pool= DefaultChannelPool(atoms.size,-1, DefaultChannelPool.PoolLeaseStrategy.FIFO, timer, 1000)
+
+    /**
+     * Client that represents this user
+     */
+    @JsonIgnore
+    val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(true).setChannelPool(pool).setNettyTimer(timer))
     @JsonIgnore
     var parent: Test? = null
 
@@ -99,7 +107,8 @@ class UserStory : Cloneable {
             log.error(e)
         }
         finally {
-            //client.close()
+            //free resources
+            client.close()
         }
     }
 
@@ -143,9 +152,21 @@ class UserStory : Cloneable {
     companion object {
         private val log =
             LogManager.getLogger(UserStory::class.java)
+
+        /*
+        * A netty internum. Only a handful per JVM recommended.
+        */
         @JvmStatic
         val timer = HashedWheelTimer()
+        /**
+         * To be used by the static client. Sharing it with all dynamic clients slows them down, probably because it needs to synchronize accesses.
+         */
+        val staticPool= DefaultChannelPool(60000,-1, DefaultChannelPool.PoolLeaseStrategy.FIFO, timer, 1000)
+        /*
+         * Fallback in case no client per story shall be created
+         */
         @JvmStatic
-        val pool= DefaultChannelPool(0,-1, DefaultChannelPool.PoolLeaseStrategy.FIFO, timer, 2147483647)
+        val staticClient = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(true).setChannelPool(staticPool).setNettyTimer(timer))
+
     }
 }
