@@ -329,7 +329,8 @@ class RestClient {
      //above methods are for user's convenience, this method does the actual request
     @Throws(IOException::class)
     suspend fun exchangeWithEndpoint(request: Request): RestResult? {
-         val client = (request.story?:UserStory()).client
+         //in case global connection sharing is enabled, clients of stories might be null
+         val client = (request.story?.client)?:UserStory.staticClient
         //append GET parameters if necessary
         if(request.url == null || request.method == null){
             return null;

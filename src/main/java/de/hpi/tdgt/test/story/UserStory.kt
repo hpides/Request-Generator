@@ -7,10 +7,12 @@ import de.hpi.tdgt.test.ThreadRecycler
 import de.hpi.tdgt.test.story.atom.Atom
 import de.hpi.tdgt.test.story.atom.WarmupEnd
 import de.hpi.tdgt.util.PropertiesReader
+import io.netty.util.HashedWheelTimer
 import kotlinx.coroutines.*
 import org.apache.logging.log4j.LogManager
 import org.asynchttpclient.DefaultAsyncHttpClientConfig
 import org.asynchttpclient.Dsl
+import org.asynchttpclient.netty.channel.DefaultChannelPool
 import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.ExecutionException
@@ -18,12 +20,20 @@ import java.util.concurrent.ExecutionException
 
 class UserStory : Cloneable {
     var scalePercentage = 0.0
-    var name: String? = null
-    val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(true))
-
-
-
     private var atoms: Array<Atom> = arrayOf()
+    var name: String? = null
+
+    /**
+     * Holds connections to be shared for every atom
+     */
+    @JsonIgnore
+    val pool= DefaultChannelPool(atoms.size,-1, DefaultChannelPool.PoolLeaseStrategy.FIFO, timer, 1000)
+
+    /**
+     * Client that represents this user
+     */
+    @JsonIgnore
+    val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(true).setChannelPool(pool).setNettyTimer(timer))
     @JsonIgnore
     var parent: Test? = null
 
@@ -96,6 +106,10 @@ class UserStory : Cloneable {
         } catch (e: InterruptedException) {
             log.error(e)
         }
+        finally {
+            //free resources
+            client.close()
+        }
     }
 
     fun hasWarmup(): Boolean {
@@ -131,8 +145,28 @@ class UserStory : Cloneable {
         return atoms
     }
 
+    init {
+        timer.start()
+    }
+
     companion object {
         private val log =
             LogManager.getLogger(UserStory::class.java)
+
+        /*
+        * A netty internum. Only a handful per JVM recommended.
+        */
+        @JvmStatic
+        val timer = HashedWheelTimer()
+        /**
+         * To be used by the static client. Sharing it with all dynamic clients slows them down, probably because it needs to synchronize accesses.
+         */
+        val staticPool= DefaultChannelPool(60000,-1, DefaultChannelPool.PoolLeaseStrategy.FIFO, timer, 1000)
+        /*
+         * Fallback in case no client per story shall be created
+         */
+        @JvmStatic
+        val staticClient = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(true).setChannelPool(staticPool).setNettyTimer(timer))
+
     }
 }
