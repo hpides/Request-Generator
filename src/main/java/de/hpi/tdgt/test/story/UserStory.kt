@@ -7,8 +7,6 @@ import de.hpi.tdgt.test.ThreadRecycler
 import de.hpi.tdgt.test.story.atom.Atom
 import de.hpi.tdgt.test.story.atom.WarmupEnd
 import de.hpi.tdgt.util.PropertiesReader
-import io.ktor.client.HttpClient
-import io.ktor.util.KtorExperimentalAPI
 import io.netty.util.HashedWheelTimer
 import kotlinx.coroutines.*
 import org.apache.logging.log4j.LogManager
@@ -99,7 +97,7 @@ class UserStory : Cloneable {
             log.error(e)
         }
         finally {
-
+            //client.close()
         }
     }
 
@@ -149,6 +147,5 @@ class UserStory : Cloneable {
         val pool= DefaultChannelPool(60000,-1, DefaultChannelPool.PoolLeaseStrategy.LIFO, timer, 1000)
     }
 
-    //val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(false).setNettyTimer(timer).setChannelPool(pool))
-
+    val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(false).setNettyTimer(timer).setChannelPool(pool))
 }

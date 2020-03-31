@@ -4,20 +4,6 @@ import de.hpi.tdgt.test.Test
 import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.time_measurement.TimeStorage
 import de.hpi.tdgt.util.PropertiesReader
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.request.HttpRequestBuilder
-import io.ktor.client.request.header
-import io.ktor.client.request.parameter
-import io.ktor.client.request.request
-import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.readBytes
-import io.ktor.content.TextContent
-import io.ktor.http.ContentType
-import io.ktor.http.HttpMethod
-import io.ktor.http.contentType
-import io.ktor.http.cookies
-import io.ktor.util.KtorExperimentalAPI
 import io.netty.handler.codec.http.cookie.Cookie
 import io.netty.handler.codec.http.cookie.DefaultCookie
 import kotlinx.coroutines.future.await
@@ -340,74 +326,63 @@ class RestClient {
         request.testId = testId
         return exchangeWithEndpoint(request)
     }
-
-
-
      //above methods are for user's convenience, this method does the actual request
     @Throws(IOException::class)
     suspend fun exchangeWithEndpoint(request: Request): RestResult? {
-         //val client = (request.story?:UserStory()).client
-         val client = HttpClient(CIO)
-         //append GET parameters if necessary
+         val client = (request.story?:UserStory()).client
+        //append GET parameters if necessary
         if(request.url == null || request.method == null){
             return null;
         }
         val url =
             appendGetParametersToUrlIfNecessary(request.url!!, request.params, request.method!!)
 
+        val preparedRequest = Dsl.request(request.method, url.toString())
+        val start = System.nanoTime()
+        //set auth header if required
+        if (request.username != null && request.password != null) {
+            preparedRequest.setHeader(
+                HttpConstants.HEADER_AUTHORIZATION,
+                "Basic " + Base64.getEncoder().encodeToString(
+                    (request.username + ":" + request.password).toByteArray(StandardCharsets.UTF_8)
+                )
+            )
+        }
+        //set POST Body to contain formencoded data
+        if (request.isForm && (request.method == HttpConstants.POST || request.method == HttpConstants.PUT)) {
+            preparedRequest.setHeader("Content-Type", HttpConstants.APPLICATION_X_WWW_FORM_URLENCODED)
+            val body = request.params?.entries?.stream()?.map { entry -> Param(entry.key, entry.value) }?.collect(Collectors.toList())
+            preparedRequest.setFormParams(body)
+        }
+        //set POST body to what was passed
+        if (!request.isForm && (request.method == HttpConstants.POST || request.method == HttpConstants.PUT || request.method == HttpConstants.GET) && request.body != null) {
+            preparedRequest.setHeader("Content-Type", HttpConstants.CONTENT_TYPE_APPLICATION_JSON)
+            if(request.body != null) {
+                preparedRequest.setBody(request.body!!.toByteArray(StandardCharsets.UTF_8))
+            }
+        }
 
+        for(cookie in request.sendCookies.entries){
+            preparedRequest.addCookie(DefaultCookie(cookie.key,cookie.value))
+        }
 
-         //got a connection
+        //got a connection
         val result = RestResult()
         //try to connect
         var retry: Int = -1
 
-        var future:HttpResponse? = null
-         val start = System.nanoTime()
+        var future:ListenableFuture<Response>? = null
+
         while (retry < request.retries) {
             Test.ConcurrentRequestsThrottler.instance.allowRequest()
             //Exceptions might be thrown here as well as later when waiting for the response
             try {
-                future = client.request(url.toString()){
-                    this.method = HttpMethod(request.method!!)
-                    //set auth header if required
-                    if (request.username != null && request.password != null) {
-                        this.header(
-                                HttpConstants.HEADER_AUTHORIZATION,
-                                "Basic " + Base64.getEncoder().encodeToString(
-                                        (request.username + ":" + request.password).toByteArray(StandardCharsets.UTF_8)
-                                )
-                        )
-                    }
-                    //set POST Body to contain formencoded data
-                    if (request.isForm && (request.method == HttpConstants.POST || request.method == HttpConstants.PUT)) {
-                        this.body = TextContent(mapToURLEncodedString(request.params).toString(), contentType=ContentType.parse(HttpConstants.APPLICATION_X_WWW_FORM_URLENCODED))
-                    }
-                    //set POST body to what was passed
-                    if (!request.isForm && (request.method == HttpConstants.POST || request.method == HttpConstants.PUT || request.method == HttpConstants.GET) && request.body != null) {
-                        if(request.body != null) {
-                            this.body = TextContent(request.body!!, contentType=ContentType.parse(HttpConstants.CONTENT_TYPE_APPLICATION_JSON))
-                        }
-                    }
-
-                    val cookieStr = java.lang.StringBuilder()
-                    var first = true
-                    for(cookie in request.sendCookies.entries){
-                        if(!first) {
-                            cookieStr.append("; ")
-                        }
-                        cookieStr.append(cookie.key).append("=").append(cookie.value)
-                    }
-                    this.header(HttpConstants.HEADER_COOKIE, cookieStr.toString())
-                }
+                future = client.executeRequest(preparedRequest)
             } catch (e: Exception) {
                 log.error("Could not connect to $url", e)
                 result.errorCondition = e
                 retry ++
                 continue
-            }
-            finally {
-                client.close()
             }
         if(future == null){
             log.error("Unknown error while sending request!")
@@ -415,7 +390,19 @@ class RestClient {
             continue
         }
         result.startTime = start
-        val response = future
+        val response:Response
+        try {
+            if(!PropertiesReader.AsyncIO()) {
+                response = future.get()
+            }else{
+                response = future.toCompletableFuture().await()
+            }
+        } catch (e: Exception) {
+            log.error("Could not connect to $url", e)
+            result.errorCondition = e
+            retry ++
+            continue
+        }
         readResponse(response, result, request)
         Test.ConcurrentRequestsThrottler.instance.requestDone()
             return result
@@ -469,31 +456,31 @@ class RestClient {
      */
     @Throws(IOException::class)
     private suspend fun readResponse(
-            response: HttpResponse,
+            response: Response,
             res: RestResult,
             request: Request
     ) {
-        val responseData = response.readBytes()
+        val responseData = response.responseBodyAsBytes
         //got results, store them and the time
 //TODO do we want to measure the time to transfer the data? Currently we are, but we could also take the time after retrieving content length
         res.response = responseData
         res.endTime = System.nanoTime()
-        res.contentType = response.contentType()?.toString()
-        res.returnCode = response.status.value
+        res.contentType = response.contentType
+        res.headers = response.headers
+        res.returnCode = response.statusCode
         for(cookie in request.receiveCookies){
             var foundCookie = false;
-            for(header in response.headers.getAll(HttpConstants.HEADER_SET_COOKIE)?:LinkedList()){
+            for(responseCookie in response.cookies){
                 //accept first cookie, second one is probably a mistake
-                if(cookie == header.split("=")[0] && !foundCookie){
-                    res.receivedCookies.put(cookie, header.split("=")[1].split(";")[0])
+                if(cookie == responseCookie.name() && !foundCookie){
+                    res.receivedCookies.put(cookie, responseCookie.value())
                     foundCookie = true;
                 }
-                if(cookie == header.split("=")[0] && foundCookie){
+                if(cookie == responseCookie.name() && foundCookie){
                     log.warn("Duplicate cookie key $cookie")
                 }
             }
         }
-
         storage.registerTime(
             request.method,
             request.url.toString(),
