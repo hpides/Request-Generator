@@ -1,5 +1,6 @@
 package de.hpi.tdgt.requesthandling
 
+import de.hpi.tdgt.test.story.UserStory
 import java.net.URL
 import java.util.HashMap
 
@@ -31,7 +32,7 @@ class Request {
     /**
      * To account time to a story.
      */
-    var story: String? = null
+    var story: UserStory? = null
     /**
      * To match MQTT messages to a test.
      */
@@ -43,7 +44,7 @@ class Request {
     /**
      * Contains cookie name (left) and value(right)
      */
-    var sendCookies: Map<String, String> = HashMap();
+    var sendCookies: Map<String, String> = HashMap()
 
 
     constructor(
@@ -59,7 +60,7 @@ class Request {
         form: Boolean,
         username: String?,
         password: String?,
-        story: String?,
+        story: UserStory?,
         testId: Long
     ) {
         this.url = url
