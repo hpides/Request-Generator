@@ -102,7 +102,6 @@ class Request : Atom() {
                 reportFailureToUser("XPATH failed: \"${expression}\"", e.message)
                 continue
             }
-            log.info("Extracted "+str)
             knownParams.put(entry.value, str)
         }
     }

@@ -1,7 +1,6 @@
 package de.hpi.tdgt.test.story
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import de.hpi.tdgt.requesthandling.NoopCookieHandler
 import de.hpi.tdgt.test.Test
 import de.hpi.tdgt.test.Test.ActiveInstancesThrottler
 import de.hpi.tdgt.test.ThreadRecycler
@@ -10,9 +9,9 @@ import de.hpi.tdgt.test.story.atom.WarmupEnd
 import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.*
 import org.apache.logging.log4j.LogManager
+import org.asynchttpclient.DefaultAsyncHttpClientConfig
+import org.asynchttpclient.Dsl
 import java.lang.Runnable
-import java.net.http.HttpClient
-import java.time.Duration
 import java.util.*
 import java.util.concurrent.ExecutionException
 
@@ -20,8 +19,8 @@ import java.util.concurrent.ExecutionException
 class UserStory : Cloneable {
     var scalePercentage = 0.0
     var name: String? = null
+    val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(true))
 
-    val client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).connectTimeout(Duration.ofMillis(300000)).build()
 
 
     private var atoms: Array<Atom> = arrayOf()

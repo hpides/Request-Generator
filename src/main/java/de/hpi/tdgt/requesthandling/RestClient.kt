@@ -4,20 +4,19 @@ import de.hpi.tdgt.test.Test
 import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.time_measurement.TimeStorage
 import de.hpi.tdgt.util.PropertiesReader
+import io.netty.handler.codec.http.cookie.Cookie
+import io.netty.handler.codec.http.cookie.DefaultCookie
 import kotlinx.coroutines.future.await
 import org.apache.logging.log4j.LogManager
+import org.asynchttpclient.*
 import java.io.IOException
-import java.net.*
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
+import java.net.MalformedURLException
+import java.net.URL
+import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-import java.time.Duration
 import java.util.*
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Collectors
-import kotlin.collections.HashMap
 
 class RestClient {
     @Throws(IOException::class)
@@ -327,36 +326,18 @@ class RestClient {
         request.testId = testId
         return exchangeWithEndpoint(request)
     }
-
-        //above methods are for user's convenience, this method does the actual request
+     //above methods are for user's convenience, this method does the actual request
     @Throws(IOException::class)
     suspend fun exchangeWithEndpoint(request: Request): RestResult? {
-         //val client = (request.story?:UserStory()).client
+         val client = (request.story?:UserStory()).client
         //append GET parameters if necessary
         if(request.url == null || request.method == null){
             return null;
         }
         val url =
             appendGetParametersToUrlIfNecessary(request.url!!, request.params, request.method!!)
-        var contentType = ""
-        var body = ""
-        //set POST Body to contain formencoded data
-        if (request.isForm && (request.method == HttpConstants.POST || request.method == HttpConstants.PUT)) {
-            contentType = HttpConstants.APPLICATION_X_WWW_FORM_URLENCODED
-            body = mapToURLEncodedString(request.params).toString()
 
-        }
-        //set POST body to what was passed
-        if (!request.isForm && (request.method == HttpConstants.POST || request.method == HttpConstants.PUT || request.method == HttpConstants.GET) && request.body != null) {
-            contentType = HttpConstants.CONTENT_TYPE_APPLICATION_JSON
-            if(request.body != null) {
-               body = request.body!!
-            }
-        }
-
-        val preparedRequest = HttpRequest.newBuilder().method(request.method, HttpRequest.BodyPublishers.ofString(body))
-        preparedRequest.uri(url.toURI())
-        preparedRequest.setHeader(HttpConstants.HEADER_CONTENT_TYPE, contentType)
+        val preparedRequest = Dsl.request(request.method, url.toString())
         val start = System.nanoTime()
         //set auth header if required
         if (request.username != null && request.password != null) {
@@ -367,35 +348,36 @@ class RestClient {
                 )
             )
         }
-
-
-
-        var first = true
-        val cookies = StringBuilder()
-        for(cookie in request.sendCookies.entries){
-            if(first){
-                first = false
-            }
-            else{
-                cookies.append("; ")
-            }
-
-            cookies.append(cookie.key).append("=").append(cookie.value)
+        //set POST Body to contain formencoded data
+        if (request.isForm && (request.method == HttpConstants.POST || request.method == HttpConstants.PUT)) {
+            preparedRequest.setHeader("Content-Type", HttpConstants.APPLICATION_X_WWW_FORM_URLENCODED)
+            val body = request.params?.entries?.stream()?.map { entry -> Param(entry.key, entry.value) }?.collect(Collectors.toList())
+            preparedRequest.setFormParams(body)
         }
-        preparedRequest.setHeader(HttpConstants.HEADER_COOKIE,cookies.toString())
+        //set POST body to what was passed
+        if (!request.isForm && (request.method == HttpConstants.POST || request.method == HttpConstants.PUT || request.method == HttpConstants.GET) && request.body != null) {
+            preparedRequest.setHeader("Content-Type", HttpConstants.CONTENT_TYPE_APPLICATION_JSON)
+            if(request.body != null) {
+                preparedRequest.setBody(request.body!!.toByteArray(StandardCharsets.UTF_8))
+            }
+        }
+
+        for(cookie in request.sendCookies.entries){
+            preparedRequest.addCookie(DefaultCookie(cookie.key,cookie.value))
+        }
 
         //got a connection
         val result = RestResult()
         //try to connect
         var retry: Int = -1
 
-        var future: CompletableFuture<HttpResponse<String>>?
+        var future:ListenableFuture<Response>? = null
 
         while (retry < request.retries) {
             Test.ConcurrentRequestsThrottler.instance.allowRequest()
             //Exceptions might be thrown here as well as later when waiting for the response
             try {
-                future = (request.story?:UserStory()).client.sendAsync(preparedRequest.build(), HttpResponse.BodyHandlers.ofString())
+                future = client.executeRequest(preparedRequest)
             } catch (e: Exception) {
                 log.error("Could not connect to $url", e)
                 result.errorCondition = e
@@ -408,7 +390,7 @@ class RestClient {
             continue
         }
         result.startTime = start
-        val response:HttpResponse<String>
+        val response:Response
         try {
             if(!PropertiesReader.AsyncIO()) {
                 response = future.get()
@@ -474,27 +456,28 @@ class RestClient {
      */
     @Throws(IOException::class)
     private suspend fun readResponse(
-            response: HttpResponse<String>,
+            response: Response,
             res: RestResult,
             request: Request
     ) {
-        val responseData = response.body()
+        val responseData = response.responseBodyAsBytes
         //got results, store them and the time
 //TODO do we want to measure the time to transfer the data? Currently we are, but we could also take the time after retrieving content length
-        res.response = responseData.toByteArray()
+        res.response = responseData
         res.endTime = System.nanoTime()
-        res.contentType = response.headers().firstValue(HttpConstants.HEADER_CONTENT_TYPE).orElse(HttpConstants.CONTENT_TYPE_TEXT_PLAIN)
-        res.returnCode = response.statusCode()
+        res.contentType = response.contentType
+        res.headers = response.headers
+        res.returnCode = response.statusCode
         for(cookie in request.receiveCookies){
             var foundCookie = false;
-            for(header in response.headers().allValues(HttpConstants.HEADER_SET_COOKIE)){
+            for(responseCookie in response.cookies){
                 //accept first cookie, second one is probably a mistake
-                if(cookie == header.split("=")[0] && foundCookie){
-                    log.warn("Duplicate cookie key $cookie")
-                }
-                if(cookie == header.split("=")[0] && !foundCookie){
-                    res.receivedCookies[cookie] = header
+                if(cookie == responseCookie.name() && !foundCookie){
+                    res.receivedCookies.put(cookie, responseCookie.value())
                     foundCookie = true;
+                }
+                if(cookie == responseCookie.name() && foundCookie){
+                    log.warn("Duplicate cookie key $cookie")
                 }
             }
         }
@@ -519,16 +502,4 @@ class RestClient {
         @JvmField
         var requestsSent = AtomicInteger(0)
     }
-}
-
-class NoopCookieHandler : CookieHandler() {
-    override fun put(uri: URI?, responseHeaders: MutableMap<String, MutableList<String>>?) {
-        //NOOP
-    }
-
-    override fun get(uri: URI?, requestHeaders: MutableMap<String, MutableList<String>>?): MutableMap<String, MutableList<String>> {
-        //NOOP
-        return HashMap()
-    }
-
 }

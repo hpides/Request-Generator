@@ -87,9 +87,6 @@ class Data_Generation : Atom() {
                     buffer[data[data.size - 1]] = ""
                 } else {
                     buffer[data[i]] = values[i]
-                    if(data[i] == "email"){
-                        log.info("Email: "+values[i])
-                    }
                 }
             }
         }
