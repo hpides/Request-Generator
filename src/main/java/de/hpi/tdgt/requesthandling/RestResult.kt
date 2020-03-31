@@ -15,7 +15,6 @@ class RestResult {
     var endTime: Long = 0
     var response: ByteArray = ByteArray(0)
     var contentType: String? = null
-    var headers: HttpHeaders? = null
     var returnCode = 0
     var errorCondition: Exception? = null
 
