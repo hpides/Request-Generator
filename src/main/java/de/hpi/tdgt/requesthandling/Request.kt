@@ -13,6 +13,10 @@ class Request {
      * Params for GET URL / POST / PUT Form-Encoded data.
      */
     var params: Map<String, String>? = null
+    /**
+     * Name for this request in time storage
+     */
+    var recordName:String? = null
     var method: String? = null
     var isFollowsRedirects = true
     var connectTimeout = -1

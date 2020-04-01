@@ -196,6 +196,64 @@ class MQTTTest : RequestHandlingFramework() {
     }
 
     @org.junit.jupiter.api.Test
+    fun aggregationOfTimesWorks() {
+        val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
+        val params = HashMap<String, String>()
+        params["key"] = "wrong"
+        params["value"] = "wrong"
+        val test =
+            deserialize(Utils().requestExampleWithRequestReplacement)
+        //make sure we do not run successors
+        test.start()
+        Thread.sleep(3000)
+        val typeRef: TypeReference<MqttTimeMessage?> =
+            object : TypeReference<MqttTimeMessage?>() {}
+        val response = Vector<MqttTimeMessage>()
+        for (item in messages) {
+            response.add(mapper.readValue(item, typeRef))
+        }
+        //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
+        MatcherAssert.assertThat(
+            response[0].times,
+            Matchers.hasKey("http://localhost:9000/param=\$value")
+        )
+        MatcherAssert.assertThat(
+            response[0].times["http://localhost:9000/param=\$value"],
+            Matchers.hasKey("GET")
+        )
+    }
+
+    @org.junit.jupiter.api.Test
+    fun aggregationOfTimesCanBeDisabled() {
+        val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
+        val params = HashMap<String, String>()
+        params["key"] = "wrong"
+        params["value"] = "wrong"
+        val test =
+            deserialize(Utils().requestExampleWithRequestReplacement)
+        val request = test.getStories()[0].getAtoms()[1] as Request
+        request.timeAggregation = false
+        //make sure we do not run successors
+        test.start()
+        Thread.sleep(3000)
+        val typeRef: TypeReference<MqttTimeMessage?> =
+            object : TypeReference<MqttTimeMessage?>() {}
+        val response = Vector<MqttTimeMessage>()
+        for (item in messages) {
+            response.add(mapper.readValue(item, typeRef))
+        }
+        //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
+        MatcherAssert.assertThat(
+            response[0].times,
+            Matchers.hasKey("http://localhost:9000/param=pw")
+        )
+        MatcherAssert.assertThat(
+            response[0].times["http://localhost:9000/param=pw"],
+            Matchers.hasKey("GET")
+        )
+    }
+
+    @org.junit.jupiter.api.Test
     @Throws(
         MqttException::class,
         InterruptedException::class,

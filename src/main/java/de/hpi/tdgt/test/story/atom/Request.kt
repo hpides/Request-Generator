@@ -35,6 +35,11 @@ class Request : Atom() {
             }
             return field
         }
+        set(value){
+            field = value
+            unescapedAddr = value
+        }
+    private var unescapedAddr: String? = null
     /**
      * Expected usage: values of this arrays are keys. Use them as keys in a HTTP
      * Form in a Request Body, get values for these keys from passed dict.
@@ -81,7 +86,19 @@ class Request : Atom() {
     var assertions = arrayOfNulls<Assertion>(0)
     var implicitNotFailedAssertion: Assertion? = null
 
+    /**
+     * If true, times for endpoints with variable expansion in the addresses are recorded as they are given (resulting in all of them showing one graph line).
+     * Else, all of them will be displayed individually.
+     * Enable for small-scope debuging, disable for large-scope tests.
+     */
+    var timeAggregation:Boolean = true
 
+    private fun getRecordName():String?{
+        if(timeAggregation){
+            return unescapedAddr
+        }
+        return addr
+    }
 
     fun parseXPaths(returnedPage: String, xpaths:Map<String,String>){
         //turns HTML into valid xml
@@ -173,6 +190,7 @@ class Request : Atom() {
         ret.xpaths = xpaths
         //also stateless
         ret.assertions = assertions
+        ret.timeAggregation = timeAggregation
         cloning = false;
         return ret
     }
@@ -201,6 +219,7 @@ class Request : Atom() {
                     extractResponseParams(
                         rc.postFormToEndpoint(
                             getParent(),
+                           getRecordName(),
                             getParent()!!.parent!!.testId,
                             URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -211,7 +230,7 @@ class Request : Atom() {
                 } else {
                     extractResponseParams(
                         rc.postFormToEndpoint(
-                            UserStory(),
+                            UserStory(),getRecordName(),
                             0,
                             URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -229,7 +248,9 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.postFormToEndpointWithAuth(
-                        getParent(),
+
+getParent(),
+                           getRecordName(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -347,7 +368,9 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.postBodyToEndpoint(
-                        getParent(),
+
+getParent(),
+                           getRecordName(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -364,7 +387,9 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.postBodyToEndpointWithAuth(
-                        getParent(),
+
+getParent(),
+                           getRecordName(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -401,7 +426,9 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.putFormToEndpoint(
-                        getParent(),
+
+getParent(),
+                           getRecordName(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -418,7 +445,9 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.putFormToEndpointWithAuth(
-                        getParent(),
+
+getParent(),
+                           getRecordName(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -450,7 +479,9 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.putBodyToEndpoint(
-                        getParent(),
+
+getParent(),
+                           getRecordName(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -467,7 +498,9 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.putBodyToEndpointWithAuth(
-                        getParent(),
+
+getParent(),
+                           getRecordName(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -496,7 +529,9 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.deleteFromEndpoint(
-                        getParent(),
+
+getParent(),
+                           getRecordName(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -513,7 +548,9 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.deleteFromEndpointWithAuth(
-                        getParent(),
+
+getParent(),
+                           getRecordName(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -550,7 +587,9 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.getFromEndpoint(
-                        getParent(),
+
+getParent(),
+                           getRecordName(),
                         if(getParent() != null && getParent()!!.parent != null){getParent()!!.parent!!.testId}else{0},
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -567,7 +606,9 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.getFromEndpointWithAuth(
-                        getParent(),
+
+getParent(),
+                           getRecordName(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -599,7 +640,9 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.getBodyFromEndpoint(
-                        getParent(),
+
+getParent(),
+                           getRecordName(),
                         if(getParent() != null && getParent()!!.parent != null){getParent()!!.parent!!.testId}else{0},
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),
@@ -616,7 +659,9 @@ class Request : Atom() {
             try {
                 extractResponseParams(
                     rc.getBodyFromEndpointWithAuth(
-                        getParent(),
+
+getParent(),
+                           getRecordName(),
                         getParent()!!.parent!!.testId,
                         URL(addr),
                             receiveCookies.keys.toTypedArray(),

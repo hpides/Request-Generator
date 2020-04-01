@@ -21,7 +21,7 @@ import java.util.stream.Collectors
 class RestClient {
     @Throws(IOException::class)
     suspend fun getFromEndpoint(
-        story: UserStory?,
+        story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -38,12 +38,13 @@ class RestClient {
         request.method = HttpConstants.GET
         request.story = story
         request.testId = testId
+        request.recordName = recordName
         return exchangeWithEndpoint(request)
     }
 
     @Throws(IOException::class)
     suspend fun getBodyFromEndpoint(
-        story: UserStory?,
+        story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -59,12 +60,13 @@ class RestClient {
         request.isForm = false
         request.story = story
         request.testId = testId
+        request.recordName = recordName
         return exchangeWithEndpoint(request)
     }
 
     @Throws(IOException::class)
     suspend fun postFormToEndpoint(
-        story: UserStory?,
+        story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -80,11 +82,12 @@ class RestClient {
         request.isForm = true
         request.story = story
         request.testId = testId
+        request.recordName = recordName
         return exchangeWithEndpoint(request)
     }
 
     @Throws(IOException::class)
-    suspend fun postBodyToEndpoint(story: UserStory?, testId: Long, url: URL?, receiveCookies: Array<String>,
+    suspend fun postBodyToEndpoint(story: UserStory?, recordName:String?, testId: Long, url: URL?, receiveCookies: Array<String>,
         sendCookies: Map<String, String>, body: String?): RestResult? {
         val request = Request()
         request.url = url
@@ -95,12 +98,13 @@ class RestClient {
         request.body = body
         request.story = story
         request.testId = testId
+        request.recordName = recordName
         return exchangeWithEndpoint(request)
     }
 
     @Throws(IOException::class)
     suspend fun putFormToEndpoint(
-        story: UserStory?,
+        story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -116,11 +120,12 @@ class RestClient {
         request.isForm = true
         request.story = story
         request.testId = testId
+        request.recordName = recordName
         return exchangeWithEndpoint(request)
     }
 
     @Throws(IOException::class)
-    suspend fun putBodyToEndpoint(story: UserStory?, testId: Long, url: URL?, receiveCookies: Array<String>,
+    suspend fun putBodyToEndpoint(story: UserStory?, recordName:String?, testId: Long, url: URL?, receiveCookies: Array<String>,
         sendCookies: Map<String, String>, body: String?): RestResult? {
         val request = Request()
         request.url = url
@@ -131,12 +136,13 @@ class RestClient {
         request.body = body
         request.story = story
         request.testId = testId
+        request.recordName = recordName
         return exchangeWithEndpoint(request)
     }
 
     @Throws(IOException::class)
     suspend fun getFromEndpointWithAuth(
-        story: UserStory?,
+        story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -155,12 +161,13 @@ class RestClient {
         request.password = password
         request.story = story
         request.testId = testId
+        request.recordName = recordName
         return exchangeWithEndpoint(request)
     }
 
     @Throws(IOException::class)
     suspend fun getBodyFromEndpointWithAuth(
-        story: UserStory?,
+        story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -180,12 +187,13 @@ class RestClient {
         request.password = password
         request.story = story
         request.testId = testId
+        request.recordName = recordName
         return exchangeWithEndpoint(request)
     }
 
     @Throws(IOException::class)
     suspend fun postFormToEndpointWithAuth(
-        story: UserStory?,
+        story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -205,12 +213,13 @@ class RestClient {
         request.password = password
         request.story = story
         request.testId = testId
+        request.recordName = recordName
         return exchangeWithEndpoint(request)
     }
 
     @Throws(IOException::class)
     suspend fun postBodyToEndpointWithAuth(
-        story: UserStory?,
+        story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -230,12 +239,13 @@ class RestClient {
         request.password = password
         request.story = story
         request.testId = testId
+        request.recordName = recordName
         return exchangeWithEndpoint(request)
     }
 
     @Throws(IOException::class)
     suspend fun putFormToEndpointWithAuth(
-        story: UserStory?,
+        story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -255,12 +265,13 @@ class RestClient {
         request.password = password
         request.story = story
         request.testId = testId
+        request.recordName = recordName
         return exchangeWithEndpoint(request)
     }
 
     @Throws(IOException::class)
     suspend fun putBodyToEndpointWithAuth(
-        story: UserStory?,
+        story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -280,12 +291,13 @@ class RestClient {
         request.password = password
         request.story = story
         request.testId = testId
+        request.recordName = recordName
         return exchangeWithEndpoint(request)
     }
 
     @Throws(IOException::class)
     suspend fun deleteFromEndpoint(
-        story: UserStory?,
+        story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
         receiveCookies: Array<String>,
@@ -299,13 +311,14 @@ class RestClient {
         request.params = getParams
         request.method = HttpConstants.DELETE
         request.testId = testId
+        request.recordName = recordName
         request.story = story
         return exchangeWithEndpoint(request)
     }
 
     @Throws(IOException::class)
     suspend fun deleteFromEndpointWithAuth(
-            story: UserStory?,
+            story: UserStory?, recordName:String?,
             testId: Long,
             url: URL?,
             receiveCookies: Array<String>,
@@ -324,6 +337,7 @@ class RestClient {
         request.password = password
         request.story = story
         request.testId = testId
+        request.recordName = recordName
         return exchangeWithEndpoint(request)
     }
      //above methods are for user's convenience, this method does the actual request
@@ -484,7 +498,7 @@ class RestClient {
         }
         storage.registerTime(
             request.method,
-            request.url.toString(),
+            request.recordName,
             res.durationNanos(),
             request.story?.name,
             request.testId
