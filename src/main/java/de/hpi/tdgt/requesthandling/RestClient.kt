@@ -420,8 +420,12 @@ class RestClient {
         }
         readResponse(response, result, request)
         Test.ConcurrentRequestsThrottler.instance.requestDone()
+            //clients created because no story was given have to be closed
+            if(request.story == null){client.close()}
             return result
         }
+         //clients created because no story was given have to be closed
+         if(request.story == null){client.close()}
         return result
     }
 

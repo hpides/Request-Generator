@@ -149,6 +149,10 @@ class UserStory : Cloneable {
         timer.start()
     }
 
+    protected fun finalize() {
+        client.close()
+    }
+
     companion object {
         private val log =
             LogManager.getLogger(UserStory::class.java)
