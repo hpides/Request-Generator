@@ -421,7 +421,7 @@ class RestClient {
         }
         readResponse(response, result, request)
         Test.ConcurrentRequestsThrottler.instance.requestDone()
-
+        return result;
         }
             finally{
                 if(request.story == null){client.close()}
