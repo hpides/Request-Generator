@@ -35,6 +35,11 @@ class Request : Atom() {
             }
             return field
         }
+        set(value){
+            field = value
+            unescapedAddr = value
+        }
+    private var unescapedAddr: String? = null
     /**
      * Expected usage: values of this arrays are keys. Use them as keys in a HTTP
      * Form in a Request Body, get values for these keys from passed dict.
@@ -81,7 +86,19 @@ class Request : Atom() {
     var assertions = arrayOfNulls<Assertion>(0)
     var implicitNotFailedAssertion: Assertion? = null
 
+    /**
+     * If true, times for endpoints with variable expansion in the addresses are recorded as they are given (resulting in all of them showing one graph line).
+     * Else, all of them will be displayed individually.
+     * Enable for small-scope debuging, disable for large-scope tests.
+     */
+    var timeAggregation:Boolean = true
 
+    private fun getRecordName():String?{
+        if(timeAggregation){
+            return unescapedAddr
+        }
+        return addr
+    }
 
     fun parseXPaths(returnedPage: String, xpaths:Map<String,String>){
         //turns HTML into valid xml
@@ -143,12 +160,32 @@ class Request : Atom() {
             implicitNotFailedAssertion = RequestIsSent()
             (implicitNotFailedAssertion as RequestIsSent).name = "Request \"$name\" is sent"
         }
-        when (verb) {
-            "POST" -> handlePost()
-            "PUT" -> handlePut()
-            "DELETE" -> handleDelete()
-            "GET" -> handleGet()
+        val request = de.hpi.tdgt.requesthandling.Request()
+        request.method = verb
+        request.recordName = getRecordName()
+        request.url = URL(addr)
+        if (requestJSONObject != null) {
+            request.body = replaceWithKnownParams(requestJSONObject!!, true)
+        } else if(requestParams.isNotEmpty()){
+            val params = HashMap<String,String>()
+            for (key in requestParams) {
+                // sometimes, a space sneaks in
+                if(knownParams.get(key.trim()) != null) {
+                    params[key.trim()] = knownParams[key.trim()]!!
+                }
+            }
+            request.params = params
         }
+        if(basicAuth != null){
+            request.username =  knownParams[basicAuth!!.user]
+            request.password = knownParams[basicAuth!!.password]
+        }
+        request.story = getParent()?: UserStory()
+        // in tests and in "pure" usage, parent might be nuull and we do not want to fail because of this
+        request.testId = ((getParent()?:UserStory()).parent?.testId)?:0L
+        request.receiveCookies = receiveCookies.keys.toTypedArray()
+        request.sendCookies = prepareCookies()
+        extractResponseParams(rc.exchangeWithEndpoint(request))
     }
 
     /**
@@ -173,78 +210,9 @@ class Request : Atom() {
         ret.xpaths = xpaths
         //also stateless
         ret.assertions = assertions
+        ret.timeAggregation = timeAggregation
         cloning = false;
         return ret
-    }
-
-    private suspend fun handlePost() {
-        if (requestJSONObject != null) {
-            handlePostWithBody()
-        } else {
-            handlePostWithForm()
-        }
-    }
-
-    private suspend fun handlePostWithForm() {
-        val params = HashMap<String, String>()
-        for (key in requestParams) {
-            log.info("Key "+key+" known "+knownParams.get(key))
-            // sometimes, a space sneaks in
-            if(knownParams.get(key.trim()) != null) {
-                params[key.trim()] = knownParams[key.trim()]!!
-            }
-
-        }
-        if (basicAuth == null) {
-            try { //a few tests trigger the alternative case
-                if (getParent() != null && getParent()!!.parent != null) {
-                    extractResponseParams(
-                        rc.postFormToEndpoint(
-                            getParent(),
-                            getParent()!!.parent!!.testId,
-                            URL(addr),
-                            receiveCookies.keys.toTypedArray(),
-                            prepareCookies(),
-                            params
-                        )
-                    )
-                } else {
-                    extractResponseParams(
-                        rc.postFormToEndpoint(
-                            UserStory(),
-                            0,
-                            URL(addr),
-                            receiveCookies.keys.toTypedArray(),
-                            prepareCookies(),
-                            params
-                        )
-                    )
-                }
-            } catch (e: MalformedURLException) { // TODO Auto-generated catch block
-                log.error(e)
-            } catch (e: IOException) { // TODO Auto-generated catch block
-                log.error(e)
-            }
-        } else {
-            try {
-                extractResponseParams(
-                    rc.postFormToEndpointWithAuth(
-                        getParent(),
-                        getParent()!!.parent!!.testId,
-                        URL(addr),
-                            receiveCookies.keys.toTypedArray(),
-                            prepareCookies(),
-                        params,
-                        knownParams[basicAuth!!.user],
-                        knownParams[basicAuth!!.password]
-                    )
-                )
-            } catch (e: MalformedURLException) { // TODO Auto-generated catch block
-                log.error(e)
-            } catch (e: IOException) { // TODO Auto-generated catch block
-                log.error(e)
-            }
-        }
     }
 
     private fun toStringMap(input: Map<*, *>): Map<String, String> {
@@ -336,302 +304,6 @@ class Request : Atom() {
             reportFailureToUser("Request $name: Could not replace variable(s) $builder", current)
         }
         return current
-    }
-
-    private suspend fun handlePostWithBody() {
-        var jsonParams: String? = ""
-        if (requestJSONObject != null) {
-            jsonParams = replaceWithKnownParams(requestJSONObject!!, true)
-        }
-        if (basicAuth == null) {
-            try {
-                extractResponseParams(
-                    rc.postBodyToEndpoint(
-                        getParent(),
-                        getParent()!!.parent!!.testId,
-                        URL(addr),
-                            receiveCookies.keys.toTypedArray(),
-                            prepareCookies(),
-                        jsonParams
-                    )
-                )
-            } catch (e: MalformedURLException) { // TODO Auto-generated catch block
-                log.error(e)
-            } catch (e: IOException) { // TODO Auto-generated catch block
-                log.error(e)
-            }
-        } else {
-            try {
-                extractResponseParams(
-                    rc.postBodyToEndpointWithAuth(
-                        getParent(),
-                        getParent()!!.parent!!.testId,
-                        URL(addr),
-                            receiveCookies.keys.toTypedArray(),
-                            prepareCookies(),
-                        jsonParams,
-                        knownParams[basicAuth!!.user],
-                        knownParams[basicAuth!!.password]
-                    )
-                )
-            } catch (e: MalformedURLException) { // TODO Auto-generated catch block
-                log.error(e)
-            } catch (e: IOException) { // TODO Auto-generated catch block
-                log.error(e)
-            }
-        }
-    }
-
-    private suspend fun handlePut() {
-        if (requestJSONObject != null) {
-            handlePutWithBody()
-        } else {
-            handlePutWithForm()
-        }
-    }
-
-    private suspend fun handlePutWithForm() {
-        val params = HashMap<String, String>()
-        for (key in requestParams) {
-            if(knownParams[key]!=null) {
-                params[key] = knownParams[key]!!
-            }
-        }
-        if (basicAuth == null) {
-            try {
-                extractResponseParams(
-                    rc.putFormToEndpoint(
-                        getParent(),
-                        getParent()!!.parent!!.testId,
-                        URL(addr),
-                            receiveCookies.keys.toTypedArray(),
-                            prepareCookies(),
-                        params
-                    )
-                )
-            } catch (e: MalformedURLException) { // TODO Auto-generated catch block
-                log.error(e)
-            } catch (e: IOException) { // TODO Auto-generated catch block
-                log.error(e)
-            }
-        } else {
-            try {
-                extractResponseParams(
-                    rc.putFormToEndpointWithAuth(
-                        getParent(),
-                        getParent()!!.parent!!.testId,
-                        URL(addr),
-                            receiveCookies.keys.toTypedArray(),
-                            prepareCookies(),
-                        params,
-                        knownParams[basicAuth!!.user],
-                        knownParams[basicAuth!!.password]
-                    )
-                )
-            } catch (e: MalformedURLException) { // TODO Auto-generated catch block
-                log.error(e)
-            } catch (e: IOException) { // TODO Auto-generated catch block
-                log.error(e)
-            }
-        }
-    }
-
-    private suspend fun handlePutWithBody() {
-        val params = HashMap<String, String>()
-        if (requestJSONObject != null) { //fill out template
-        }
-        var jsonParams: String? = ""
-        try {
-            jsonParams = om.writeValueAsString(params)
-        } catch (e1: JsonProcessingException) { // TODO Auto-generated catch block
-            e1.printStackTrace()
-        }
-        if (basicAuth == null) {
-            try {
-                extractResponseParams(
-                    rc.putBodyToEndpoint(
-                        getParent(),
-                        getParent()!!.parent!!.testId,
-                        URL(addr),
-                            receiveCookies.keys.toTypedArray(),
-                            prepareCookies(),
-                        jsonParams
-                    )
-                )
-            } catch (e: MalformedURLException) { // TODO Auto-generated catch block
-                log.error(e)
-            } catch (e: IOException) { // TODO Auto-generated catch block
-                log.error(e)
-            }
-        } else {
-            try {
-                extractResponseParams(
-                    rc.putBodyToEndpointWithAuth(
-                        getParent(),
-                        getParent()!!.parent!!.testId,
-                        URL(addr),
-                            receiveCookies.keys.toTypedArray(),
-                            prepareCookies(),
-                        jsonParams,
-                        knownParams[basicAuth!!.user],
-                        knownParams[basicAuth!!.password]
-                    )
-                )
-            } catch (e: MalformedURLException) { // TODO Auto-generated catch block
-                log.error(e)
-            } catch (e: IOException) { // TODO Auto-generated catch block
-                log.error(e)
-            }
-        }
-    }
-
-    private suspend fun handleDelete() {
-        val params = HashMap<String, String>()
-        for (key in requestParams) {
-            if(knownParams[key]!=null) {
-                params[key] = knownParams[key]!!
-            }
-        }
-        if (basicAuth == null) {
-            try {
-                extractResponseParams(
-                    rc.deleteFromEndpoint(
-                        getParent(),
-                        getParent()!!.parent!!.testId,
-                        URL(addr),
-                            receiveCookies.keys.toTypedArray(),
-                            prepareCookies(),
-                        params
-                    )
-                )
-            } catch (e: MalformedURLException) { // TODO Auto-generated catch block
-                log.error(e)
-            } catch (e: IOException) { // TODO Auto-generated catch block
-                log.error(e)
-            }
-        } else {
-            try {
-                extractResponseParams(
-                    rc.deleteFromEndpointWithAuth(
-                        getParent(),
-                        getParent()!!.parent!!.testId,
-                        URL(addr),
-                            receiveCookies.keys.toTypedArray(),
-                            prepareCookies(),
-                        params,
-                        knownParams[basicAuth!!.user],
-                        knownParams[basicAuth!!.password]
-                    )
-                )
-            } catch (e: MalformedURLException) { // TODO Auto-generated catch block
-                log.error(e)
-            } catch (e: IOException) { // TODO Auto-generated catch block
-                log.error(e)
-            }
-        }
-    }
-
-    private suspend fun handleGet() {
-        if (requestJSONObject != null) {
-            handleGetWithBody()
-        } else {
-            handleGetWithForm()
-        }
-    }
-
-    private suspend fun handleGetWithForm() {
-        val params = HashMap<String, String>()
-        for (key in requestParams) {
-            if(knownParams[key]!=null) {
-                params[key] = knownParams[key]!!
-            }
-        }
-        if (basicAuth == null) {
-            try {
-                extractResponseParams(
-                    rc.getFromEndpoint(
-                        getParent(),
-                        if(getParent() != null && getParent()!!.parent != null){getParent()!!.parent!!.testId}else{0},
-                        URL(addr),
-                            receiveCookies.keys.toTypedArray(),
-                            prepareCookies(),
-                        params
-                    )
-                )
-            } catch (e: MalformedURLException) { // TODO Auto-generated catch block
-                log.error(e)
-            } catch (e: IOException) { // TODO Auto-generated catch block
-                log.error(e)
-            }
-        } else {
-            try {
-                extractResponseParams(
-                    rc.getFromEndpointWithAuth(
-                        getParent(),
-                        getParent()!!.parent!!.testId,
-                        URL(addr),
-                            receiveCookies.keys.toTypedArray(),
-                            prepareCookies(),
-                        params,
-                        knownParams[basicAuth!!.user],
-                        knownParams[basicAuth!!.password]
-                    )
-                )
-            } catch (e: MalformedURLException) { // TODO Auto-generated catch block
-                log.error(e)
-            } catch (e: IOException) { // TODO Auto-generated catch block
-                log.error(e)
-            }
-        }
-    }
-
-    private suspend fun handleGetWithBody() {
-        val params = HashMap<String, String>()
-        if (requestJSONObject != null) { //fill out template
-        }
-        var jsonParams: String? = ""
-        try {
-            jsonParams = om.writeValueAsString(params)
-        } catch (e1: JsonProcessingException) { // TODO Auto-generated catch block
-            e1.printStackTrace()
-        }
-        if (basicAuth == null) {
-            try {
-                extractResponseParams(
-                    rc.getBodyFromEndpoint(
-                        getParent(),
-                        if(getParent() != null && getParent()!!.parent != null){getParent()!!.parent!!.testId}else{0},
-                        URL(addr),
-                            receiveCookies.keys.toTypedArray(),
-                            prepareCookies(),
-                        jsonParams
-                    )
-                )
-            } catch (e: MalformedURLException) { // TODO Auto-generated catch block
-                log.error(e)
-            } catch (e: IOException) { // TODO Auto-generated catch block
-                log.error(e)
-            }
-        } else {
-            try {
-                extractResponseParams(
-                    rc.getBodyFromEndpointWithAuth(
-                        getParent(),
-                        getParent()!!.parent!!.testId,
-                        URL(addr),
-                            receiveCookies.keys.toTypedArray(),
-                            prepareCookies(),
-                        jsonParams,
-                        knownParams[basicAuth!!.user],
-                        knownParams[basicAuth!!.password]
-                    )
-                )
-            } catch (e: MalformedURLException) { // TODO Auto-generated catch block
-                log.error(e)
-            } catch (e: IOException) { // TODO Auto-generated catch block
-                log.error(e)
-            }
-        }
     }
 
     override fun equals(other: Any?): Boolean {
