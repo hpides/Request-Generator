@@ -57,6 +57,11 @@ public class Utils {
         IOUtils.copy(getClass().getResourceAsStream("RequestExampleWithTokens.json"), writer);
         return writer.toString();
     }
+    public String getRequestExampleWithRequestReplacement() throws IOException {
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(getClass().getResourceAsStream("RequestExampleWithRequestReplacement.json"), writer);
+        return writer.toString();
+    }
     public static void assertInstanceOf(Object o, Class c){
         Assertions.assertTrue(c.isInstance(o), "First atom of first story should be a data generation atom and not a "+o.getClass().getName());
     }

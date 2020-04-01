@@ -64,7 +64,7 @@ object Main {
                 log.info("--- Testing user creation and update ---")
                 var result = rc.postBodyToEndpoint(
                         UserStory(),
-                        0,
+                        "Endpoint test",0,
                         URL("http://users/users/new"),
                         emptyArray(),
                         HashMap(),
@@ -73,7 +73,7 @@ object Main {
                 log.info("Create user: " + result.toString() + " and code: " + result!!.returnCode + " in: " + result.durationMillis() + " ms.")
                 result = rc.getFromEndpointWithAuth(
                         UserStory(),
-                        0,
+                        "Endpoint test",0,
                         URL("http://users/users/all"),
                         emptyArray(),
                         HashMap(),
@@ -84,7 +84,7 @@ object Main {
                 log.info("Get all users: " + result.toString() + " and code: " + result!!.returnCode + " in: " + result.durationMillis() + " ms.")
                 result = rc.putFormToEndpointWithAuth(
                         UserStory(),
-                        0,
+                        "Endpoint test",0,
                         URL("http://users/users/update"),
                         emptyArray(),
                         params,
@@ -99,7 +99,7 @@ object Main {
                 params["text"] = "because it is rather short."
                 result = rc.postFormToEndpointWithAuth(
                         UserStory(),
-                        0,
+                        "Endpoint test",0,
                         URL("http://posts/posts/new"),
                         emptyArray(),
                         params,
@@ -110,7 +110,7 @@ object Main {
                 log.info("Create post: " + result.toString() + " and code: " + result!!.returnCode + " in: " + result.durationMillis() + " ms.")
                 result = rc.getFromEndpointWithAuth(
                         UserStory(),
-                        0,
+                        "Endpoint test",0,
                         URL("http://posts/posts/all"),
                         emptyArray(),
                         HashMap(),
@@ -124,7 +124,7 @@ object Main {
                 params["key"] = "short"
                 result = rc.getFromEndpointWithAuth(
                         UserStory(),
-                        0,
+                        "Endpoint test",0,
                         URL("http://search/posts/search"),
                         emptyArray(),
                         params,
@@ -136,7 +136,7 @@ object Main {
                 log.info("--- Deleting user ---")
                 result = rc.deleteFromEndpointWithAuth(
                         UserStory(),
-                        0,
+                        "Endpoint test",0,
                         URL("http://users/users/delete"),
                         emptyArray(),
                         HashMap(),

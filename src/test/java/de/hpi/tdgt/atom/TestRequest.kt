@@ -415,6 +415,21 @@ class TestRequest : RequestHandlingFramework() {
         val test = deserialize(Utils().getRequestExampleWithTokens())
         MatcherAssert.assertThat((test.getStories()[0].getAtoms()[2].clone() as Request).tokenNames, Matchers.hasEntry(Matchers.equalTo("_csrf"), Matchers.equalTo("_csrf")))
     }
+
+    @Test
+    fun canCloneTimeAggregationFalse(){
+        val test = deserialize(Utils().requestExampleWithRequestReplacement)
+        val request = test.getStories()[0].getAtoms()[1] as Request
+        request.timeAggregation = false
+        MatcherAssert.assertThat((request.clone() as Request).timeAggregation, Matchers.equalTo(false))
+    }
+    @Test
+    fun canCloneTimeAggregationTrue(){
+        val test = deserialize(Utils().requestExampleWithRequestReplacement)
+        val request = test.getStories()[0].getAtoms()[1] as Request
+        request.timeAggregation = true
+        MatcherAssert.assertThat((request.clone() as Request).timeAggregation, Matchers.equalTo(true))
+    }
     @Test
     fun canCloneReceiveCookies(){
         val test = deserialize(Utils().getRequestExampleWithTokens())
