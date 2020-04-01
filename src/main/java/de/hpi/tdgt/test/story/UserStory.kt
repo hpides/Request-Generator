@@ -148,7 +148,7 @@ class UserStory : Cloneable {
     init {
         timer.start()
     }
-
+    //on GC, remember to return ressources to the OS
     protected fun finalize() {
         client.close()
     }

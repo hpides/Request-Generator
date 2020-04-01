@@ -42,6 +42,14 @@ public class TimeStorage {
         //to clean files
         mqttReporter = () -> {
             while (running.get()) {
+                //first second starts after start / first entry
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    //Clean up
+                    break;
+                }
+
                 //client is null if reset was called
                 while (client == null || !client.isConnected()) {
                     String publisherId = UUID.randomUUID().toString();
@@ -82,13 +90,7 @@ public class TimeStorage {
                 }
                 //client is created and connected
                 sendTimesViaMqtt();
-                //first second starts immediately (short tests)
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    //Clean up
-                    break;
-                }
+
             }
             //to clean files
             try {
