@@ -26,11 +26,21 @@
           "id": 1,
           "repeat": 1,
           "successors": [
+            6
           ],
           "type": "REQUEST",
           "verb": "GET",
           "addr": "http://localhost:9000/param=$value",
           "timeAggregation": true
+        },
+        {
+          "name": "Warte 1,2 Sekunde",
+          "id": 6,
+          "repeat": 1,
+          "successors": [
+          ],
+          "type": "DELAY",
+          "delayMs": 1200
         }
       ]
     }
