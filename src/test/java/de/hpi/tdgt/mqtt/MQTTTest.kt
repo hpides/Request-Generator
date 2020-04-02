@@ -720,10 +720,10 @@ class MQTTTest : RequestHandlingFramework() {
         val actuals = readAssertion(messages)
         MatcherAssert.assertThat(
             actuals[0].actuals,
-            Matchers.hasKey("Data Generation \"generation\" loads data")
+            Matchers.hasKey("Data Generation \"generation\" has no data remaining")
         )
         val reason: Set<String?> =
-            actuals[0].actuals["Data Generation \"generation\" loads data"]!!.value?:HashSet()
+            actuals[0].actuals["Data Generation \"generation\" has no data remaining"]!!.value?:HashSet()
         MatcherAssert.assertThat(
             reason,
             Matchers.hasItem(Matchers.containsStringIgnoringCase("NotThere.csv"))
