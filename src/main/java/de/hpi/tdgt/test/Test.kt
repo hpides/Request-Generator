@@ -22,6 +22,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.sync.Semaphore
+import java.lang.Exception
 import java.util.concurrent.CompletableFuture
 
 //allow frontend to store additional information
@@ -355,7 +356,11 @@ class Test {
 
         fun requestDone() {
             if (maxParallelRequests != null) {
-                maxParallelRequests!!.release()
+                try {
+                    maxParallelRequests!!.release()
+                } catch (e:Exception){
+                    log.error("Could not release permit in concurrentRequestThrottler: ",e)
+                }
             }
             synchronized(this) { active-- }
         }

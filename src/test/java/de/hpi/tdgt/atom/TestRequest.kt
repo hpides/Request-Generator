@@ -4,6 +4,7 @@ import de.hpi.tdgt.HttpHandlers
 import de.hpi.tdgt.RequestHandlingFramework
 import de.hpi.tdgt.Utils
 import de.hpi.tdgt.deserialisation.Deserializer.deserialize
+import de.hpi.tdgt.requesthandling.RestClient
 import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.Atom
 import de.hpi.tdgt.test.story.atom.Request
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.IOException
+import java.net.URL
 import java.util.concurrent.ExecutionException
 import kotlin.collections.HashMap
 
@@ -88,6 +90,25 @@ class TestRequest : RequestHandlingFramework() {
         MatcherAssert.assertThat(
             AssertionStorage.instance.getFails("postWithBody returns JSON"),
             Matchers.`is`(0)
+        )
+    }
+    @Test
+    @Throws(InterruptedException::class, ExecutionException::class)
+    fun canSendPOSTWithForm() {
+        val rc = Request()
+        val params = java.util.HashMap<String, String>()
+        params["param"] = "value"
+        rc.addr="http://localhost:9000/echoPost"
+        rc.verb="POST"
+        rc.responseJSONObject=arrayOf("param")
+        rc.requestParams= arrayOf("param")
+        rc.predecessorCount = -1
+        rc.repeat = 1
+        runBlocking { rc.run(params) }
+
+        MatcherAssert.assertThat("PostBodyHandler should have accepted this post!",
+                postHandler.lastPostWasOkay,
+                Matchers.`is`(true)
         )
     }
 
