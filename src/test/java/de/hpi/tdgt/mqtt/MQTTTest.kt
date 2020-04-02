@@ -40,7 +40,6 @@ import java.net.URL
 import java.util.*
 import java.util.concurrent.ExecutionException
 import kotlin.collections.HashMap
-import kotlin.collections.HashSet
 
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(classes = [WebApplication::class], webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -62,11 +61,11 @@ class MQTTTest : RequestHandlingFramework() {
         mockParent.parent = mockTest
         mockParent.name = mockStoryName
     }
-    val messages = HashSet<String>()
+
     @org.junit.jupiter.api.Test
     @Throws(MqttException::class, InterruptedException::class, IOException::class)
     fun TimeStorageStreamsTimesUsingMQTT() {
-        prepareClient(TimeStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
         TimeStorage.getInstance().registerTime("POST", "http://localhost:9000/", 10, "story", 0)
         Thread.sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
@@ -84,7 +83,7 @@ class MQTTTest : RequestHandlingFramework() {
     @org.junit.jupiter.api.Test
     @Throws(MqttException::class, InterruptedException::class, IOException::class)
     fun TimeStorageStreamsAllTimesUsingMQTT() {
-        prepareClient(TimeStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
         val storyName = "story"
         TimeStorage.getInstance().registerTime("POST", "http://localhost:9000/", 10, storyName, 0)
         Thread.sleep(3000)
@@ -111,7 +110,7 @@ class MQTTTest : RequestHandlingFramework() {
     @org.junit.jupiter.api.Test
     @Throws(MqttException::class, InterruptedException::class, IOException::class)
     fun TimeStorageStreamsAllTimesOfAllStoriesUsingMQTT() { //this test is based on the assumption that both entries are added at roughly the same time, so we want predictable timing behavior
-        prepareClient(TimeStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
         val storyName1 = "story1"
         val storyName2 = "story2"
         TimeStorage.getInstance().registerTime("POST", "http://localhost:9000/", 10, storyName1, 0)
@@ -169,7 +168,7 @@ class MQTTTest : RequestHandlingFramework() {
         ExecutionException::class
     )
     fun TimeStorageStreamsAllTimesUsingMQTTWithCorrectStoryName() {
-        prepareClient(TimeStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
         val params = HashMap<String, String>()
         params["key"] = "wrong"
         params["value"] = "wrong"
@@ -198,7 +197,7 @@ class MQTTTest : RequestHandlingFramework() {
 
     @org.junit.jupiter.api.Test
     fun aggregationOfTimesWorks() {
-        prepareClient(TimeStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
         val params = HashMap<String, String>()
         params["key"] = "wrong"
         params["value"] = "wrong"
@@ -226,7 +225,7 @@ class MQTTTest : RequestHandlingFramework() {
 
     @org.junit.jupiter.api.Test
     fun aggregationOfTimesCanBeDisabled() {
-        prepareClient(TimeStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
         val params = HashMap<String, String>()
         params["key"] = "wrong"
         params["value"] = "wrong"
@@ -262,7 +261,7 @@ class MQTTTest : RequestHandlingFramework() {
         ExecutionException::class
     )
     fun TimeStorageStreamsAllTimesUsingMQTTWithCorrectThroughput() {
-        prepareClient(TimeStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
         val params = HashMap<String, String>()
         params["key"] = "wrong"
         params["value"] = "wrong"
@@ -297,7 +296,7 @@ class MQTTTest : RequestHandlingFramework() {
         ExecutionException::class
     )
     fun TimeStorageStreamsAllTimesUsingMQTTWithATestId() {
-        prepareClient(TimeStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
         val params = HashMap<String, String>()
         params["key"] = "wrong"
         params["value"] = "wrong"
@@ -328,7 +327,7 @@ class MQTTTest : RequestHandlingFramework() {
         ExecutionException::class
     )
     fun TimeStorageStreamsAllTimesUsingMQTTWithACreationTime() {
-        prepareClient(TimeStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
         val params = HashMap<String, String>()
         params["key"] = "wrong"
         params["value"] = "wrong"
@@ -352,8 +351,7 @@ class MQTTTest : RequestHandlingFramework() {
     }
 
     @Throws(MqttException::class)
-    private fun prepareClient(topic: String) {
-        messages.clear()
+    private fun prepareClient(topic: String): MutableSet<String> {
         val publisherId = UUID.randomUUID().toString()
         publisher = MqttClient(PropertiesReader.getMqttHost(), publisherId, MemoryPersistence())
         val options = MqttConnectOptions()
@@ -361,13 +359,15 @@ class MQTTTest : RequestHandlingFramework() {
         options.isCleanSession = true
         options.connectionTimeout = 10
         (publisher as MqttClient).connect(options)
+        val message = HashSet<String>()
         publisher.subscribe(topic, IMqttMessageListener { s: String, mqttMessage: MqttMessage ->
             //hamcrest can't handle empty sets in the list for contains, so filter them out
             if (s == topic && String(mqttMessage.payload) != "{}" && !String(mqttMessage.payload).isEmpty()) {
                 log.info("Received " + String(mqttMessage.payload))
-                messages.add(String(mqttMessage.payload))
+                message.add(String(mqttMessage.payload))
             }
         })
+        return message
     }
 
     @AfterEach
@@ -378,7 +378,6 @@ class MQTTTest : RequestHandlingFramework() {
         publisher.publish(AssertionStorage.MQTT_TOPIC, msg)
         publisher.publish(TimeStorage.MQTT_TOPIC, msg)
         AssertionStorage.instance.reset()
-        TimeStorage.getInstance().reset()
         publisher.disconnect()
         publisher.close()
     }
@@ -410,7 +409,7 @@ class MQTTTest : RequestHandlingFramework() {
         val params = HashMap<String, String>()
         params["key"] = "wrong"
         params["value"] = "wrong"
-        prepareClient(AssertionStorage.MQTT_TOPIC)
+        val message: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
         val getWithAuth =
             deserialize(Utils().requestExampleWithAssertionsJSON).getStories()[0].getAtoms()[3] as Request
         //make sure we do not run successors
@@ -418,7 +417,7 @@ class MQTTTest : RequestHandlingFramework() {
         runBlocking{getWithAuth!!.run(params)}
         Thread.sleep(3000)
         val allActuals =
-            getAllActuals(messages)
+            getAllActuals(message)
         MatcherAssert.assertThat(
             allActuals,
             Matchers.hasItem<Map<String, Pair<Int, Set<String>>?>>(
@@ -447,7 +446,7 @@ class MQTTTest : RequestHandlingFramework() {
         val params = HashMap<String, String>()
         params["key"] = "wrong"
         params["value"] = "wrong"
-        prepareClient(AssertionStorage.MQTT_TOPIC)
+        val message: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
         val getWithAuth =
             deserialize(Utils().requestExampleWithAssertionsJSON).getStories()[0].getAtoms()[3] as Request
         getWithAuth.addr = "http://AHostThatJustCanNotExist"
@@ -456,7 +455,7 @@ class MQTTTest : RequestHandlingFramework() {
         runBlocking{getWithAuth!!.run(params)}
         Thread.sleep(3000)
         val allActuals =
-            getAllActuals(messages)
+            getAllActuals(message)
         val failedAssertioNName = "Request \"" + getWithAuth.name + "\" is sent"
         MatcherAssert.assertThat(
             allActuals,
@@ -491,7 +490,7 @@ class MQTTTest : RequestHandlingFramework() {
         IOException::class
     )
     fun ContentTypeAssertionStreamsFailedAssertions() {
-       prepareClient(AssertionStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
         val params = HashMap<String, String>()
         params["key"] = "something"
         params["value"] = "somethingElse"
@@ -542,7 +541,7 @@ class MQTTTest : RequestHandlingFramework() {
         IOException::class
     )
     fun AssertionStorageIsDeletedEverySecond() {
-        prepareClient(AssertionStorage.MQTT_TOPIC)
+        val messages = prepareClient(AssertionStorage.MQTT_TOPIC)
         val params = HashMap<String, String>()
         params["key"] = "something"
         params["value"] = "somethingElse"
@@ -584,7 +583,7 @@ class MQTTTest : RequestHandlingFramework() {
         IOException::class
     )
     fun AssertionStorageIsDeletedEverySecondIncludingNumberOfActuals() {
-        prepareClient(AssertionStorage.MQTT_TOPIC)
+        val messages = prepareClient(AssertionStorage.MQTT_TOPIC)
         val params = HashMap<String, String>()
         params["key"] = "something"
         params["value"] = "somethingElse"
@@ -632,7 +631,7 @@ class MQTTTest : RequestHandlingFramework() {
     )
     fun ResponseNotEmptyAssertionStreamsFailedAssertions() {
         val params = HashMap<String, String>()
-        prepareClient(AssertionStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
         val getJsonObjectWithAssertion =
             deserialize(Utils().requestExampleWithAssertionsJSON).getStories()[0].getAtoms()[2] as Request
         //do not run successors
@@ -669,7 +668,7 @@ class MQTTTest : RequestHandlingFramework() {
     )
     fun ResponseNotEmptyAssertionStreamsFailedAssertionsWithTestId() {
         val params = HashMap<String, String>()
-        prepareClient(AssertionStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
         val getJsonObjectWithAssertion =
             deserialize(Utils().requestExampleWithAssertionsJSON).getStories()[0].getAtoms()[2] as Request
         //do not run successors
@@ -690,13 +689,13 @@ class MQTTTest : RequestHandlingFramework() {
     )
     fun ATestStartMessageIsSent() {
         runBlocking {
-            prepareClient(Test.MQTT_TOPIC)
+            val message: Set<String> = prepareClient(Test.MQTT_TOPIC)
             //test that does not do anything is sufficient, no need to waste resources here
             val test =
                     deserialize(Utils().noopJson)
             test.start(test.warmup())
             val messageStart = "testStart"
-            val hasTestStart = hasMessageStartingWith(messages, messageStart)
+            val hasTestStart = hasMessageStartingWith(message, messageStart)
             MatcherAssert.assertThat("control topic should have received a \"testStart\"!", hasTestStart)
         }
     }
@@ -709,7 +708,7 @@ class MQTTTest : RequestHandlingFramework() {
         IOException::class
     )
     fun AnAssertionErrorIsSentIfDataGenerationDoesNotFindFile() {
-        prepareClient(AssertionStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
         //test that does not do anything is sufficient, no need to waste resources here
         val generation = Data_Generation()
         generation.table = "NotThere"
@@ -739,7 +738,7 @@ class MQTTTest : RequestHandlingFramework() {
         IOException::class
     )
     fun AnAssertionErrorIsSentIfDataGenerationHasTooFewLines() {
-        prepareClient(AssertionStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
         //test that does not do anything is sufficient, no need to waste resources here
         val generation = Data_Generation()
         generation.table = "values"
@@ -782,7 +781,7 @@ class MQTTTest : RequestHandlingFramework() {
         IOException::class
     )
     fun AnAssertionErrorIsSentIfDataGenerationHasTooFewColumns() {
-        prepareClient(AssertionStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
         //test that does not do anything is sufficient, no need to waste resources here
         val generation = Data_Generation()
         generation.table = "values"
@@ -827,13 +826,13 @@ class MQTTTest : RequestHandlingFramework() {
     )
     fun ATestStartMessageWithIdAndConfigIsSent() {
         runBlocking {
-            prepareClient(Test.MQTT_TOPIC)
+            val message: Set<String> = prepareClient(Test.MQTT_TOPIC)
             //test that does not do anything is sufficient, no need to waste resources here
             val test =
                     deserialize(Utils().noopJson)
             test.start(test.warmup())
             val messageStart = "testStart"
-            val startMessage = findMessageStartingWith(messages, messageStart)
+            val startMessage = findMessageStartingWith(message, messageStart)
             val parts = startMessage!!.split(" ".toRegex()).toTypedArray()
             //if there are whitespaces in the string, it will be split by them to
             MatcherAssert.assertThat(parts.size, Matchers.greaterThanOrEqualTo(3))
@@ -863,16 +862,16 @@ class MQTTTest : RequestHandlingFramework() {
     @org.junit.jupiter.api.Test
     @Throws(Exception::class)
     fun runsUserStoryAgainstTestServerSendsTestConfig() {
-        prepareClient(Test.MQTT_TOPIC)
+        val message: Set<String> = prepareClient(Test.MQTT_TOPIC)
         val requestEntity =
             RequestEntity.post(URL("http://localhost:" + port + "/upload/" + System.currentTimeMillis()).toURI())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Utils().noopJson)
         restTemplate!!.exchange(requestEntity, String::class.java)
         val messageStart = "testStart"
-        var startMessage = findMessageStartingWith(messages, messageStart)
+        var startMessage = findMessageStartingWith(message, messageStart)
         while(startMessage == null){
-            startMessage = findMessageStartingWith(messages, messageStart)
+            startMessage = findMessageStartingWith(message, messageStart)
             sleep(1000)
         }
         val parts = startMessage!!.split(" ".toRegex()).toTypedArray()
@@ -902,7 +901,7 @@ class MQTTTest : RequestHandlingFramework() {
 
     @org.junit.jupiter.api.Test
     public fun parsesHTMLWithCustomXPATHThrowsAssertionError(){
-        prepareClient(AssertionStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
         val requestAtom = Request()
         val xpaths = HashMap<String, String>()
         xpaths.put("Bjärk!","user")
@@ -922,7 +921,7 @@ class MQTTTest : RequestHandlingFramework() {
 
     @org.junit.jupiter.api.Test
     public fun StringReplacementWithUnescapedRelacementThrowsError(){
-        prepareClient(AssertionStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
         val requestAtom = Request()
         requestAtom.name = "request"
         requestAtom.addr = "http://localhost:9000\$part1\$part2"
@@ -945,7 +944,7 @@ class MQTTTest : RequestHandlingFramework() {
 
     @org.junit.jupiter.api.Test
     public fun noAssertionErrorForReplacementIsThrownDuringClone(){
-        prepareClient(AssertionStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
         val requestAtom = Request()
         requestAtom.name = "request"
         requestAtom.addr = "http://localhost:9000\$part1\$part2"
@@ -972,7 +971,7 @@ class MQTTTest : RequestHandlingFramework() {
         IOException::class
     )
     fun ATestEndMessageIsSent() {
-        prepareClient(Test.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(Test.MQTT_TOPIC)
         //test that does not do anything is sufficient, no need to waste resources here
         val test =
             deserialize(Utils().noopJson)
@@ -986,7 +985,7 @@ class MQTTTest : RequestHandlingFramework() {
 
     @org.junit.jupiter.api.Test
     public fun assertionErrorIsThrownIfXPATHIsNotFound(){
-        prepareClient(AssertionStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
         val test = de.hpi.tdgt.test.Test()
         val story = UserStory()
         story.parent = test
@@ -1017,7 +1016,7 @@ class MQTTTest : RequestHandlingFramework() {
 
     @org.junit.jupiter.api.Test
     public fun assertionErrorIsThrownIfXPATHIsInvalid(){
-        prepareClient(AssertionStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
         val test = de.hpi.tdgt.test.Test()
         val story = UserStory()
         story.parent = test
@@ -1048,7 +1047,7 @@ class MQTTTest : RequestHandlingFramework() {
 
     @org.junit.jupiter.api.Test
     public fun noAssertionErrorIsThrownIfXPATHIsFound(){
-        prepareClient(AssertionStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
         val test = de.hpi.tdgt.test.Test()
         val story = UserStory()
         story.parent = test
@@ -1076,7 +1075,7 @@ class MQTTTest : RequestHandlingFramework() {
     //regression test, this failed in production
     @org.junit.jupiter.api.Test
     public fun noAssertionErrorIsThrownIfXPATHIsFoundAndCorrectlyEscaped(){
-        prepareClient(AssertionStorage.MQTT_TOPIC)
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
         val test = de.hpi.tdgt.test.Test()
         val story = UserStory()
         story.parent = test
