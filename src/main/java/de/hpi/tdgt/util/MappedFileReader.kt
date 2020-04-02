@@ -1,45 +1,27 @@
 package de.hpi.tdgt.util
 
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
+import org.apache.logging.log4j.LogManager
 import java.io.Closeable
-import java.io.IOException
-import java.nio.BufferUnderflowException
 import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousFileChannel
 import java.nio.channels.CompletionHandler
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.CompletableFuture
 
 
-class MappedFileReader :Closeable {
-    private val channel: AsynchronousFileChannel
-    var buffer: ByteBuffer
-    var mappedData:ByteArray = ByteArray(0)
+class MappedFileReader//e.g. file not found//async reading taken from http://www.java2s.com/Tutorials/Java/Java_io/1050__Java_nio_Asynchronous.htm
+(filepath: String) :Closeable {
+    private lateinit var channel: AsynchronousFileChannel
+    private lateinit var buffer: ByteBuffer
+    private var mappedData:ByteArray = ByteArray(0)
     private var offset = 0
     private var closed = false
-    internal class Attachment {
-        var path: Path? = null
-        var buffer: ByteBuffer? = null
-        var asyncChannel: AsynchronousFileChannel? = null
-    }
 
-    //async reading taken from http://www.java2s.com/Tutorials/Java/Java_io/1050__Java_nio_Asynchronous.htm
-    constructor(filepath: String) {
-        val path = Paths.get(filepath)
-        channel = AsynchronousFileChannel.open(path, StandardOpenOption.READ)
-        buffer = ByteBuffer.allocate(channel.size().toInt())
-
-        val attach = Attachment()
-        attach.asyncChannel = channel
-        attach.buffer = buffer
-        attach.path = path
-    }
-    var exception: java.lang.Exception? = null
-    var readData = false
+    var exception: Exception? = null
+    private var readData = false
     private suspend fun readData() {
         try {
             //conversion taken from https://stackoverflow.com/a/28454743, handler from http://tutorials.jenkov.com/java-nio/asynchronousfilechannel.html
@@ -61,12 +43,12 @@ class MappedFileReader :Closeable {
             completableFuture.await()
 
             readData = true
-        } catch (e:java.lang.Exception){
+        } catch (e:Exception){
             exception = e
         }
     }
-    val mutex = Semaphore(1)
-    public suspend fun nextLine(): String? {
+    private val mutex = Semaphore(1)
+    suspend fun nextLine(): String? {
         if(closed){
             return null
         }
@@ -75,46 +57,73 @@ class MappedFileReader :Closeable {
             readData()
         }
         val line = StringBuilder()
-        try {
-            var current = mappedData[offset].toChar()
-            //left when line break is detected
-            while (true) {
-                val next = mappedData[offset+1].toChar()
-                if (current == '\n' || current == '\r') {
-                    //Windows style linebreak, filter next character so it is not mistaken for the next line break
-                    if (next == '\n' && current == '\r') {
-                        offset++
-                    }
-                    //clear line break for next run
-                    offset ++
-                    break
-                } else {
-                    line.append(current)
-                }
-                offset++
-                current = mappedData[offset].toChar()
-            }
-            //buffer is empty
-        } catch (e: BufferUnderflowException) {
+        if(offset >= mappedData.size){
             close()
+            return line.toString()
         }
-        finally {
-            mutex.release()
+        var current = mappedData[offset].toChar()
+        //left when line break is detected
+        while (true) {
+            if(offset + 1 >= mappedData.size){
+                close()
+                return line.toString()
+            }
+            val next = mappedData[offset+1].toChar()
+            if (current == '\n' || current == '\r') {
+                //Windows style linebreak, filter next character so it is not mistaken for the next line break
+                if (next == '\n' && current == '\r') {
+                    offset++
+                }
+                //clear line break for next run
+                offset ++
+                break
+            } else {
+                line.append(current)
+            }
+            offset++
+            if(offset >= mappedData.size){
+                close()
+                return line.toString()
+            }
+            current = mappedData[offset].toChar()
         }
+        mutex.release()
         return line.toString()
     }
 
     fun hasNextLine(): Boolean {
-        return offset <= buffer.limit() && !closed
+        if(closed) return false
+        return  offset <= buffer.limit()
     }
 
-    fun ioException(): java.lang.Exception? {
+    fun ioException(): Exception? {
         return exception
     }
 
     override fun close() {
         closed = true
-        channel.close()
+        // not initialized if no file was found
+        if(::channel.isInitialized) {
+            channel.close()
+        }
+    }
+
+    companion object {
+        private val log = LogManager.getLogger(
+                MappedFileReader::class.java
+        )
+    }
+
+    init {
+        try {
+            val path = Paths.get(filepath)
+            channel = AsynchronousFileChannel.open(path, StandardOpenOption.READ)
+            buffer = ByteBuffer.allocate(channel.size().toInt())
+            //e.g. file not found
+        } catch (e:Exception){
+            log.error("Error creating mappedFileReader: ",e)
+            closed = true
+        }
     }
 
 }
