@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.fail
 import java.io.IOException
+import java.lang.Thread.sleep
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -576,6 +577,7 @@ class TestRequestHandling : RequestHandlingFramework() {
         try {
             val parallelRequests = 10
             de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.instance.setMaxParallelRequests(parallelRequests)
+            sleep(1000)
             val futures = Vector<CompletableFuture<*>>()
             for (i in 0 until parallelRequests * 10) {
                 futures.add(GlobalScope.async { sendRequest.run() }.asCompletableFuture())
