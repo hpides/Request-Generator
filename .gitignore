@@ -27,3 +27,5 @@ target/
 logs/
 
 *.jar
+#redis dumps
+*.rdb
