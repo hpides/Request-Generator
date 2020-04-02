@@ -88,7 +88,6 @@ open class RequestHandlingFramework {
         server.stop(0)
         TimeStorage.getInstance().reset()
         AssertionStorage.instance.reset()
-        Test.ConcurrentRequestsThrottler.instance.reset()
         Thread.sleep(200)
     }
 

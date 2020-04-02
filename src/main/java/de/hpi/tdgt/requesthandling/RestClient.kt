@@ -389,6 +389,7 @@ class RestClient {
         var future:ListenableFuture<Response>? = null
 
         while (retry < request.retries) {
+            try{
             Test.ConcurrentRequestsThrottler.instance.allowRequest()
             //Exceptions might be thrown here as well as later when waiting for the response
             try {
@@ -419,10 +420,20 @@ class RestClient {
             continue
         }
         readResponse(response, result, request)
-        Test.ConcurrentRequestsThrottler.instance.requestDone()
-            return result
+        return result;
         }
-        return result
+            finally{
+                //created a new story for this request that also created a new client
+                if(request.story == null){
+                    client.close()
+                }
+                Test.ConcurrentRequestsThrottler.instance.requestDone()
+            }
+
+        }
+         //clients created because no story was given have to be closed
+         if(request.story == null){client.close()}
+         return result
     }
 
     @Throws(MalformedURLException::class)
