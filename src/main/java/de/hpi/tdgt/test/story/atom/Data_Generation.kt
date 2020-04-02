@@ -2,6 +2,7 @@ package de.hpi.tdgt.test.story.atom
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
+import de.hpi.tdgt.util.MappedFileReader
 import org.apache.logging.log4j.LogManager
 import java.io.File
 import java.io.FileInputStream
@@ -19,10 +20,7 @@ class Data_Generation : Atom() {
 
     //should not be serialized or accessible from other classes
     @JsonIgnore
-    private var stream: InputStream? = null
-    //should not be serialized or accessible from other classes
-    @JsonIgnore
-    private var sc: Scanner? = null
+    private var sc: MappedFileReader? = null
 
     override suspend fun perform() {
         val generatedData = readBuffer()
@@ -41,8 +39,7 @@ class Data_Generation : Atom() {
     @JsonIgnore
     var readLines = 0
 
-    fun readBuffer(): Map<String, String> {
-        initStream()
+    suspend fun readBuffer(): Map<String, String> {
         initScanner()
         //sc has a value now
         val buffer = HashMap<String, String>()
@@ -51,24 +48,26 @@ class Data_Generation : Atom() {
         var line: String
         //sc might be null, if file not found
         if (sc != null) {
-            synchronized(sc!!) {
                 if (sc!!.hasNextLine()) {
                     readLines++
-                    line = sc!!.nextLine()
+                    val retrieved = sc!!.nextLine()
+                    //two threads might end up in here at the exact time, but only one gets last line--> catch this
+                    if(retrieved != null){
+                        line = retrieved
+                    }
+                    else{
+                        warnNoDataRemain()
+                        return buffer
+                    }
                     log.info("Retrieved " + line + "from table" + " in Thread " + Thread.currentThread().id + "for atom " + name)
                 } else {
-                    log.error("No data remains for atom " + name)
-                    reportFailureToUser(
-                        "Data Generation \"" + name + "\" has no data remaining",
-                        "read $readLines lines from file $outputDirectory/$table.csv"
-                    )
+                    warnNoDataRemain()
                     return buffer
                 }
                 // Scanner suppresses exceptions
                 if (sc!!.ioException() != null) {
                     log.error("Exception: ", sc!!.ioException())
                 }
-            }
         } else {
             log.warn("Data generation $name could not read data from file $table.csv")
             return buffer
@@ -93,28 +92,23 @@ class Data_Generation : Atom() {
         return buffer
     }
 
-    private fun initStream() {
-        if (stream == null && table != null && !table!!.isEmpty()) {
-            val table =
-                File("$outputDirectory/$table.csv")
-            try {
-                stream = FileInputStream(table)
-            } catch (e: FileNotFoundException) {
-                log.error(e)
-                val message = e.message
-                reportFailureToUser("Data Generation \"$name\" loads data", message)
-            }
-        }
+    private fun warnNoDataRemain() {
+        log.error("No data remains for atom " + name)
+        reportFailureToUser(
+                "Data Generation \"" + name + "\" has no data remaining",
+                "read $readLines lines from file $outputDirectory/$table.csv"
+        )
     }
+
 
     private fun initScanner() { //only one Thread is allowed to add a scanner at the same time; only need to synchronise scanner creation and retrieval
 //stream might be null, if no file found
-        if (sc == null && stream != null) {
+        if (sc == null) {
             synchronized(association) {
                 if (association.containsKey(table)) {
                     sc = association[table]
                 } else {
-                    sc = Scanner(stream, StandardCharsets.UTF_8)
+                    sc = MappedFileReader("$outputDirectory/$table.csv")
                     association.put(table, sc)
                 }
             }
@@ -131,11 +125,8 @@ class Data_Generation : Atom() {
         val `this$table`: Any? = table
         val `other$table`: Any? = otherObject.table
         if (if (`this$table` == null) `other$table` != null else `this$table` != `other$table`) return false
-        val `this$stream`: InputStream? = this.stream
-        val `other$stream`: InputStream? = otherObject.stream
-        if (if (`this$stream` == null) `other$stream` != null else `this$stream` != `other$stream`) return false
-        val `this$sc`: Scanner? = this.sc
-        val `other$sc`: Scanner? = otherObject.sc
+        val `this$sc`: MappedFileReader? = this.sc
+        val `other$sc`: MappedFileReader? = otherObject.sc
         if (if (`this$sc` == null) `other$sc` != null else `this$sc` != `other$sc`) return false
         return if (readLines != otherObject.readLines) false else true
     }
@@ -150,9 +141,7 @@ class Data_Generation : Atom() {
         result = result * PRIME + Arrays.deepHashCode(data)
         val `$table`: Any? = table
         result = result * PRIME + (`$table`?.hashCode() ?: 43)
-        val `$stream`: InputStream? = this.stream
-        result = result * PRIME + (`$stream`?.hashCode() ?: 43)
-        val `$sc`: Scanner? = this.sc
+        val `$sc`: MappedFileReader? = this.sc
         result = result * PRIME + (`$sc`?.hashCode() ?: 43)
         result = result * PRIME + readLines
         return result
@@ -164,7 +153,7 @@ class Data_Generation : Atom() {
         )
         //this is used to synchronise current line in all file(s)
         @JsonIgnore
-        private val association: MutableMap<String?, Scanner?> =
+        private val association: MutableMap<String?, MappedFileReader?> =
             HashMap()
 
         /**
