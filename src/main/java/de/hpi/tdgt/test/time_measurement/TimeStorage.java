@@ -25,6 +25,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static kotlinx.coroutines.sync.SemaphoreKt.Semaphore;
+
 @Log4j2
 public class TimeStorage {
     //can't be re-connected, create a new instance everytime the thread is run
@@ -207,13 +209,19 @@ public class TimeStorage {
     private ObjectMapper mapper = new ObjectMapper();
     public void registerTime(String verb, String addr, long latency, String story, long testid) {
         this.testID = testid;
-        //test was started after reset was called, so restart the thread
         if (reporter == null) {
-            reporter = new Thread(mqttReporter);
-            log.info("Resumed reporter.");
-            running.set(true);
-            reporter.setPriority(Thread.MAX_PRIORITY);
-            reporter.start();
+            //multiple threads might do this simultaneously
+            synchronized (this) {
+                //test was started after reset was called, so restart the thread
+                //by now, another thread might have done this already
+                if (reporter == null) {
+                    reporter = new Thread(mqttReporter);
+                    log.info("Resumed reporter.");
+                    running.set(true);
+                    reporter.setPriority(Thread.MAX_PRIORITY);
+                    reporter.start();
+                }
+            }
         }
         //triggers exception
         if(story != null) {
