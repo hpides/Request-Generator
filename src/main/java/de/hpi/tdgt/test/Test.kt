@@ -22,6 +22,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.sync.Semaphore
+import java.lang.Exception
 import java.util.concurrent.CompletableFuture
 
 //allow frontend to store additional information
@@ -318,7 +319,6 @@ class Test {
         private var active = 0
         var maximumParallelRequests = 0
         @Throws(ExecutionControl.NotImplementedException::class)
-        @Synchronized
         fun setMaxParallelRequests(concurrent: Int) {
             if (maxParallelRequests == null) {
                 maxParallelRequests = Semaphore(concurrent)
@@ -344,9 +344,6 @@ class Test {
             if (maxParallelRequests != null) {
                 maxParallelRequests!!.acquire()
             }
-            else {
-                log.warn("ConcurrentRequestsThrottler not properly initialized!")
-            }
             synchronized(this) {
                 waiters--
                 active++
@@ -359,11 +356,20 @@ class Test {
 
         fun requestDone() {
             if (maxParallelRequests != null) {
-                maxParallelRequests!!.release()
+                try {
+                    maxParallelRequests!!.release()
+                } catch (e:Exception){
+                    log.error("Could not release permit in concurrentRequestThrottler: ",e)
+                }
             }
             synchronized(this) { active-- }
         }
 
+        fun reset() {
+            maxParallelRequests = null
+            active = 0
+            maximumParallelRequests = 0
+        }
 
         companion object {
             @JvmStatic

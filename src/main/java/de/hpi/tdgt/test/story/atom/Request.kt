@@ -152,7 +152,7 @@ class Request : Atom() {
         }
         return ret
     }
-    
+
     @Throws(InterruptedException::class)
     override suspend fun perform() {
         log.info("Sending request " + addr + " in Thread " + Thread.currentThread().id + "with attributes: " + knownParams)
@@ -166,6 +166,7 @@ class Request : Atom() {
         request.url = URL(addr)
         if (requestJSONObject != null) {
             request.body = replaceWithKnownParams(requestJSONObject!!, true)
+            request.isForm = false
         } else if(requestParams.isNotEmpty()){
             val params = HashMap<String,String>()
             for (key in requestParams) {
@@ -175,6 +176,7 @@ class Request : Atom() {
                 }
             }
             request.params = params
+            request.isForm = true
         }
         if(basicAuth != null){
             request.username =  knownParams[basicAuth!!.user]
@@ -229,10 +231,10 @@ class Request : Atom() {
             if (result.toJson()!!.isObject) {
                 val json = String(result.response, StandardCharsets.UTF_8)
                 val map: Map<*, *> =
-                    om.readValue(
-                        json,
-                        MutableMap::class.java
-                    )
+                        om.readValue(
+                                json,
+                                MutableMap::class.java
+                        )
                 knownParams.putAll(toStringMap(map))
             } else {
                 log.info("I can not handle Arrays.")
@@ -273,7 +275,7 @@ class Request : Atom() {
                 useValue = sanitizeXPATH(value)
             }
             //sanitizeXPATH takes care of quotes
-        if(enquoteInsertedValue && !sanitizeXPATH) {
+            if(enquoteInsertedValue && !sanitizeXPATH) {
                 current = current.replace("$$key", '\"' + useValue + '\"')
             }
             else{
@@ -353,7 +355,7 @@ class Request : Atom() {
         result = result * PRIME + Arrays.deepHashCode(assertions)
         val `$implicitNotFailedAssertion`: Any? = implicitNotFailedAssertion
         result =
-            result * PRIME + (`$implicitNotFailedAssertion`?.hashCode() ?: 43)
+                result * PRIME + (`$implicitNotFailedAssertion`?.hashCode() ?: 43)
         return result
     }
 
@@ -372,7 +374,7 @@ class Request : Atom() {
 
     companion object {
         private val log =
-            LogManager.getLogger(Request::class.java)
+                LogManager.getLogger(Request::class.java)
         @JsonIgnore
         private val rc = RestClient()
         @JsonIgnore

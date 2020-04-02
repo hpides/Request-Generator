@@ -259,6 +259,7 @@ object HttpHandlers {
      * Expects post.
      */
     class PostHandler : HttpHandlerBase(), HttpHandler {
+        var lastPostWasOkay = true
         @Throws(IOException::class)
         override fun handle(he: HttpExchange) {
             super.handle(he)
@@ -268,7 +269,9 @@ object HttpHandlers {
             val isr = InputStreamReader(he.requestBody, "utf-8")
             var headers = he.requestHeaders
             val contentType = headers.getFirst(HttpConstants.HEADER_CONTENT_TYPE)
+            lastPostWasOkay = true
             if (contentType == null || contentType != HttpConstants.APPLICATION_X_WWW_FORM_URLENCODED) {
+                lastPostWasOkay = false
                 val message = "Missing Content Type Header!"
                 headers = he.responseHeaders
                 headers[HttpConstants.HEADER_CONTENT_TYPE] = listOf(HttpConstants.CONTENT_TYPE_APPLICATION_JSON)
