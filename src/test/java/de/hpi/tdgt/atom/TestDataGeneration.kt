@@ -194,6 +194,7 @@ class TestDataGeneration {
         thirdGenerationThread.start()
         thirdGenerationThread.join()
         generationThread.join()
+        otherGenerationThread.join()
         params = generationRunnable.knownParams!!
         val allValues = ArrayList(params.values)
         otherParams = otherGenerationRunnable.knownParams!!
