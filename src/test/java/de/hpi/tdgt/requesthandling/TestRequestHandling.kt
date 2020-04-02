@@ -585,7 +585,7 @@ class TestRequestHandling : RequestHandlingFramework() {
             }
             MatcherAssert.assertThat(
                 de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.instance.maximumParallelRequests,
-                Matchers.lessThanOrEqualTo(parallelRequests + 1)
+                Matchers.lessThanOrEqualTo(parallelRequests + 2)
             )
         } catch (e: Exception) {
             log.error(e)
