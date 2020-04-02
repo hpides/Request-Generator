@@ -420,12 +420,16 @@ class RestClient {
             continue
         }
         readResponse(response, result, request)
-        Test.ConcurrentRequestsThrottler.instance.requestDone()
         return result;
         }
             finally{
-                if(request.story == null){client.close()}
+                //created a new story for this request that also created a new client
+                if(request.story == null){
+                    client.close()
+                }
+                Test.ConcurrentRequestsThrottler.instance.requestDone()
             }
+
         }
          //clients created because no story was given have to be closed
          if(request.story == null){client.close()}
