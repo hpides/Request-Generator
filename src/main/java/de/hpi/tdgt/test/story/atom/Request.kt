@@ -228,17 +228,21 @@ class Request : Atom() {
     @Throws(IOException::class, JsonParseException::class, JsonMappingException::class)
     private suspend fun extractResponseParams(result: RestResult?) {
         if (result != null && result.isJSON) {
-            if (result.toJson()!!.isObject) {
-                val json = String(result.response, StandardCharsets.UTF_8)
-                val map: Map<*, *> =
-                        om.readValue(
-                                json,
-                                MutableMap::class.java
-                        )
-                knownParams.putAll(toStringMap(map))
-            } else {
-                log.info("I can not handle Arrays.")
-                log.info(result)
+            try {
+                if (result.toJson()!!.isObject) {
+                    val json = String(result.response, StandardCharsets.UTF_8)
+                    val map: Map<*, *> =
+                            om.readValue(
+                                    json,
+                                    MutableMap::class.java
+                            )
+                    knownParams.putAll(toStringMap(map))
+                } else {
+                    log.info("I can not handle Arrays.")
+                    log.info(result)
+                }
+            } catch (e: JsonParseException){
+                reportFailureToUser("Request $name can parse response JSON",e.message)
             }
         } else {
             log.info("Not JSON! Response is ignored.")
@@ -267,7 +271,7 @@ class Request : Atom() {
         }
     }
 
-    public fun replaceWithKnownParams(toReplace: String, enquoteInsertedValue:Boolean,sanitizeXPATH:Boolean = false): String? {
+    public fun replaceWithKnownParams(toReplace: String, enquoteInsertedValue:Boolean,sanitizeXPATH:Boolean = false, sanitizeJSONPATH: Boolean = false): String? {
         var current = toReplace
         for ((key, value) in knownParams) {
             var useValue=value
@@ -275,8 +279,27 @@ class Request : Atom() {
                 useValue = sanitizeXPATH(value)
             }
             //sanitizeXPATH takes care of quotes
-            if(enquoteInsertedValue && !sanitizeXPATH) {
+            if(enquoteInsertedValue && !sanitizeXPATH && !sanitizeJSONPATH) {
                 current = current.replace("$$key", '\"' + useValue + '\"')
+            }
+            else if(sanitizeJSONPATH){
+                //inside a JSONPATH regex, forward slashes need to be escaped since they denominate regexes. Else they should not be replaced because it might alter the meaning.
+                var isInRegex = false
+                val keyStart = current.indexOf(key)
+                if(keyStart > 0){
+                    var index = 0;
+                    while(index < keyStart){
+                        if(current[index] == '/') isInRegex = !isInRegex
+                        index++
+                    }
+                }
+                if(isInRegex) {
+                    useValue = useValue.replace("/","\\/")
+                }
+                //symbols that always need replacement
+                useValue = useValue.replace("(","\\(").replace(")","\\)").replace("'","\\'").replace("\"","\\\"")
+
+                current = current.replace("$$key", useValue)
             }
             else{
                 current = current.replace("$$key", useValue)
@@ -285,7 +308,7 @@ class Request : Atom() {
         //should show a warning
         //need to consider surrounding characters in both direction, else it does not match...
         //method might be called during cloning (usage in setters). In this case, we do not want it to report failed assertions
-        if (Pattern.matches(".*"+"\\"+"\$"+"[a-zA-Z0-9]*.*", current) && !cloning) {
+        if (Pattern.matches(".*"+"\\"+"\$"+"[a-zA-Z0-9]+.*", current) && !cloning) {
             val p = Pattern.compile("\\$[a-zA-Z0-9]*")
             val m = p.matcher(current)
             val allUncompiled = HashSet<String>()
