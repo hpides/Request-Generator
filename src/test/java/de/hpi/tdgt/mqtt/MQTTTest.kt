@@ -10,10 +10,7 @@ import de.hpi.tdgt.test.Test
 import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.Data_Generation
 import de.hpi.tdgt.test.story.atom.Request
-import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
-import de.hpi.tdgt.test.story.atom.assertion.ContentType
-import de.hpi.tdgt.test.story.atom.assertion.MqttAssertionMessage
-import de.hpi.tdgt.test.story.atom.assertion.XPATHAssertion
+import de.hpi.tdgt.test.story.atom.assertion.*
 import de.hpi.tdgt.test.time_measurement.MqttTimeMessage
 import de.hpi.tdgt.test.time_measurement.TimeStorage
 import de.hpi.tdgt.util.Pair
@@ -1091,6 +1088,101 @@ class MQTTTest : RequestHandlingFramework() {
         requestAtom.assertions = requestAtom.assertions + arrayOf(xpathAssertion)
         var params = HashMap<String, String>()
         params.put("val","I've not done any javascript at all and I' trying to sum up values from the select class. can get both of them displayed, but not summed up. Could anyone explain why I'm getting the \"[object HTMLParagraphElement]\" as the answer? Thank you")
+        runBlocking {requestAtom.run(params)}
+        sleep(2000)
+        val actuals = readAssertion(messages)
+        var message: MqttAssertionMessage? = null
+        for (assertion in actuals) {
+            if (!assertion.actuals.isEmpty()) {
+                message = assertion
+            }
+        }
+        MatcherAssert.assertThat(message, Matchers.nullValue())
+    }
+
+    @org.junit.jupiter.api.Test
+    public fun assertionErrorIsThrownIfJSONPATHIsNotFound(){
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
+        val test = Test()
+        val story = UserStory()
+        story.parent = test
+        val requestAtom = Request()
+        requestAtom.setParent(story)
+        requestAtom.name = "request"
+        requestAtom.verb = "GET"
+        requestAtom.addr = "http://localhost:9000/jsonObject?param=otherValue"
+        requestAtom.predecessorCount = 0
+        requestAtom.repeat = 1
+        val JSONPATHAssertion= JSONPATHAssertion()
+        val JSONPATH = "$[?(@.param=~ /value/)]"
+        JSONPATHAssertion.JSONPATH = JSONPATH
+        JSONPATHAssertion.name = "Has param and value"
+        requestAtom.assertions = requestAtom.assertions + arrayOf(JSONPATHAssertion)
+        runBlocking {requestAtom.run(HashMap())}
+        sleep(2000)
+        val actuals = readAssertion(messages)
+        var message: MqttAssertionMessage? = null
+        for (assertion in actuals) {
+            if (!assertion.actuals.isEmpty()) {
+                message = assertion
+            }
+        }
+        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo(JSONPATHAssertion.name)))
+        MatcherAssert.assertThat(message.actuals.get(JSONPATHAssertion.name)!!.value, Matchers.hasItem(Matchers.equalTo("jsonpath \"${JSONPATH}\" returned empty result")))
+    }
+
+    @org.junit.jupiter.api.Test
+    public fun assertionErrorIsThrownIfJSONPATHIsInvalid(){
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
+        val test = de.hpi.tdgt.test.Test()
+        val story = UserStory()
+        story.parent = test
+        val requestAtom = Request()
+        requestAtom.setParent(story)
+        requestAtom.name = "request"
+        requestAtom.verb = "GET"
+        requestAtom.addr = "http://localhost:9000/jsonObject?param=otherValue"
+        requestAtom.predecessorCount = 0
+        requestAtom.repeat = 1
+        val JSONPATHAssertion= JSONPATHAssertion()
+        val JSONPATH = "Bjärk!']"
+        JSONPATHAssertion.JSONPATH = JSONPATH
+        JSONPATHAssertion.name = "Has some text"
+        requestAtom.assertions = requestAtom.assertions + arrayOf(JSONPATHAssertion)
+        runBlocking {requestAtom.run(HashMap())}
+        sleep(2000)
+        val actuals = readAssertion(messages)
+        var message: MqttAssertionMessage? = null
+        for (assertion in actuals) {
+            if (!assertion.actuals.isEmpty()) {
+                message = assertion
+            }
+        }
+        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("Has some text")))
+        MatcherAssert.assertThat(message.actuals.get("Has some text")!!.value, Matchers.hasItem(Matchers.containsString("jsonpath \"${JSONPATH}\" is invalid")))
+    }
+
+
+    //regression test, this failed in production
+    @org.junit.jupiter.api.Test
+    public fun noAssertionErrorIsThrownIfJSONPATHIsFoundAndCorrectlyEscaped(){
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
+        val test = de.hpi.tdgt.test.Test()
+        val story = UserStory()
+        story.parent = test
+        val requestAtom = Request()
+        requestAtom.setParent(story)
+        requestAtom.name = "request"
+        requestAtom.verb = "GET"
+        requestAtom.addr = "http://localhost:9000/jsonObject?param=abc'\"//'()"
+        requestAtom.predecessorCount = 0
+        requestAtom.repeat = 1
+        val JSONPATHAssertion= JSONPATHAssertion()
+        JSONPATHAssertion.JSONPATH = "$[?(@.\$pName=~ /\$value/)]"
+        requestAtom.assertions = requestAtom.assertions + arrayOf(JSONPATHAssertion)
+        var params = HashMap<String, String>()
+        params.put("value","abc'\"//'()")
+        params.put("pName","param")
         runBlocking {requestAtom.run(params)}
         sleep(2000)
         val actuals = readAssertion(messages)

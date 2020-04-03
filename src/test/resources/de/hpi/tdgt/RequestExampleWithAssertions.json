@@ -41,6 +41,11 @@
               "type": "CONTENT_TYPE",
               "name": "postWithBody returns JSON",
               "contentType": "application/json"
+            },
+            {
+              "type": "JSONPATH",
+              "name": "postWithBody returns the right JSON",
+              "jsonpath": "$[?(@.value=~ /$value/ && @.key=~ /$key/)]"
             }
 
           ]

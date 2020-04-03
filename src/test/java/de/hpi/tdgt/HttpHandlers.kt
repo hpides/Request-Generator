@@ -191,8 +191,8 @@ object HttpHandlers {
                     responseBuilder.append(",")
                 }
                 first = false
-                responseBuilder.append("\"").append(key).append("\"").append(" : ").append("\"")
-                    .append(parameters[key]).append("\"").append("\n")
+                responseBuilder.append("\"").append(key.replace("\"","\\\"")).append("\"").append(" : ").append("\"")
+                    .append(parameters[key].toString().replace("\"","\\\"")).append("\"").append("\n")
             }
             if (!parameters.isEmpty()) {
                 responseBuilder.append(",")

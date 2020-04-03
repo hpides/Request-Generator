@@ -153,6 +153,12 @@
             <artifactId>dom4j</artifactId>
             <version>2.1.1</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path</artifactId>
+            <version>2.4.0</version>
+        </dependency>
     </dependencies>
     <reporting>
 	    <plugins>
