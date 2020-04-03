@@ -463,6 +463,78 @@ class TestRequestHandling : RequestHandlingFramework() {
         //repeated 7 times, only one thread has correct data
         MatcherAssert.assertThat(authHandler.numberFailedLogins, Matchers.`is`(6))
     }
+    @Test
+    @Throws(IOException::class, InterruptedException::class, ExecutionException::class)
+    fun testFirstUserStoryWithConnectionPooling() = runBlocking {
+        val test =
+            deserialize(Utils().requestExampleJSON)
+        test.noSession = true
+        //do not run second story for this time around; messes with results
+        test.setStories(arrayOf(test.getStories()[0]))
+        test.start()
+        val params1: MutableMap<String, String> =
+            HashMap()
+        val params2: MutableMap<String, String> =
+            HashMap()
+        params1["key"] = "wrong"
+        params1["value"] = "wrong"
+        params2["key"] = "user"
+        params2["value"] = "pw"
+        //should have seen wrong and wrong as well as user and pw
+        MatcherAssert.assertThat(
+            "GetHandler should have received key=wrong.",
+            jsonObjectGetHandler.getAllParams().contains(
+                Pair(
+                    "key",
+                    "wrong"
+                )
+            ),
+            Matchers.`is`(true)
+        )
+        MatcherAssert.assertThat(
+            "GetHandler should have received value=wrong.",
+            jsonObjectGetHandler.getAllParams().contains(
+                Pair(
+                    "value",
+                    "wrong"
+                )
+            ),
+            Matchers.`is`(true)
+        )
+        MatcherAssert.assertThat(
+            "GetHandler should have received key=user.",
+            jsonObjectGetHandler.getAllParams().contains(
+                Pair(
+                    "key",
+                    "user"
+                )
+            ),
+            Matchers.`is`(true)
+        )
+        MatcherAssert.assertThat(
+            "GetHandler should have received value=pw.",
+            jsonObjectGetHandler.getAllParams().contains(
+                Pair(
+                    "value",
+                    "pw"
+                )
+            ),
+            Matchers.`is`(true)
+        )
+        //should have seen wrong and wrong as well as user and pw
+        MatcherAssert.assertThat(
+            "GetHandler should have received key=wrong and value=wrong.",
+            postBodyHandler.getAllParameters().contains(params1),
+            Matchers.`is`(true)
+        )
+        MatcherAssert.assertThat(
+            "GetHandler should have received key=user and value=pw.",
+            postBodyHandler.getAllParameters().contains(params2),
+            Matchers.`is`(true)
+        )
+        //repeated 7 times, only one thread has correct data
+        MatcherAssert.assertThat(authHandler.numberFailedLogins, Matchers.`is`(6))
+    }
 
     @Test
     @Throws(IOException::class, InterruptedException::class, ExecutionException::class)
