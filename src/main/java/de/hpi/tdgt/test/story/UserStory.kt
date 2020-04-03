@@ -10,6 +10,7 @@ import de.hpi.tdgt.util.PropertiesReader
 import io.netty.util.HashedWheelTimer
 import kotlinx.coroutines.*
 import org.apache.logging.log4j.LogManager
+import org.asynchttpclient.AsyncHttpClient
 import org.asynchttpclient.DefaultAsyncHttpClientConfig
 import org.asynchttpclient.Dsl
 import org.asynchttpclient.netty.channel.DefaultChannelPool
@@ -33,9 +34,16 @@ class UserStory : Cloneable {
      * Client that represents this user
      */
     @JsonIgnore
-    val client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(true).setChannelPool(pool).setNettyTimer(timer))
+    var client:AsyncHttpClient = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(true).setChannelPool(pool).setNettyTimer(timer))
     @JsonIgnore
     var parent: Test? = null
+        set(value){
+            field = value
+            if(value?.noSession == true && client !== staticClient){
+                client.close()
+                client = staticClient
+            }
+        }
 
     fun setAtoms(atoms: Array<Atom>) {
         this.atoms = atoms
@@ -107,8 +115,7 @@ class UserStory : Cloneable {
             log.error(e)
         }
         finally {
-            //free resources
-            client.close()
+            finalize()
         }
     }
 
@@ -150,7 +157,8 @@ class UserStory : Cloneable {
     }
     //on GC, remember to return ressources to the OS
     protected fun finalize() {
-        client.close()
+        //free resources, but only if client is not shared
+        if(client !== staticClient)client.close()
     }
 
     companion object {

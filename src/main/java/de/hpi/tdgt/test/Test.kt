@@ -41,6 +41,11 @@ class Test {
     var configJSON: String? = null
     var repeat = 0
     var scaleFactor = 0
+
+    /**
+     * True to enable global connection pooling, else false.
+     */
+    var noSession = false;
     private var stories: Array<UserStory> = arrayOf()
     //this is used to be able to repeat them
     var stories_clone: Array<UserStory> = arrayOf()
