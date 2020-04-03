@@ -236,7 +236,11 @@ class Request : Atom() {
                                     json,
                                     MutableMap::class.java
                             )
-                    knownParams.putAll(toStringMap(map))
+                    val strMap = toStringMap(map)
+                    //only keep params the user actually wanted
+                    for(param in responseJSONObject){
+                        knownParams.put(param, strMap[param]?:"")
+                    }
                 } else {
                     log.info("I can not handle Arrays.")
                     log.info(result)
