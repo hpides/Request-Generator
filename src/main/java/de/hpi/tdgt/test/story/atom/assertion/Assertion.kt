@@ -16,7 +16,8 @@ import org.apache.logging.log4j.LogManager
     JsonSubTypes.Type(value = ContentNotEmpty::class, name = "CONTENT_NOT_EMPTY"),
     JsonSubTypes.Type(value = ContentType::class, name = "CONTENT_TYPE"),
     JsonSubTypes.Type(value = ResponseCode::class, name = "RESPONSE_CODE"),
-    JsonSubTypes.Type(value = XPATHAssertion::class, name = "XPATH")
+    JsonSubTypes.Type(value = XPATHAssertion::class, name = "XPATH"),
+    JsonSubTypes.Type(value = JSONPATHAssertion::class, name = "JSONPATH")
 )
 abstract class Assertion {
     var name: String = ""

@@ -45,7 +45,7 @@
             {
               "type": "JSONPATH",
               "name": "postWithBody returns the right JSON",
-              "JSONPATH": "$[?(@.value=~ /$value/ && @.key=~ /$key/)]"
+              "jsonpath": "$[?(@.value=~ /$value/ && @.key=~ /$key/)]"
             }
 
           ]
