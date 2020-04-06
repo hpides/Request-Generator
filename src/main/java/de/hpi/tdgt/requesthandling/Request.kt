@@ -50,6 +50,10 @@ class Request {
      */
     var sendCookies: Map<String, String> = HashMap()
 
+    /**
+     * Contains names of headers and values to send to the target system
+     */
+    val sendHeaders: MutableMap<String, String> =  HashMap()
 
     constructor(
         url: URL?,

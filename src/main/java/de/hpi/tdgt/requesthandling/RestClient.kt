@@ -381,6 +381,10 @@ class RestClient {
             preparedRequest.addCookie(DefaultCookie(cookie.key,cookie.value))
         }
 
+         for(header in request.sendHeaders.entries){
+            preparedRequest.setHeader(header.key, header.value)
+         }
+
         //got a connection
         val result = RestResult()
         //try to connect

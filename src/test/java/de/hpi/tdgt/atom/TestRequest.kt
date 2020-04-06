@@ -495,4 +495,25 @@ class TestRequest : RequestHandlingFramework() {
         MatcherAssert.assertThat(authHandler.totalRequests, Matchers.greaterThan(0))
     }
 
+    @Test
+    @Throws(InterruptedException::class, ExecutionException::class)
+    fun canTransferHeader() {
+        val params = HashMap<String, String>()
+        params["header1"] = "value1"
+        getWithAuth!!.addr = "http://localhost:9000/headers"
+        getWithAuth!!.sendHeaders = arrayOf("header1")
+        runBlocking{getWithAuth!!.run(params)}
+        MatcherAssert.assertThat(headerHandler.lastHeaders!!.getFirst("header1"), Matchers.notNullValue())
+    }
+
+    @Test
+    @Throws(InterruptedException::class, ExecutionException::class)
+    fun canExtractHeaders() {
+        val params = HashMap<String, String>()
+        getWithAuth!!.addr = "http://localhost:9000/headers"
+        getWithAuth!!.receiveHeaders = arrayOf("custom")
+        runBlocking{getWithAuth!!.run(params)}
+        MatcherAssert.assertThat(getWithAuth!!.knownParams, Matchers.hasEntry("custom","CustomValue"))
+    }
+
 }
