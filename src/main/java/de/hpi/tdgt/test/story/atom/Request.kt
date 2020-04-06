@@ -93,6 +93,11 @@ class Request : Atom() {
      */
     var timeAggregation:Boolean = true
 
+    /**
+     * Contains names of headers for which the value shall be extracted under the given names from the token and which shall be sent to the target endpoint.
+     */
+    var sendHeaders: Array<String> = emptyArray()
+
     private fun getRecordName():String?{
         if(timeAggregation){
             return unescapedAddr
@@ -181,6 +186,9 @@ class Request : Atom() {
         if(basicAuth != null){
             request.username =  knownParams[basicAuth!!.user]
             request.password = knownParams[basicAuth!!.password]
+        }
+        for(header in this.sendHeaders){
+            request.sendHeaders[header] = this.knownParams[header]?:""
         }
         request.story = getParent()?: UserStory()
         // in tests and in "pure" usage, parent might be nuull and we do not want to fail because of this

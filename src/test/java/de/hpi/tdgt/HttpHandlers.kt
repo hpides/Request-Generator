@@ -1,6 +1,7 @@
 package de.hpi.tdgt
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.sun.net.httpserver.Headers
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpHandler
 import de.hpi.tdgt.requesthandling.HttpConstants
@@ -11,6 +12,7 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.io.UnsupportedEncodingException
 import java.net.URLDecoder
+import java.net.http.HttpHeaders
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.stream.Collectors
@@ -471,6 +473,28 @@ object HttpHandlers {
             val response = String(Utils().signupHtml.readAllBytes())
             val headers = he.responseHeaders
             headers[HttpConstants.HEADER_CONTENT_TYPE] = listOf(HttpConstants.CONTENT_TYPE_TEXT_HTML)
+            he.sendResponseHeaders(200, response.length.toLong())
+            val os = he.responseBody
+            os.write(response.toByteArray())
+            os.close()
+        }
+
+    }
+
+    /**
+     * Makes request URL Parameters to a JSON Object with the Request keys as keys and their values as values.
+     */
+    class CustomHeaderHandler : HttpHandlerBase(), HttpHandler {
+        var lastHeaders:Headers? = null;
+        @Throws(IOException::class)
+        override fun handle(he: HttpExchange) {
+            super.handle(he)
+            lastHeaders = he.requestHeaders
+            // send response
+            val response = String(Utils().signupHtml.readAllBytes())
+            val headers = he.responseHeaders
+            headers[HttpConstants.HEADER_CONTENT_TYPE] = listOf(HttpConstants.CONTENT_TYPE_TEXT_HTML)
+            headers["custom"] = listOf("CustomValue")
             he.sendResponseHeaders(200, response.length.toLong())
             val os = he.responseBody
             os.write(response.toByteArray())
