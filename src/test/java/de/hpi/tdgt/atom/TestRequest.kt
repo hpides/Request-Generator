@@ -506,4 +506,14 @@ class TestRequest : RequestHandlingFramework() {
         MatcherAssert.assertThat(headerHandler.lastHeaders!!.getFirst("header1"), Matchers.notNullValue())
     }
 
+    @Test
+    @Throws(InterruptedException::class, ExecutionException::class)
+    fun canExtractHeaders() {
+        val params = HashMap<String, String>()
+        getWithAuth!!.addr = "http://localhost:9000/headers"
+        getWithAuth!!.receiveHeaders = arrayOf("custom")
+        runBlocking{getWithAuth!!.run(params)}
+        MatcherAssert.assertThat(getWithAuth!!.knownParams, Matchers.hasEntry("custom","CustomValue"))
+    }
+
 }

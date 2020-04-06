@@ -98,6 +98,11 @@ class Request : Atom() {
      */
     var sendHeaders: Array<String> = emptyArray()
 
+    /**
+     * Contains names of headers for which the value shall be extracted under the given names from the response and which shall be saved under that name in the token.
+     */
+    var receiveHeaders: Array<String> = emptyArray()
+
     private fun getRecordName():String?{
         if(timeAggregation){
             return unescapedAddr
@@ -268,7 +273,7 @@ class Request : Atom() {
         //given cookie map is indirection between cookie name and name to put it into because of namespacing
         for(cookie in receiveCookies.keys){
             if (result != null && result.receivedCookies.get(cookie) != null) {
-                knownParams.put(receiveCookies.get(cookie)!!, result.receivedCookies.get(cookie)!!)
+                knownParams[receiveCookies[cookie]!!] = result.receivedCookies[cookie]!!
             }
         }
 
@@ -280,6 +285,11 @@ class Request : Atom() {
             implicitNotFailedAssertion!!.check(result, getParent()!!.parent!!.testId, this)
         } else {
             log.error("Can not check assertions because I do not have a parent or grandparent: $name")
+        }
+        if(result?.headers != null) {
+            for (header in this.receiveHeaders) {
+                this.knownParams[header] = result.headers!![header]
+            }
         }
     }
 
