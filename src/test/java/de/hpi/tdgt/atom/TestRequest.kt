@@ -501,9 +501,11 @@ class TestRequest : RequestHandlingFramework() {
         val params = HashMap<String, String>()
         params["header1"] = "value1"
         getWithAuth!!.addr = "http://localhost:9000/headers"
-        getWithAuth!!.sendHeaders = arrayOf("header1")
+        val headers = HashMap<String,String>()
+        headers["header1"] = "Header_\$header1_sent"
+        getWithAuth!!.sendHeaders = headers
         runBlocking{getWithAuth!!.run(params)}
-        MatcherAssert.assertThat(headerHandler.lastHeaders!!.getFirst("header1"), Matchers.notNullValue())
+        MatcherAssert.assertThat(headerHandler.lastHeaders!!.getFirst("header1"), Matchers.equalTo("Header_value1_sent"))
     }
 
     @Test
