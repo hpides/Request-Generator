@@ -94,9 +94,9 @@ class Request : Atom() {
     var timeAggregation:Boolean = true
 
     /**
-     * Contains names of headers for which the value shall be extracted under the given names from the token and which shall be sent to the target endpoint.
+     * Contains an expression that might contain variable expansions to the left and names to send the generated values under to the rigth.
      */
-    var sendHeaders: Array<String> = emptyArray()
+    var sendHeaders: Map<String, String> = HashMap()
 
     /**
      * Contains names of headers for which the value shall be extracted under the given names from the response and which shall be saved under that name in the token.
@@ -193,7 +193,7 @@ class Request : Atom() {
             request.password = knownParams[basicAuth!!.password]
         }
         for(header in this.sendHeaders){
-            request.sendHeaders[header] = this.knownParams[header]?:""
+            request.sendHeaders[header.key] = replaceWithKnownParams(header.value,false)?:""
         }
         request.story = getParent()?: UserStory()
         // in tests and in "pure" usage, parent might be nuull and we do not want to fail because of this
