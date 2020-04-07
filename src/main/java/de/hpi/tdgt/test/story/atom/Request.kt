@@ -211,6 +211,7 @@ class Request : Atom() {
     public override fun performClone(): Atom {
         cloning = true;
         val ret = Request()
+        ret.cloning = true
         ret.addr = addr
         ret.verb = verb
         ret.responseJSONObject = responseJSONObject
@@ -229,6 +230,7 @@ class Request : Atom() {
         ret.receiveHeaders = receiveHeaders
         ret.sendHeaders = sendHeaders
         cloning = false;
+        ret.cloning = false
         return ret
     }
 
@@ -287,10 +289,6 @@ class Request : Atom() {
             implicitNotFailedAssertion!!.check(result, getParent()!!.parent!!.testId, this)
         } else {
             log.error("Can not check assertions because I do not have a parent or grandparent: $name")
-        }
-
-        if(receiveHeaders.isNotEmpty()){
-            log.error(this)
         }
 
         if(result?.headers != null) {
