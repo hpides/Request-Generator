@@ -193,7 +193,7 @@ class Request : Atom() {
             request.password = knownParams[basicAuth!!.password]
         }
         for(header in this.sendHeaders){
-            request.sendHeaders[header.key] = replaceWithKnownParams(header.value,false)?:""
+            request.sendHeaders[header.value] = replaceWithKnownParams(header.key,false)?:""
         }
         request.story = getParent()?: UserStory()
         // in tests and in "pure" usage, parent might be nuull and we do not want to fail because of this
@@ -226,6 +226,8 @@ class Request : Atom() {
         //also stateless
         ret.assertions = assertions
         ret.timeAggregation = timeAggregation
+        ret.receiveHeaders = receiveHeaders
+        ret.sendHeaders = sendHeaders
         cloning = false;
         return ret
     }
@@ -286,6 +288,11 @@ class Request : Atom() {
         } else {
             log.error("Can not check assertions because I do not have a parent or grandparent: $name")
         }
+
+        if(receiveHeaders.isNotEmpty()){
+            log.error(this)
+        }
+
         if(result?.headers != null) {
             for (header in this.receiveHeaders) {
                 this.knownParams[header] = result.headers!![header]

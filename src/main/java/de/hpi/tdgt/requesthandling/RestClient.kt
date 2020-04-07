@@ -345,6 +345,9 @@ class RestClient {
     suspend fun exchangeWithEndpoint(request: Request): RestResult? {
          //in case global connection sharing is enabled, clients of stories might be null
          val client = (request.story?.client)?:UserStory.staticClient
+
+         //if got a connection or error occurs
+         val result = RestResult()
         //append GET parameters if necessary
         if(request.url == null || request.method == null){
             return null;
@@ -380,13 +383,14 @@ class RestClient {
         for(cookie in request.sendCookies.entries){
             preparedRequest.addCookie(DefaultCookie(cookie.key,cookie.value))
         }
+        try {
+            for (header in request.sendHeaders.entries) {
+                preparedRequest.setHeader(header.key, header.value)
+            }
+        } catch (e: Exception){
+            result.errorCondition = e
+        }
 
-         for(header in request.sendHeaders.entries){
-            preparedRequest.setHeader(header.key, header.value)
-         }
-
-        //got a connection
-        val result = RestResult()
         //try to connect
         var retry: Int = -1
 

@@ -518,4 +518,19 @@ class TestRequest : RequestHandlingFramework() {
         MatcherAssert.assertThat(getWithAuth!!.knownParams, Matchers.hasEntry("custom","CustomValue"))
     }
 
+    @Test
+    @Throws(InterruptedException::class, ExecutionException::class)
+    fun canCloneHeaders() {
+        val params = HashMap<String, String>()
+        getWithAuth!!.addr = "http://localhost:9000/headers"
+        getWithAuth!!.receiveHeaders = arrayOf("custom")
+        getWithAuth!!.receiveHeaders = arrayOf("custom")
+        val headers = HashMap<String,String>()
+        headers["header1"] = "Header_\$header1_sent"
+        getWithAuth!!.sendHeaders = headers
+        runBlocking{getWithAuth!!.run(params)}
+        MatcherAssert.assertThat((getWithAuth!!.clone() as Request).receiveHeaders, Matchers.equalTo(arrayOf("custom")))
+        MatcherAssert.assertThat((getWithAuth!!.clone() as Request).sendHeaders, Matchers.hasEntry("header1","Header_\$header1_sent"))
+    }
+
 }
