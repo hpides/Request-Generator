@@ -193,7 +193,7 @@ class Request : Atom() {
             request.password = knownParams[basicAuth!!.password]
         }
         for(header in this.sendHeaders){
-            request.sendHeaders[header.key] = replaceWithKnownParams(header.value,false)?:""
+            request.sendHeaders[header.value] = replaceWithKnownParams(header.key,false)?:""
         }
         request.story = getParent()?: UserStory()
         // in tests and in "pure" usage, parent might be nuull and we do not want to fail because of this
@@ -211,6 +211,7 @@ class Request : Atom() {
     public override fun performClone(): Atom {
         cloning = true;
         val ret = Request()
+        ret.cloning = true
         ret.addr = addr
         ret.verb = verb
         ret.responseJSONObject = responseJSONObject
@@ -226,7 +227,10 @@ class Request : Atom() {
         //also stateless
         ret.assertions = assertions
         ret.timeAggregation = timeAggregation
+        ret.receiveHeaders = receiveHeaders
+        ret.sendHeaders = sendHeaders
         cloning = false;
+        ret.cloning = false
         return ret
     }
 
@@ -286,6 +290,7 @@ class Request : Atom() {
         } else {
             log.error("Can not check assertions because I do not have a parent or grandparent: $name")
         }
+
         if(result?.headers != null) {
             for (header in this.receiveHeaders) {
                 this.knownParams[header] = result.headers!![header]
@@ -302,6 +307,8 @@ class Request : Atom() {
             }
             //sanitizeXPATH takes care of quotes
             if(enquoteInsertedValue && !sanitizeXPATH && !sanitizeJSONPATH) {
+                // quotes in JSON need to be replaced
+                useValue = useValue.replace("\"","\\\"")
                 current = current.replace("$$key", '\"' + useValue + '\"')
             }
             else if(sanitizeJSONPATH){

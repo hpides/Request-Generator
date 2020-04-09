@@ -1195,6 +1195,35 @@ class MQTTTest : RequestHandlingFramework() {
         MatcherAssert.assertThat(message, Matchers.nullValue())
     }
 
+    //regression test, this failed in production
+    @org.junit.jupiter.api.Test
+    public fun assertionErrorIsThrownIfHeaderInvalid(){
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
+        val test = de.hpi.tdgt.test.Test()
+        val story = UserStory()
+        story.parent = test
+        val requestAtom = Request()
+        requestAtom.setParent(story)
+        requestAtom.name = "request"
+        requestAtom.verb = "GET"
+        requestAtom.addr = "http://localhost:9000/"
+        requestAtom.predecessorCount = 0
+        requestAtom.repeat = 1
+        val headers = HashMap<String, String>()
+        headers["abc"] = ";;;;"
+        requestAtom.sendHeaders = headers
+        runBlocking {requestAtom.run(HashMap())}
+        sleep(2000)
+        val actuals = readAssertion(messages)
+        var message: MqttAssertionMessage? = null
+        for (assertion in actuals) {
+            if (!assertion.actuals.isEmpty()) {
+                message = assertion
+            }
+        }
+        MatcherAssert.assertThat(message, Matchers.notNullValue())
+    }
+
     private fun findMessageStartingWith(
         messages: Set<String>,
         messageStart: String

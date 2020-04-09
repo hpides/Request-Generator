@@ -502,7 +502,7 @@ class TestRequest : RequestHandlingFramework() {
         params["header1"] = "value1"
         getWithAuth!!.addr = "http://localhost:9000/headers"
         val headers = HashMap<String,String>()
-        headers["header1"] = "Header_\$header1_sent"
+        headers["Header_\$header1_sent"] = "header1"
         getWithAuth!!.sendHeaders = headers
         runBlocking{getWithAuth!!.run(params)}
         MatcherAssert.assertThat(headerHandler.lastHeaders!!.getFirst("header1"), Matchers.equalTo("Header_value1_sent"))
@@ -516,6 +516,32 @@ class TestRequest : RequestHandlingFramework() {
         getWithAuth!!.receiveHeaders = arrayOf("custom")
         runBlocking{getWithAuth!!.run(params)}
         MatcherAssert.assertThat(getWithAuth!!.knownParams, Matchers.hasEntry("custom","CustomValue"))
+    }
+
+    @Test
+    @Throws(InterruptedException::class, ExecutionException::class)
+    fun canCloneHeaders() {
+        val params = HashMap<String, String>()
+        getWithAuth!!.addr = "http://localhost:9000/headers"
+        getWithAuth!!.receiveHeaders = arrayOf("custom")
+        getWithAuth!!.receiveHeaders = arrayOf("custom")
+        val headers = HashMap<String,String>()
+        headers["header1"] = "Header_\$header1_sent"
+        getWithAuth!!.sendHeaders = headers
+        runBlocking{getWithAuth!!.run(params)}
+        MatcherAssert.assertThat((getWithAuth!!.clone() as Request).receiveHeaders, Matchers.equalTo(arrayOf("custom")))
+        MatcherAssert.assertThat((getWithAuth!!.clone() as Request).sendHeaders, Matchers.hasEntry("header1","Header_\$header1_sent"))
+    }
+
+    @Test
+    @Throws(InterruptedException::class, ExecutionException::class)
+    fun quotesInJsonAreEscaped() {
+        val params = HashMap<String, String>()
+        params["key"] = "something\""
+        params["value"] = "somethingElse\""
+        postWithBodyAndAssertion!!.knownParams.putAll(params)
+        val replaced = postWithBodyAndAssertion!!.replaceWithKnownParams("{key: \$key}",true)
+        MatcherAssert.assertThat(replaced, Matchers.equalTo("{key: \"something\\\"\"}"))
     }
 
 }
