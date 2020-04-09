@@ -307,6 +307,8 @@ class Request : Atom() {
             }
             //sanitizeXPATH takes care of quotes
             if(enquoteInsertedValue && !sanitizeXPATH && !sanitizeJSONPATH) {
+                // quotes in JSON need to be replaced
+                useValue = useValue.replace("\"","\\\"")
                 current = current.replace("$$key", '\"' + useValue + '\"')
             }
             else if(sanitizeJSONPATH){
