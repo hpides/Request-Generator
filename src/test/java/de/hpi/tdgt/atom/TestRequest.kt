@@ -513,7 +513,9 @@ class TestRequest : RequestHandlingFramework() {
     fun canExtractHeaders() {
         val params = HashMap<String, String>()
         getWithAuth!!.addr = "http://localhost:9000/headers"
-        getWithAuth!!.receiveHeaders = arrayOf("custom")
+        val receiveHeaders = HashMap<String, String>()
+        receiveHeaders.put("custom","custom")
+        getWithAuth!!.receiveHeaders = receiveHeaders
         runBlocking{getWithAuth!!.run(params)}
         MatcherAssert.assertThat(getWithAuth!!.knownParams, Matchers.hasEntry("custom","CustomValue"))
     }
@@ -523,13 +525,14 @@ class TestRequest : RequestHandlingFramework() {
     fun canCloneHeaders() {
         val params = HashMap<String, String>()
         getWithAuth!!.addr = "http://localhost:9000/headers"
-        getWithAuth!!.receiveHeaders = arrayOf("custom")
-        getWithAuth!!.receiveHeaders = arrayOf("custom")
+        val receiveHeaders = HashMap<String, String>()
+        receiveHeaders.put("custom","custom")
+        getWithAuth!!.receiveHeaders = receiveHeaders
         val headers = HashMap<String,String>()
         headers["header1"] = "Header_\$header1_sent"
         getWithAuth!!.sendHeaders = headers
         runBlocking{getWithAuth!!.run(params)}
-        MatcherAssert.assertThat((getWithAuth!!.clone() as Request).receiveHeaders, Matchers.equalTo(arrayOf("custom")))
+        MatcherAssert.assertThat((getWithAuth!!.clone() as Request).receiveHeaders, Matchers.equalTo(receiveHeaders as Map<String, String>))
         MatcherAssert.assertThat((getWithAuth!!.clone() as Request).sendHeaders, Matchers.hasEntry("header1","Header_\$header1_sent"))
     }
 
