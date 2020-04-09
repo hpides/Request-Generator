@@ -99,9 +99,9 @@ class Request : Atom() {
     var sendHeaders: Map<String, String> = HashMap()
 
     /**
-     * Contains names of headers for which the value shall be extracted under the given names from the response and which shall be saved under that name in the token.
+     * Contains names of headers for which the value shall be extracted under the given names from the response to the left and which shall be saved under that name on the right in the token.
      */
-    var receiveHeaders: Array<String> = emptyArray()
+    var receiveHeaders:  Map<String, String> = HashMap()
 
     private fun getRecordName():String?{
         if(timeAggregation){
@@ -293,7 +293,7 @@ class Request : Atom() {
 
         if(result?.headers != null) {
             for (header in this.receiveHeaders) {
-                this.knownParams[header] = result.headers!![header]
+                this.knownParams[header.value] = result.headers!![header.key]
             }
         }
     }
