@@ -533,4 +533,15 @@ class TestRequest : RequestHandlingFramework() {
         MatcherAssert.assertThat((getWithAuth!!.clone() as Request).sendHeaders, Matchers.hasEntry("header1","Header_\$header1_sent"))
     }
 
+    @Test
+    @Throws(InterruptedException::class, ExecutionException::class)
+    fun quotesInJsonAreEscaped() {
+        val params = HashMap<String, String>()
+        params["key"] = "something\""
+        params["value"] = "somethingElse\""
+        postWithBodyAndAssertion!!.knownParams.putAll(params)
+        val replaced = postWithBodyAndAssertion!!.replaceWithKnownParams("{key: \$key}",true)
+        MatcherAssert.assertThat(replaced, Matchers.equalTo("{key: \"something\\\"\"}"))
+    }
+
 }
