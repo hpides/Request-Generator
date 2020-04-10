@@ -2,8 +2,16 @@ package de.hpi.tdgt.concurrency
 
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.yield
-import java.util.concurrent.locks.ReentrantReadWriteLock
+
+/*
+somewhat mimics the https://docs.microsoft.com/en-us/windows/win32/sync/event-objects synchronisation primitive.
+But has global signaled state, for easy usage for system-wide events.
+ */
 object Event {
+
+    /**
+     * Return when event of this name has been signaled.
+     */
     suspend fun waitFor(name: String) {
         while(true) {
             try {
@@ -17,6 +25,10 @@ object Event {
             }
         }
     }
+
+    /**
+     * Release all waiters for the specified signal.
+     */
     suspend fun signal(name: String) {
         for(i in 1..tickets){
             lock.acquire()
@@ -29,11 +41,11 @@ object Event {
 
     private val signaledEvents = HashSet<String>()
 
-    private val tickets = 1000
-
+    private const val tickets = 1000
+    //use 1000 tickets to mimic reader-writer-locks (readers take one ticket, writers all 1000). Unfortunately, there is no non-blocking implementation of this...
     private val lock = Semaphore(tickets,0)
 
-    public suspend fun reset(){
+    suspend fun reset(){
         for(i in 1..tickets){
             lock.acquire()
         }
