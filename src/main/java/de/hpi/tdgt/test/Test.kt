@@ -2,6 +2,7 @@ package de.hpi.tdgt.test
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import de.hpi.tdgt.concurrency.Event
 import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.Data_Generation
 import de.hpi.tdgt.test.story.atom.WarmupEnd
@@ -210,6 +211,8 @@ class Test {
 
     @Throws(InterruptedException::class)
     private suspend fun runTest(stories: Array<UserStory>): MutableCollection<Future<*>> {
+        //old testStart should be gone by now
+        Event.reset()
         try {
             ConcurrentRequestsThrottler.instance.setMaxParallelRequests(maximumConcurrentRequests)
         } catch (e: ExecutionControl.NotImplementedException) {
@@ -237,6 +240,8 @@ class Test {
                 j++
             }
         }
+        //cloning takes considerably much time, so make sure all stories are cloned before they actually start
+        Event.signal(testStartEvent)
         return futures
     }
 
@@ -391,6 +396,7 @@ class Test {
             LogManager.getLogger(Test::class.java)
         const val DEFAULT_CONCURRENT_REQUEST_LIMIT = 100
         const val DEFAULT_ACTIVE_INSTANCES_PER_SECOND_LIMIT = 10000
+        const val testStartEvent = "testStart"
     }
 }
 

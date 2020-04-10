@@ -1,6 +1,7 @@
 package de.hpi.tdgt.test.story
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import de.hpi.tdgt.concurrency.Event
 import de.hpi.tdgt.test.Test
 import de.hpi.tdgt.test.Test.ActiveInstancesThrottler
 import de.hpi.tdgt.test.ThreadRecycler
@@ -104,9 +105,10 @@ class UserStory : Cloneable {
             synchronized(this) { clone = clone() }
             log.info("Running story " + clone.name.toString() + " in thread " + Thread.currentThread().id)
             try {
-                GlobalScope.async{
+                withContext(Dispatchers.IO) {
+                    Event.waitFor(Test.testStartEvent)
                     clone.getAtoms()[0].run(HashMap())
-                }.await()
+                }
             } catch (e: ExecutionException) {
                 log.error(e)
             }

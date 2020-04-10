@@ -65,7 +65,7 @@ abstract class Atom : Cloneable {
     @Throws(InterruptedException::class, ExecutionException::class)
     suspend fun run(dataMap: Map<String, String>?) {
         log.info("Running Atom " + name + " in Thread " + Thread.currentThread().id)
-        predecessorsReady = predecessorsReady + 1
+        predecessorsReady += 1
         knownParams.putAll(dataMap!!)
         if (predecessorsReady >= predecessorCount) { //perform as often as requested
             for (i in 0 until repeat) {

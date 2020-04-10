@@ -2,6 +2,7 @@
   "repeat": 1,
   "scaleFactor": 100000,
   "activeInstancesPerSecond": 100000,
+  "noSession": true,
   "stories": [
     {
       "scalePercentage": 1,
