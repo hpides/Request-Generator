@@ -281,7 +281,7 @@ public class TimeStorage {
     public void printSummary() {
         for (val entry : registeredTimes.entrySet()) {
             for (val verbMap : entry.getValue().entrySet()) {
-                log.info("Endpoint " + verbMap.getKey() + " " + entry.getKey() + " min: " + getMin(verbMap.getKey(), entry.getKey()) / MS_IN_NS + " ms, max: " + getMax(verbMap.getKey(), entry.getKey()) / MS_IN_NS + " ms, avg: " + getAvg(verbMap.getKey(), entry.getKey()) / MS_IN_NS + " ms.");
+                log.error("Endpoint " + verbMap.getKey() + " " + entry.getKey() + " min: " + getMin(verbMap.getKey(), entry.getKey()) / MS_IN_NS + " ms, max: " + getMax(verbMap.getKey(), entry.getKey()) / MS_IN_NS + " ms, avg: " + getAvg(verbMap.getKey(), entry.getKey()) / MS_IN_NS + " ms.");
             }
         }
     }

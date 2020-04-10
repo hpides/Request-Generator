@@ -242,8 +242,11 @@ class Test {
         }
         //cloning takes considerably much time, so make sure all stories are cloned before they actually start
         Event.signal(testStartEvent)
+        testStart = System.currentTimeMillis()
         return futures
     }
+
+    var testStart = 0L
 
     fun getStories(): Array<UserStory> {
         return stories

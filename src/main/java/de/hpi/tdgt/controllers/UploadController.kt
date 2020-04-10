@@ -51,14 +51,14 @@ class UploadController {
             testToRun.start(threads)
         }
         val endtime = System.currentTimeMillis()
-        log.info("---Test finished in " + (endtime - starttime) + " ms.---")
-        log.info("---Times---")
+        log.error("---Test finished in " + (endtime - testToRun.testStart) + " ms.---")
+        log.error("---Times---")
         TimeStorage.getInstance().printSummary()
-        log.info("---Assertions---")
+        log.error("---Assertions---")
         AssertionStorage.instance.printSummary()
         TimeStorage.getInstance().reset()
         AssertionStorage.instance.reset()
-        log.info(RestClient.requestsSent.get().toString() + " requests sent.")
+        log.error(RestClient.requestsSent.get().toString() + " requests sent.")
         RestClient.requestsSent.set(0)
     }
 
