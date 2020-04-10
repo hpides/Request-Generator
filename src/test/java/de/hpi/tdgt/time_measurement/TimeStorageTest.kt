@@ -21,7 +21,7 @@ class TimeStorageTest : RequestHandlingFramework() {
         //do not run second story for this time around; messes with results
         test.setStories(arrayOf(test.getStories()[0]))
         test.start()
-        val storage = TimeStorage.getInstance()
+        val storage = TimeStorage.instance
         val firstRequest =
             test.getStories()[0].getAtoms()[2] as Request
         MatcherAssert.assertThat(
@@ -38,7 +38,7 @@ class TimeStorageTest : RequestHandlingFramework() {
         //do not run second story for this time around; messes with results
         test.setStories(arrayOf(test.getStories()[0]))
         test.start()
-        val storage = TimeStorage.getInstance()
+        val storage = TimeStorage.instance
         val firstRequest =
             test.getStories()[0].getAtoms()[2] as Request
         MatcherAssert.assertThat(
@@ -55,7 +55,7 @@ class TimeStorageTest : RequestHandlingFramework() {
         //do not run second story for this time around; messes with results
         test.setStories(arrayOf(test.getStories()[0]))
         test.start()
-        val storage = TimeStorage.getInstance()
+        val storage = TimeStorage.instance
         val firstRequest =
             test.getStories()[0].getAtoms()[2] as Request
         MatcherAssert.assertThat(
@@ -72,7 +72,7 @@ class TimeStorageTest : RequestHandlingFramework() {
         //do not run second story for this time around; messes with results
         test.setStories(arrayOf(test.getStories()[0]))
         test.start()
-        val storage = TimeStorage.getInstance()
+        val storage = TimeStorage.instance
         val firstRequest =
             test.getStories()[0].getAtoms()[2] as Request
         MatcherAssert.assertThat(

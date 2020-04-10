@@ -165,7 +165,7 @@ class Test {
             }
             //make sure all times are sent
             AssertionStorage.instance.flush()
-            TimeStorage.getInstance().flush()
+            TimeStorage.instance.flush()
             try {
                 client!!.publish(
                         MQTT_TOPIC,

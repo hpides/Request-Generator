@@ -517,7 +517,7 @@ class RestClient {
         }
         storage.registerTime(
             request.method,
-            request.recordName,
+            request.recordName?:"",
             res.durationNanos(),
             request.story?.name,
             request.testId
@@ -529,7 +529,7 @@ class RestClient {
     companion object {
         private val log =
             LogManager.getLogger(RestClient::class.java)
-        private val storage = TimeStorage.getInstance()
+        private val storage = TimeStorage.instance
         /**
          * Counts how many requests the application as a whole sent. Resetted each time a test is over.
          */
