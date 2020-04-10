@@ -89,7 +89,7 @@ open class RequestHandlingFramework {
         })
         handlers = ArrayList()
         server.stop(0)
-        TimeStorage.getInstance().reset()
+        TimeStorage.instance.reset()
         AssertionStorage.instance.reset()
         Thread.sleep(200)
     }

@@ -1,6 +1,7 @@
 package de.hpi.tdgt.test.story
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import de.hpi.tdgt.concurrency.Event
 import de.hpi.tdgt.test.Test
 import de.hpi.tdgt.test.Test.ActiveInstancesThrottler
 import de.hpi.tdgt.test.ThreadRecycler
@@ -34,14 +35,14 @@ class UserStory : Cloneable {
      * Client that represents this user
      */
     @JsonIgnore
-    var client:AsyncHttpClient = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(true).setChannelPool(pool).setNettyTimer(timer))
+    var client:AsyncHttpClient = staticClient
     @JsonIgnore
     var parent: Test? = null
         set(value){
             field = value
-            if(value?.noSession == true && client !== staticClient){
-                client.close()
-                client = staticClient
+            //Windows resource leakage: One can not create e.g. 100.000 clients, so start off with the assumption only one is wanted and create them if necessary; Event makes sure that this is not counted as test time
+            if(value?.noSession == false && client === staticClient){
+                client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(true).setChannelPool(pool).setNettyTimer(timer))
             }
         }
 
@@ -49,7 +50,7 @@ class UserStory : Cloneable {
         this.atoms = atoms
         //set links
         Arrays.stream(atoms)
-            .forEach({ atom: Atom -> atom.initSuccessors(this) })
+            .forEach { atom: Atom -> atom.initSuccessors(this) }
     }
 
     public override fun clone(): UserStory {
@@ -104,9 +105,10 @@ class UserStory : Cloneable {
             synchronized(this) { clone = clone() }
             log.info("Running story " + clone.name.toString() + " in thread " + Thread.currentThread().id)
             try {
-                GlobalScope.async{
+                withContext(Dispatchers.IO) {
+                    Event.waitFor(Test.testStartEvent)
                     clone.getAtoms()[0].run(HashMap())
-                }.await()
+                }
             } catch (e: ExecutionException) {
                 log.error(e)
             }

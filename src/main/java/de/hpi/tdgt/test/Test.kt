@@ -2,6 +2,7 @@ package de.hpi.tdgt.test
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import de.hpi.tdgt.concurrency.Event
 import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.Data_Generation
 import de.hpi.tdgt.test.story.atom.WarmupEnd
@@ -23,6 +24,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.sync.Semaphore
 import java.lang.Exception
+import java.lang.Thread.sleep
 import java.util.concurrent.CompletableFuture
 
 //allow frontend to store additional information
@@ -79,6 +81,7 @@ class Test {
         val watchdog = Thread(ActiveInstancesThrottler.instance)
         watchdog.priority = Thread.MAX_PRIORITY
         watchdog.start()
+        Event.unsignal(WarmupEnd.eventName)
         //will run stories with warmup only, so they can run until WarmupEnd is reached
         val threads =
             runTest(
@@ -90,10 +93,15 @@ class Test {
             .mapToInt { story: UserStory -> (story.numberOfWarmupEnds() * story.scalePercentage * scaleFactor).toInt() }
                 .sum()
         //wait for all warmup ends to be stuck
-        while (waitersToExpect > WarmupEnd.waiting) {
-            log.info("Waiting for warmup to complete: " + WarmupEnd.waiting + " of " + waitersToExpect + " complete!")
-            delay(5000)
+        val future = Thread {
+            while (waitersToExpect > WarmupEnd.waiting) {
+                log.info("Waiting for warmup to complete: " + WarmupEnd.waiting + " of " + waitersToExpect + " complete!")
+                sleep(1000)
+            }
         }
+        future.start()
+        future.join()
+        log.info("Warmup complete")
         watchdog.interrupt()
         return threads
     }
@@ -161,10 +169,12 @@ class Test {
                 if (i < repeat - 1) {
                     threadsFromWarmupReceived = warmup()
                 }
+
+                log.info("Test run $i complete!")
             }
             //make sure all times are sent
             AssertionStorage.instance.flush()
-            TimeStorage.getInstance().flush()
+            TimeStorage.instance.flush()
             try {
                 client!!.publish(
                         MQTT_TOPIC,
@@ -208,8 +218,15 @@ class Test {
         }
     }
 
+    /**
+     * Time when user stories actually start running
+     */
+    var testStart:Long = 0
+
     @Throws(InterruptedException::class)
     private suspend fun runTest(stories: Array<UserStory>): MutableCollection<Future<*>> {
+        //old testStart should be gone by now
+        Event.unsignal(testStartEvent)
         try {
             ConcurrentRequestsThrottler.instance.setMaxParallelRequests(maximumConcurrentRequests)
         } catch (e: ExecutionControl.NotImplementedException) {
@@ -237,6 +254,9 @@ class Test {
                 j++
             }
         }
+        //cloning takes considerably much time, so make sure all stories are cloned before they actually start
+        Event.signal(testStartEvent)
+        testStart = System.currentTimeMillis()
         return futures
     }
 
@@ -265,14 +285,14 @@ class Test {
             mutex.release()
             log.trace("Released mutex (allowRequest)")
         }
-        override fun run() = runBlocking {
+        override fun run() {
             try {
-                performAction()
+                runBlocking {performAction()}
             } catch(e:InterruptedException){
-                return@runBlocking
+                return
             }
         }
-        suspend fun performAction() {
+        private suspend fun performAction() {
             while (!Thread.interrupted()) {
                 val instancesLastSecond = instancesPerSecond
                 log.trace("Waiting for mutex (run)...")
@@ -391,6 +411,7 @@ class Test {
             LogManager.getLogger(Test::class.java)
         const val DEFAULT_CONCURRENT_REQUEST_LIMIT = 100
         const val DEFAULT_ACTIVE_INSTANCES_PER_SECOND_LIMIT = 10000
+        const val testStartEvent = "testStart"
     }
 }
 

@@ -17,5 +17,6 @@ java -jar request-generator-1.0-SNAPSHOT-jar-with-dependencies.jar ./src/test/re
 ```
 You can execute tests using curl, e.g.:
 ```bash
-curl -H "Content-Type: application/json" -X POST --data @src/test/resources/de/hpi/tdgt/test_config_example.json localhost:8080/upload
+curl -H "Content-Type: application/json" -X POST --data @src/test/resources/de/hpi/tdgt/test_config_example.json localhost:8080/upload/0
 ```
+0 might be replaced by the current epoch time in milliseconds.
