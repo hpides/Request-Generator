@@ -218,7 +218,11 @@ class TimeStorage protected constructor() {
 
     init { //to clean files
         mqttReporter = Runnable {
-            runBlocking { performTimeSending() }
+            try {
+                runBlocking { performTimeSending() }
+            } catch (e: InterruptedException){
+                //willingly ignored
+            }
         }
         reporter = Thread(mqttReporter)
         reporter!!.priority = Thread.MAX_PRIORITY

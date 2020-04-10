@@ -285,14 +285,14 @@ class Test {
             mutex.release()
             log.trace("Released mutex (allowRequest)")
         }
-        override fun run() = runBlocking {
+        override fun run() {
             try {
-                performAction()
+                runBlocking {performAction()}
             } catch(e:InterruptedException){
-                return@runBlocking
+                return
             }
         }
-        suspend fun performAction() {
+        private suspend fun performAction() {
             while (!Thread.interrupted()) {
                 val instancesLastSecond = instancesPerSecond
                 log.trace("Waiting for mutex (run)...")
