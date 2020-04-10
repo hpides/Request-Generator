@@ -1,5 +1,6 @@
 package de.hpi.tdgt.controllers
 
+import de.hpi.tdgt.concurrency.Event
 import de.hpi.tdgt.deserialisation.Deserializer
 import de.hpi.tdgt.requesthandling.RestClient
 import de.hpi.tdgt.test.Test
@@ -46,6 +47,7 @@ class UploadController {
         testToRun.testId = id
         val starttime = System.currentTimeMillis()
         runBlocking {
+            Event.reset()
             val threads: MutableCollection<Future<*>> = testToRun.warmup()
             testToRun.start(threads)
         }

@@ -1,5 +1,6 @@
 package de.hpi.tdgt.test.story.atom
 
+import de.hpi.tdgt.concurrency.Event
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -15,7 +16,7 @@ class WarmupEnd : Atom() {
     @Throws(InterruptedException::class)
     override suspend fun perform() {
         addWaiter()
-        warmupEnd.acquire()
+        Event.waitFor(eventName)
     }
 
     override fun performClone(): Atom {
@@ -24,29 +25,19 @@ class WarmupEnd : Atom() {
 
 
     companion object {
+        public const val eventName = "warmupEnd";
         private val log =
             LogManager.getLogger(WarmupEnd::class.java)
 
-        //Test knows how many warmupEnds should be waiting for this semaphore.
-//So when this number is reached, it can release all of them and thus continue processing.
-        private val warmupEnd = Semaphore(1)
         var waiting = 0
             private set
 
-        var toInitialize = true
 
         private val mutex = Semaphore(1)
 
         private suspend fun addWaiter() {
             //need coroutine-aware synchronization method here
             mutex.acquire()
-            //Semaphores can not be created without permits, so build a dummy coroutine that aquires the additional permit
-            if (toInitialize) {
-                withContext(Dispatchers.Default) {
-                    async { warmupEnd.acquire() }
-                }
-                toInitialize = false
-            }
             log.info("Added a waiter to the existing $waiting waiters!")
             waiting++
             mutex.release()
@@ -55,17 +46,11 @@ class WarmupEnd : Atom() {
         /**
          * Let all waiting warmup ends continue.
          */
-        fun startTest() {
-            log.info("START TEST!");
-            warmupEnd.release(waiting)
+        suspend fun startTest() {
+            log.info("START TEST!")
+            Event.signal(eventName)
             waiting = 0
         }
 
-    }
-}
-
-private fun Semaphore.release(waiting: Int) {
-    for(i in 0 until waiting){
-        release()
     }
 }

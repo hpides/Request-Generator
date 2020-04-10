@@ -24,6 +24,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.sync.Semaphore
 import java.lang.Exception
+import java.lang.Thread.sleep
 import java.util.concurrent.CompletableFuture
 
 //allow frontend to store additional information
@@ -80,6 +81,7 @@ class Test {
         val watchdog = Thread(ActiveInstancesThrottler.instance)
         watchdog.priority = Thread.MAX_PRIORITY
         watchdog.start()
+        Event.unsignal(WarmupEnd.eventName)
         //will run stories with warmup only, so they can run until WarmupEnd is reached
         val threads =
             runTest(
@@ -91,10 +93,15 @@ class Test {
             .mapToInt { story: UserStory -> (story.numberOfWarmupEnds() * story.scalePercentage * scaleFactor).toInt() }
                 .sum()
         //wait for all warmup ends to be stuck
-        while (waitersToExpect > WarmupEnd.waiting) {
-            log.info("Waiting for warmup to complete: " + WarmupEnd.waiting + " of " + waitersToExpect + " complete!")
-            delay(5000)
+        val future = Thread {
+            while (waitersToExpect > WarmupEnd.waiting) {
+                log.info("Waiting for warmup to complete: " + WarmupEnd.waiting + " of " + waitersToExpect + " complete!")
+                sleep(1000)
+            }
         }
+        future.start()
+        future.join()
+        log.info("Warmup complete")
         watchdog.interrupt()
         return threads
     }
@@ -162,6 +169,8 @@ class Test {
                 if (i < repeat - 1) {
                     threadsFromWarmupReceived = warmup()
                 }
+
+                log.info("Test run $i complete!")
             }
             //make sure all times are sent
             AssertionStorage.instance.flush()
@@ -217,7 +226,7 @@ class Test {
     @Throws(InterruptedException::class)
     private suspend fun runTest(stories: Array<UserStory>): MutableCollection<Future<*>> {
         //old testStart should be gone by now
-        Event.reset()
+        Event.unsignal(testStartEvent)
         try {
             ConcurrentRequestsThrottler.instance.setMaxParallelRequests(maximumConcurrentRequests)
         } catch (e: ExecutionControl.NotImplementedException) {

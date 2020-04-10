@@ -39,6 +39,19 @@ object Event {
         }
     }
 
+    /**
+     * Release all waiters for the specified signal.
+     */
+    suspend fun unsignal(name: String) {
+        for(i in 1..tickets){
+            lock.acquire()
+        }
+        signaledEvents.remove(name)
+        for(i in 1..tickets){
+            lock.release()
+        }
+    }
+
     private val signaledEvents = HashSet<String>()
 
     private const val tickets = 1000
