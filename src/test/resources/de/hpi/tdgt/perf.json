@@ -16,7 +16,7 @@
           ],
           "type": "REQUEST",
           "verb": "GET",
-          "addr": "http://192.168.56.1/",
+          "addr": "http://192.168.0.140/",
           "assertions": [
             {
               "type": "RESPONSE_CODE",

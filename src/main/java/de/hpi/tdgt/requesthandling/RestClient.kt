@@ -523,7 +523,7 @@ class RestClient {
             request.testId
         )
         log.info("Request took " + res.durationMillis() + " ms.")
-        log.error(requestsSent.incrementAndGet().toString()+"requests sent")
+        requestsSent.incrementAndGet()
     }
 
     companion object {

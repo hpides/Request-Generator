@@ -71,6 +71,7 @@ class TimeStorage protected constructor() {
      * Outermost String is the request.
      * Second string from outside is the method.
      * Innermost String is story the request belonged to.
+     * TODO remove and replace by real-time aggregation
      */
     private val registeredTimes: MutableMap<String, MutableMap<String, MutableMap<String, MutableList<Long>>>> = HashMap()
     /**
@@ -130,10 +131,10 @@ class TimeStorage protected constructor() {
         }
         //triggers exception
         if (story != null) {
-            registeredTimes.computeIfAbsent(addr) { HashMap() }
-            registeredTimes[addr]!!.computeIfAbsent(verb!!) { HashMap() }
-            registeredTimes[addr]!![verb]!!.computeIfAbsent(story) { Vector() }.add(latency)
             entryMutex.withPermit {
+                registeredTimes.computeIfAbsent(addr) { HashMap() }
+                registeredTimes[addr]!!.computeIfAbsent(verb!!) { HashMap() }
+                registeredTimes[addr]!![verb]!!.computeIfAbsent(story) { Vector() }.add(latency)
                 registeredTimesLastSecond.computeIfAbsent(addr) { HashMap() }
                 registeredTimesLastSecond[addr]!!.computeIfAbsent(verb) { HashMap() }
                 registeredTimesLastSecond[addr]!![verb]!!.computeIfAbsent(story) { Vector() }.add(latency)
