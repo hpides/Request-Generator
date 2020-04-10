@@ -8,15 +8,13 @@ import de.hpi.tdgt.test.story.atom.Atom
 import de.hpi.tdgt.test.story.atom.WarmupEnd
 import de.hpi.tdgt.util.PropertiesReader
 import io.netty.util.HashedWheelTimer
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.apache.logging.log4j.LogManager
 import org.asynchttpclient.AsyncHttpClient
 import org.asynchttpclient.DefaultAsyncHttpClientConfig
 import org.asynchttpclient.Dsl
 import org.asynchttpclient.netty.channel.DefaultChannelPool
+import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.ExecutionException
 
@@ -90,7 +88,7 @@ class UserStory : Cloneable {
         }
     }
 
-    private suspend fun runAtoms() {
+    private suspend fun CoroutineScope.runAtoms() {
         try { //get one of the tickets
             if (ActiveInstancesThrottler.instance != null) {
                 try {
@@ -102,15 +100,17 @@ class UserStory : Cloneable {
             } else {
                 log.warn("Internal error: Can not limit active story instances per second!")
             }
-            log.info("Running story " + name.toString() + " in thread " + Thread.currentThread().id)
+            var clone: UserStory
+            synchronized(this) { clone = clone() }
+            log.info("Running story " + clone.name.toString() + " in thread " + Thread.currentThread().id)
             try {
-                withContext(Dispatchers.IO) {
-                    getAtoms()[0].run(HashMap())
-                }
+                GlobalScope.async{
+                    clone.getAtoms()[0].run(HashMap())
+                }.await()
             } catch (e: ExecutionException) {
                 log.error(e)
             }
-            log.info("Finished story " + name.toString() + " in thread " + Thread.currentThread().id)
+            log.info("Finished story " + clone.name.toString() + " in thread " + Thread.currentThread().id)
         } catch (e: InterruptedException) {
             log.error(e)
         }

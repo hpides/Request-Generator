@@ -215,32 +215,27 @@ class Test {
         } catch (e: ExecutionControl.NotImplementedException) {
             log.error(e)
         }
-        val startedStories = LinkedList<UserStory>()
         val futures = Vector<Future<*>>()
-        //cloning can take a substantial amount of time; make sure this does not influence the test by doing it beforehand
         for (i in stories.indices) { //repeat stories as often as wished
             var j = 0
             while (j < scaleFactor * stories[i].scalePercentage) {
-                startedStories.add(stories[i].clone())
-                j++
-            }
-        }
-        for (story in startedStories) {
-                story.parent = this
-                story.isStarted = true
+                stories[i].parent = this
+                stories[i].isStarted = true
                 var future: Future<*>?
                 if(!PropertiesReader.AsyncIO()) {
                     future = ThreadRecycler.instance.executorService.submit {
                         runBlocking {
-                            story.run()
+                            stories[i].run()
                         }
                     }
                 }else{
                     //withContext(Dispatchers.IO) {
-                        future = GlobalScope.async { story.run() }.asCompletableFuture()
+                        future = GlobalScope.async { stories[i].run() }.asCompletableFuture()
                     //}
                 }
                 futures.add(future)
+                j++
+            }
         }
         return futures
     }
