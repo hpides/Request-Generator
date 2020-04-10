@@ -20,3 +20,8 @@ You can execute tests using curl, e.g.:
 curl -H "Content-Type: application/json" -X POST --data @src/test/resources/de/hpi/tdgt/test_config_example.json localhost:8080/upload/0
 ```
 0 might be replaced by the current epoch time in milliseconds.
+
+## A note on logging
+The default logging level is "info". It will provide a lot of output which will slow the application down. Feel free to overwrite "logging.level.root=info" in application.properties with "warn" or "error".  
+Also, the logging level can be set at run time via the argument "--logging.level.root="error"".  
+Output of times will happen at the error level.

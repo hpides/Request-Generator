@@ -155,7 +155,7 @@ class AssertionStorage private constructor() {
      */
     fun printSummary() {
         for ((key, value) in actuals) {
-            log.info("Assertion " + key + " failed " + value.key + " times.")
+            log.error("Assertion " + key + " failed " + value.key + " times.")
             if (value.key?:0 > 0) {
                 val actuals = StringBuilder("Actual values: [")
                 var first = true
@@ -173,7 +173,7 @@ class AssertionStorage private constructor() {
                     actuals.append(actual)
                 }
                 actuals.append("]")
-                log.info(actuals)
+                log.error(actuals)
             }
         }
     }

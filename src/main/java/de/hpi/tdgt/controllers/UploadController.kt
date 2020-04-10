@@ -59,7 +59,7 @@ class UploadController {
         AssertionStorage.instance.printSummary()
         TimeStorage.instance.reset()
         AssertionStorage.instance.reset()
-        log.info(RestClient.requestsSent.get().toString() + " requests sent.")
+        log.error(RestClient.requestsSent.get().toString() + " requests sent.")
         RestClient.requestsSent.set(0)
     }
 
