@@ -1,6 +1,6 @@
 package de.hpi.tdgt.controllers
 
-import com.fasterxml.jackson.core.JsonProcessingException
+import de.hpi.tdgt.concurrency.Event
 import de.hpi.tdgt.deserialisation.Deserializer
 import de.hpi.tdgt.requesthandling.RestClient
 import de.hpi.tdgt.test.Test
@@ -47,16 +47,17 @@ class UploadController {
         testToRun.testId = id
         val starttime = System.currentTimeMillis()
         runBlocking {
+            Event.reset()
             val threads: MutableCollection<Future<*>> = testToRun.warmup()
             testToRun.start(threads)
         }
         val endtime = System.currentTimeMillis()
-        log.info("---Test finished in " + (endtime - starttime) + " ms.---")
-        log.info("---Times---")
-        TimeStorage.getInstance().printSummary()
-        log.info("---Assertions---")
+        log.error("---Test finished in " + (endtime - testToRun.testStart) + " ms.---")
+        log.error("---Times---")
+        TimeStorage.instance.printSummary()
+        log.error("---Assertions---")
         AssertionStorage.instance.printSummary()
-        TimeStorage.getInstance().reset()
+        TimeStorage.instance.reset()
         AssertionStorage.instance.reset()
         log.info(RestClient.requestsSent.get().toString() + " requests sent.")
         RestClient.requestsSent.set(0)

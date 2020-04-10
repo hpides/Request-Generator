@@ -4,7 +4,6 @@ import de.hpi.tdgt.test.Test
 import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.time_measurement.TimeStorage
 import de.hpi.tdgt.util.PropertiesReader
-import io.netty.handler.codec.http.cookie.Cookie
 import io.netty.handler.codec.http.cookie.DefaultCookie
 import kotlinx.coroutines.future.await
 import org.apache.logging.log4j.LogManager
@@ -517,7 +516,7 @@ class RestClient {
         }
         storage.registerTime(
             request.method,
-            request.recordName,
+            request.recordName?:"",
             res.durationNanos(),
             request.story?.name,
             request.testId
@@ -529,7 +528,7 @@ class RestClient {
     companion object {
         private val log =
             LogManager.getLogger(RestClient::class.java)
-        private val storage = TimeStorage.getInstance()
+        private val storage = TimeStorage.instance
         /**
          * Counts how many requests the application as a whole sent. Resetted each time a test is over.
          */

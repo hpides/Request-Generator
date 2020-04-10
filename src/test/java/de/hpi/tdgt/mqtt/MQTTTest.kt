@@ -53,7 +53,7 @@ class MQTTTest : RequestHandlingFramework() {
     fun beforeEach() { //this test MUST handle asynch behaviour
         AssertionStorage.instance.isStoreEntriesAsynch = true
         //scenario that a message we want and a message we don't want arrive at the same time is prevented
-        TimeStorage.getInstance().setSendOnlyNonEmpty(true)
+        TimeStorage.instance.setSendOnlyNonEmpty(true)
         val mockTest = Test()
         mockParent.parent = mockTest
         mockParent.name = mockStoryName
@@ -61,9 +61,9 @@ class MQTTTest : RequestHandlingFramework() {
 
     @org.junit.jupiter.api.Test
     @Throws(MqttException::class, InterruptedException::class, IOException::class)
-    fun TimeStorageStreamsTimesUsingMQTT() {
+    fun TimeStorageStreamsTimesUsingMQTT() = runBlocking {
         val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
-        TimeStorage.getInstance().registerTime("POST", "http://localhost:9000/", 10, "story", 0)
+        TimeStorage.instance.registerTime("POST", "http://localhost:9000/", 10, "story", 0)
         Thread.sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
@@ -79,10 +79,10 @@ class MQTTTest : RequestHandlingFramework() {
 
     @org.junit.jupiter.api.Test
     @Throws(MqttException::class, InterruptedException::class, IOException::class)
-    fun TimeStorageStreamsAllTimesUsingMQTT() {
+    fun TimeStorageStreamsAllTimesUsingMQTT() = runBlocking  {
         val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
         val storyName = "story"
-        TimeStorage.getInstance().registerTime("POST", "http://localhost:9000/", 10, storyName, 0)
+        TimeStorage.instance.registerTime("POST", "http://localhost:9000/", 10, storyName, 0)
         Thread.sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
@@ -106,12 +106,12 @@ class MQTTTest : RequestHandlingFramework() {
 
     @org.junit.jupiter.api.Test
     @Throws(MqttException::class, InterruptedException::class, IOException::class)
-    fun TimeStorageStreamsAllTimesOfAllStoriesUsingMQTT() { //this test is based on the assumption that both entries are added at roughly the same time, so we want predictable timing behavior
+    fun TimeStorageStreamsAllTimesOfAllStoriesUsingMQTT()  = runBlocking { //this test is based on the assumption that both entries are added at roughly the same time, so we want predictable timing behavior
         val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
         val storyName1 = "story1"
         val storyName2 = "story2"
-        TimeStorage.getInstance().registerTime("POST", "http://localhost:9000/", 10, storyName1, 0)
-        TimeStorage.getInstance().registerTime("POST", "http://localhost:9000/", 20, storyName2, 0)
+        TimeStorage.instance.registerTime("POST", "http://localhost:9000/", 10, storyName1, 0)
+        TimeStorage.instance.registerTime("POST", "http://localhost:9000/", 20, storyName2, 0)
         Thread.sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
