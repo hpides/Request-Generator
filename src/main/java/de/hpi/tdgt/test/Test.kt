@@ -209,6 +209,11 @@ class Test {
         }
     }
 
+    /**
+     * Time when user stories actually start running
+     */
+    var testStart:Long = 0
+
     @Throws(InterruptedException::class)
     private suspend fun runTest(stories: Array<UserStory>): MutableCollection<Future<*>> {
         //old testStart should be gone by now
@@ -245,8 +250,6 @@ class Test {
         testStart = System.currentTimeMillis()
         return futures
     }
-
-    var testStart = 0L
 
     fun getStories(): Array<UserStory> {
         return stories

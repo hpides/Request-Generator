@@ -1,6 +1,5 @@
 package de.hpi.tdgt.controllers
 
-import com.fasterxml.jackson.core.JsonProcessingException
 import de.hpi.tdgt.deserialisation.Deserializer
 import de.hpi.tdgt.requesthandling.RestClient
 import de.hpi.tdgt.test.Test
@@ -58,7 +57,7 @@ class UploadController {
         AssertionStorage.instance.printSummary()
         TimeStorage.instance.reset()
         AssertionStorage.instance.reset()
-        log.error(RestClient.requestsSent.get().toString() + " requests sent.")
+        log.info(RestClient.requestsSent.get().toString() + " requests sent.")
         RestClient.requestsSent.set(0)
     }
 
