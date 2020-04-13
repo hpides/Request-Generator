@@ -1,9 +1,9 @@
 package de.hpi.tdgt.webserver
 
+import com.ginsberg.junit.exit.ExpectSystemExitWithStatus
 import de.hpi.tdgt.RequestHandlingFramework
 import de.hpi.tdgt.Utils
 import de.hpi.tdgt.WebApplication
-import de.hpi.tdgt.mqtt.MQTTTest
 import de.hpi.tdgt.util.PropertiesReader
 import org.apache.logging.log4j.LogManager
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener
@@ -91,10 +91,11 @@ class UploadJSONTest : RequestHandlingFramework() {
         //requests to this handler are sent
         MatcherAssert.assertThat(authHandler.numberFailedLogins, Matchers.greaterThan(0))
     }
-
     @Test
     @Throws(Exception::class)
+    @ExpectSystemExitWithStatus(0)
     fun runsUserStoryAgainstTestServerRunsActualTestAlsoInCliMode() {
+        //Since everything is fine, the application should exit with 0
         val args = arrayOf(
             "cli",
             "load",
@@ -107,6 +108,17 @@ class UploadJSONTest : RequestHandlingFramework() {
         waitForTestEnd()
         //requests to this handler are sent
         MatcherAssert.assertThat(authHandler.numberFailedLogins, Matchers.greaterThan(0))
+    }
+
+    @Test
+    @Throws(Exception::class)
+    @ExpectSystemExitWithStatus(1)
+    fun ExitsWith1IfUnallowedParametersInCliMode() {
+        //Since everything is fine, the application should exit with 0
+        val args = arrayOf(
+            "cli"
+        )
+        WebApplication.main(args)
     }
 
     @Test
