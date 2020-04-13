@@ -14,6 +14,7 @@ class JSONPATHAssertion : Assertion() {
         //might confuse later logic if trailing / starting whitespaces are found
         field = value?.trim()
     }
+    var returnResponse=false
     override fun check(restResult: RestResult?, testid: Long, parent: Request) {
         if(restResult!=null) {
             val response = String(restResult.response)
@@ -22,8 +23,21 @@ class JSONPATHAssertion : Assertion() {
                     val ctx: ReadContext = JsonPath.parse(response)
                     val responses : JSONArray = ctx.read(usePath)
                     if(responses.size == 0){
-                        log.error("Failed jsonpath assertion\"$name\": expected \"$usePath\" to find something but nothing was returned")
-                        AssertionStorage.instance.addFailure(name, "jsonpath \"${usePath}\" returned empty result", testid)
+                        if(!returnResponse) {
+                            log.error("Failed jsonpath assertion\"$name\": expected \"$usePath\" to find something but nothing was returned")
+                            AssertionStorage.instance.addFailure(
+                                name,
+                                "jsonpath \"${usePath}\" returned empty result",
+                                testid
+                            )
+                        } else{
+                            log.error("Failed jsonpath assertion\"$name\": response was $response")
+                            AssertionStorage.instance.addFailure(
+                                name,
+                                response,
+                                testid
+                            )
+                        }
                     }
                 } catch (e: Exception) {
                     log.error("Failed jsonpath assertion\"$name\": jsonpath \"$usePath\" is invalid :${e.message}")

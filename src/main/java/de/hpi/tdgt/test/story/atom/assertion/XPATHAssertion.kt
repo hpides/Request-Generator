@@ -12,6 +12,7 @@ import javax.xml.xpath.XPathFactory
 
 class XPATHAssertion : Assertion() {
     var xPath: String? = null
+    var returnPage = false
     override fun check(restResult: RestResult?, testid: Long, parent: Request) {
         if(restResult!=null) {
             val response = String(restResult.response)
@@ -26,8 +27,22 @@ class XPATHAssertion : Assertion() {
                             doc, XPathConstants.STRING
                     ) as String
                     if(str.isBlank()){
-                        log.error("Failed xpath assertion\"$name\": expected \"$xPath\" to find text but nothing was returned")
-                        AssertionStorage.instance.addFailure(name, "xpath \"${xPath}\" returned empty result", testid)
+                        if(!returnPage) {
+                            log.error("Failed xpath assertion\"$name\": expected \"$xPath\" to find text but nothing was returned")
+                            AssertionStorage.instance.addFailure(
+                                name,
+                                "xpath \"${xPath}\" returned empty result",
+                                testid
+                            )
+                        }
+                        else{
+                            log.error("Failed xpath assertion\"$name\": returned $response")
+                            AssertionStorage.instance.addFailure(
+                                name,
+                                response,
+                                testid
+                            )
+                        }
                     }
                 } catch (e: Exception) {
                     log.error("Failed xpath assertion\"$name\": xpath \"$xPath\" is invalid :${e.message}")
