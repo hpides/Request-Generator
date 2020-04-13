@@ -1010,6 +1010,37 @@ class MQTTTest : RequestHandlingFramework() {
         MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("Has some text")))
         MatcherAssert.assertThat(message.actuals.get("Has some text")!!.value, Matchers.hasItem(Matchers.equalTo("xpath \"${xpath}\" returned empty result")))
     }
+    @org.junit.jupiter.api.Test
+    public fun assertionErrorIsThrownIfXPATHIsNotFoundAndPageIsReturned(){
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
+        val test = de.hpi.tdgt.test.Test()
+        val story = UserStory()
+        story.parent = test
+        val requestAtom = Request()
+        requestAtom.setParent(story)
+        requestAtom.name = "request"
+        requestAtom.verb = "GET"
+        requestAtom.addr = "http://localhost:9000/html"
+        requestAtom.predecessorCount = 0
+        requestAtom.repeat = 1
+        val xpathAssertion= XPATHAssertion()
+        val xpath = "//h2[text() = 'SomethingThatIsNOTHere']"
+        xpathAssertion.xPath = xpath
+        xpathAssertion.name = "Has some text"
+        xpathAssertion.returnPage = true
+        requestAtom.assertions = requestAtom.assertions + arrayOf(xpathAssertion)
+        runBlocking {requestAtom.run(HashMap())}
+        sleep(3000)
+        val actuals = readAssertion(messages)
+        var message: MqttAssertionMessage? = null
+        for (assertion in actuals) {
+            if (!assertion.actuals.isEmpty()) {
+                message = assertion
+            }
+        }
+        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("Has some text")))
+        MatcherAssert.assertThat(message.actuals.get("Has some text")!!.value, Matchers.hasItem(Matchers.equalTo(String(Utils().signupHtml.readAllBytes()))))
+    }
 
     @org.junit.jupiter.api.Test
     public fun assertionErrorIsThrownIfXPATHIsInvalid(){
@@ -1129,6 +1160,38 @@ class MQTTTest : RequestHandlingFramework() {
         }
         MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo(JSONPATHAssertion.name)))
         MatcherAssert.assertThat(message.actuals.get(JSONPATHAssertion.name)!!.value, Matchers.hasItem(Matchers.equalTo("jsonpath \"${JSONPATH}\" returned empty result")))
+    }
+
+    @org.junit.jupiter.api.Test
+    public fun assertionErrorIsThrownIfJSONPATHIsNotFoundAndReturned(){
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
+        val test = Test()
+        val story = UserStory()
+        story.parent = test
+        val requestAtom = Request()
+        requestAtom.setParent(story)
+        requestAtom.name = "request"
+        requestAtom.verb = "GET"
+        requestAtom.addr = "http://localhost:9000/jsonObject?param=otherValue"
+        requestAtom.predecessorCount = 0
+        requestAtom.repeat = 1
+        val JSONPATHAssertion= JSONPATHAssertion()
+        val JSONPATH = "$[?(@.param=~ /value/)]"
+        JSONPATHAssertion.JSONPATH = JSONPATH
+        JSONPATHAssertion.name = "Has param and value"
+        JSONPATHAssertion.returnResponse = true
+        requestAtom.assertions = requestAtom.assertions + arrayOf(JSONPATHAssertion)
+        runBlocking {requestAtom.run(HashMap())}
+        sleep(3000)
+        val actuals = readAssertion(messages)
+        var message: MqttAssertionMessage? = null
+        for (assertion in actuals) {
+            if (!assertion.actuals.isEmpty()) {
+                message = assertion
+            }
+        }
+        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo(JSONPATHAssertion.name)))
+        MatcherAssert.assertThat(message.actuals.get(JSONPATHAssertion.name)!!.value, Matchers.hasItem(Matchers.equalTo("{\n\"param\" : \"otherValue\"\n,\"id\" : 40}")))
     }
 
     @org.junit.jupiter.api.Test
