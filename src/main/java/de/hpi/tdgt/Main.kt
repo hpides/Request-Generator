@@ -48,7 +48,9 @@ object Main {
                 UploadController.JAVA_7_DIR = args[4]
                 runBlocking {
                     //in case warmup is added
-                    UploadController().uploadTestConfig(json, System.currentTimeMillis())
+                    val controller = UploadController()
+                    controller.uploadTestConfig(json, System.currentTimeMillis())
+                    controller.currentThread?.join()
                 }
             } catch (e: IOException) {
                 log.error(e)
