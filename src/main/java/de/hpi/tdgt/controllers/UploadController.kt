@@ -1,5 +1,6 @@
 package de.hpi.tdgt.controllers
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import de.hpi.tdgt.concurrency.Event
 import de.hpi.tdgt.deserialisation.Deserializer
 import de.hpi.tdgt.requesthandling.RestClient
@@ -13,20 +14,27 @@ import org.eclipse.paho.client.mqttv3.MqttClient
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.client.RestTemplate
 import java.io.*
 import java.lang.IllegalArgumentException
+import java.lang.Thread.sleep
+import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
+import kotlin.collections.HashSet
+import kotlinx.coroutines.delay as delay1
 
 @RestController
 class UploadController {
     val client:MqttClient
+    val knownOtherInstances = HashSet<String>()
     init {
         val publisherId = UUID.randomUUID().toString()
         //use memory persistence because it is not important that all packets are transferred and we do not want to spam the file system
@@ -46,10 +54,15 @@ class UploadController {
                             client.publish(
                                 Test.MQTT_TOPIC,
                                 ("$IDENTIFICATION_RESPONSE_MESSAGE $LOCATION").toByteArray(),
-                                2,
+                                1,
                                 false
                             )
                         }
+                    }
+                else if(request.startsWith(IDENTIFICATION_RESPONSE_MESSAGE)){
+                        //format is header space host
+                        val host = request.split(" ")[1]
+                        knownOtherInstances.add(host)
                     }
                 }
             }
@@ -74,6 +87,65 @@ class UploadController {
             return ResponseEntity(HttpStatus.BAD_REQUEST)
         }
         val ret = ResponseEntity<String>(HttpStatus.OK)
+        currentThread = Thread {runTest(testToRun, id)}
+        currentThread!!.start()
+        return ret
+    }
+    val template = RestTemplate()
+    val mapper = ObjectMapper()
+    // reports the number of nodes it could aquire to run this test
+    @PostMapping(path = ["/upload/{id}/distributed"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @Throws(
+        InterruptedException::class, ExecutionException::class
+    )
+    fun uploadTestConfigForDistributed(@RequestBody testToRunAsJSON: String?, @PathVariable(required = false) id: Long): ResponseEntity<Int> {
+        val test = mapper.readValue(testToRunAsJSON, Object::class.java)
+        //data might be outdated by now
+        knownOtherInstances.clear()
+        //clients can receive request multiple times
+        client.publish(Test.MQTT_TOPIC, IDENTIFICATION_REQUEST_MESSAGE.toByteArray(),1,false)
+        sleep(DISCOVERY_TIMEOUT_MS)
+        var allNodesAccepted = true
+        val allNodes = knownOtherInstances.toTypedArray()
+        for(i in 0..allNodes.size-1){
+            var addr = allNodes[i]
+            addr = "$addr/upload/${id}/distributed/${i}/of/${allNodes.size}"
+            try {
+                val response = template.postForEntity(URL(addr).toURI(), test, String::class.java)
+                if (response.statusCode != HttpStatus.OK) {
+                    log.error("Node $addr responded with code ${response.statusCode}")
+                } else {
+                    continue
+                }
+            } catch (e:Exception){
+                log.error("Could not connect to node $addr ",e)
+            }
+            allNodesAccepted = false
+        }
+        return  if(allNodesAccepted){ResponseEntity(knownOtherInstances.size,HttpStatus.OK)} else{ResponseEntity(knownOtherInstances.size,HttpStatus.INTERNAL_SERVER_ERROR)}
+    }
+
+    //runs a test as a single node
+    @PostMapping(path = ["/upload/{id}/distributed/{nodenumber}/of/{nodes}"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @Throws(
+        InterruptedException::class, ExecutionException::class
+    )
+    fun uploadTestConfigForOneDistributedNode(@RequestBody testToRunAsJSON: String?, @PathVariable(required = true) id: Long, @PathVariable(required = true) nodenumber: Long, @PathVariable(required = true) nodes: Long): ResponseEntity<String> {
+        val testToRun: Test
+        //Jackson might throw different kinds of exceptions, depending on the error
+        testToRun = try {
+            Deserializer.deserialize(testToRunAsJSON)
+        } catch (e: IllegalArgumentException) {
+            log.error(e)
+            return ResponseEntity(HttpStatus.BAD_REQUEST)
+        } catch (e: IOException) {
+            log.error(e)
+            return ResponseEntity(HttpStatus.BAD_REQUEST)
+        }
+        val ret = ResponseEntity<String>(HttpStatus.OK)
+        //e.g. to adapt the scale factor
+        testToRun.nodes = nodes
+        testToRun.nodeNumber = nodenumber
         currentThread = Thread {runTest(testToRun, id)}
         currentThread!!.start()
         return ret
@@ -201,9 +273,10 @@ class UploadController {
         @JvmField
         var LOCATION: String? = null
 
-        @JvmField
-        var IDENTIFICATION_REQUEST_MESSAGE: String = "identify"
-        @JvmField
-        var IDENTIFICATION_RESPONSE_MESSAGE: String = "identification"
+        const val IDENTIFICATION_REQUEST_MESSAGE: String = "identify"
+
+        const val IDENTIFICATION_RESPONSE_MESSAGE: String = "identification"
+
+        const val DISCOVERY_TIMEOUT_MS = 10000L
     }
 }

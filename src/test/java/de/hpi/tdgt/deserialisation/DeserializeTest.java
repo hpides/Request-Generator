@@ -1,5 +1,8 @@
 package de.hpi.tdgt.deserialisation;
 
+import lombok.val;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import de.hpi.tdgt.Utils;
@@ -21,6 +24,14 @@ public class DeserializeTest {
         Assertions.assertNotNull(Deserializer.deserialize(getExampleJSON()));
     }
 
+    @Test
+    public void correctsScaleFactor() throws IOException{
+        val test = Deserializer.deserialize(getExampleJSON());
+        val oldScale = test.getScaleFactor();
+        test.setNodes(10);
+        val newScale = test.getScaleFactor();
+        MatcherAssert.assertThat(newScale, Matchers.equalTo(oldScale / 10));
+    }
 
 
 

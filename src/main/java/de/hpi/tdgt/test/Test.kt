@@ -36,13 +36,18 @@ class Test {
         Arrays.stream(stories)
             .forEach({ story: UserStory -> story.parent = this })
     }
-
+    var nodeNumber = 0L
+    var nodes = 1L
     /**
      * Contains the original test config as JSON. This saves time because when broadcasting it, the test does not have to be serialized again.
      */
     var configJSON: String? = null
     var repeat = 0
-    var scaleFactor = 0
+    var scaleFactor = 0L
+    get(){
+        //every node should only do a part of the task at hand
+        return field / nodes
+    }
 
     /**
      * True to enable global connection pooling, else false.
