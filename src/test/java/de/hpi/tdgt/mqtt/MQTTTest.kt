@@ -983,9 +983,38 @@ class MQTTTest : RequestHandlingFramework() {
     }
 
     @org.junit.jupiter.api.Test
+    @Throws(
+        MqttException::class,
+        InterruptedException::class,
+        ExecutionException::class,
+        IOException::class
+    )
+    fun nodeEndMessagesAndATestEndMessageIsSent() {
+        val messages: Set<String> = prepareClient(Test.MQTT_TOPIC)
+        //test that does not do anything is sufficient, no need to waste resources here
+        val test =
+            deserialize(Utils().noopJson)
+        test.nodes = 10
+        test.nodeNumber = 0
+        runBlocking {
+            test.start(test.warmup())
+            val messageEnd = "nodeEnd 0 ${test.testId}"
+            delay(1000)
+            val hasNOdeENd = hasMessageStartingWith(messages, messageEnd)
+            MatcherAssert.assertThat("control topic should have received a \"nodeEnd\"!", hasNOdeENd)
+            for(i in 1..9){
+                publisher.publish(Test.MQTT_TOPIC,"nodeEnd $i ${test.testId}".toByteArray(),2,false)
+            }
+            delay(3000)
+            val hasTestEnd = hasMessageStartingWith(messages, "testEnd")
+            MatcherAssert.assertThat("control topic should have received a \"testEnd\"!", hasTestEnd)
+        }
+    }
+
+    @org.junit.jupiter.api.Test
     public fun assertionErrorIsThrownIfXPATHIsNotFound(){
         val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
-        val test = de.hpi.tdgt.test.Test()
+        val test = Test()
         val story = UserStory()
         story.parent = test
         val requestAtom = Request()
@@ -1015,7 +1044,7 @@ class MQTTTest : RequestHandlingFramework() {
     @org.junit.jupiter.api.Test
     public fun assertionErrorIsThrownIfXPATHIsNotFoundAndPageIsReturned(){
         val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
-        val test = de.hpi.tdgt.test.Test()
+        val test = Test()
         val story = UserStory()
         story.parent = test
         val requestAtom = Request()
@@ -1047,7 +1076,7 @@ class MQTTTest : RequestHandlingFramework() {
     @org.junit.jupiter.api.Test
     public fun assertionErrorIsThrownIfXPATHIsInvalid(){
         val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
-        val test = de.hpi.tdgt.test.Test()
+        val test = Test()
         val story = UserStory()
         story.parent = test
         val requestAtom = Request()
@@ -1078,7 +1107,7 @@ class MQTTTest : RequestHandlingFramework() {
     @org.junit.jupiter.api.Test
     public fun noAssertionErrorIsThrownIfXPATHIsFound(){
         val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
-        val test = de.hpi.tdgt.test.Test()
+        val test = Test()
         val story = UserStory()
         story.parent = test
         val requestAtom = Request()
@@ -1106,7 +1135,7 @@ class MQTTTest : RequestHandlingFramework() {
     @org.junit.jupiter.api.Test
     public fun noAssertionErrorIsThrownIfXPATHIsFoundAndCorrectlyEscaped(){
         val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
-        val test = de.hpi.tdgt.test.Test()
+        val test = Test()
         val story = UserStory()
         story.parent = test
         val requestAtom = Request()
@@ -1199,7 +1228,7 @@ class MQTTTest : RequestHandlingFramework() {
     @org.junit.jupiter.api.Test
     public fun assertionErrorIsThrownIfJSONPATHIsInvalid(){
         val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
-        val test = de.hpi.tdgt.test.Test()
+        val test = Test()
         val story = UserStory()
         story.parent = test
         val requestAtom = Request()
@@ -1232,7 +1261,7 @@ class MQTTTest : RequestHandlingFramework() {
     @org.junit.jupiter.api.Test
     public fun noAssertionErrorIsThrownIfJSONPATHIsFoundAndCorrectlyEscaped(){
         val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
-        val test = de.hpi.tdgt.test.Test()
+        val test = Test()
         val story = UserStory()
         story.parent = test
         val requestAtom = Request()
@@ -1264,7 +1293,7 @@ class MQTTTest : RequestHandlingFramework() {
     @org.junit.jupiter.api.Test
     public fun assertionErrorIsThrownIfHeaderInvalid(){
         val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
-        val test = de.hpi.tdgt.test.Test()
+        val test = Test()
         val story = UserStory()
         story.parent = test
         val requestAtom = Request()

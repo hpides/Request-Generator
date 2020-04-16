@@ -61,8 +61,13 @@ class UploadController {
                     }
                 else if(request.startsWith(IDENTIFICATION_RESPONSE_MESSAGE)){
                         //format is header space host
-                        val host = request.split(" ")[1]
-                        knownOtherInstances.add(host)
+                        val parts = request.split(" ")
+                        if(parts.size > 1) {
+                            val host = parts[1]
+                            knownOtherInstances.add(host)
+                        }else{
+                            log.error("Discovery Protocol violation: identify messages must be the word identify followed by a space and a URL")
+                        }
                     }
                 }
             }
@@ -107,7 +112,7 @@ class UploadController {
         sleep(DISCOVERY_TIMEOUT_MS)
         var allNodesAccepted = true
         val allNodes = knownOtherInstances.toTypedArray()
-        for(i in 0..allNodes.size-1){
+        for(i in allNodes.indices){
             var addr = allNodes[i]
             addr = "$addr/upload/${id}/distributed/${i}/of/${allNodes.size}"
             try {

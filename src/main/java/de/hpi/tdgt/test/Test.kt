@@ -26,6 +26,8 @@ import kotlinx.coroutines.sync.Semaphore
 import java.lang.Exception
 import java.lang.Thread.sleep
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicLong
+import kotlin.collections.HashMap
 
 //allow frontend to store additional information
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -130,6 +132,7 @@ class Test {
         prepareMqttClient()
         try { //clear retained messages from last test
             client!!.publish(MQTT_TOPIC, ByteArray(0), 0, true)
+            remainingNodesForTest[testId.toString()] = AtomicLong(nodes)
             client!!.publish(
                 MQTT_TOPIC,
                 "testStart $testId $configJSON".toByteArray(StandardCharsets.UTF_8),
@@ -180,10 +183,12 @@ class Test {
             //make sure all times are sent
             AssertionStorage.instance.flush()
             TimeStorage.instance.flush()
+            //if there is only this node, the test is over; else, other nodes might still be running
+            val endMessage = (if(nodes == 1L){"testEnd"}else{"nodeEnd $nodeNumber "} +"$testId").toByteArray(StandardCharsets.UTF_8)
             try {
                 client!!.publish(
                         MQTT_TOPIC,
-                        "testEnd $testId".toByteArray(StandardCharsets.UTF_8),
+                        endMessage,
                         2,
                         false
                 )
@@ -417,6 +422,47 @@ class Test {
         const val DEFAULT_CONCURRENT_REQUEST_LIMIT = 100
         const val DEFAULT_ACTIVE_INSTANCES_PER_SECOND_LIMIT = 10000
         const val testStartEvent = "testStart"
+        @JvmStatic
+        val testEndWatchdog : MqttClient =
+            MqttClient(PropertiesReader.getMqttHost(), UUID.randomUUID().toString(), MemoryPersistence())
+        /**
+         * For every test id the number of nodes that have to finish for it to be over
+         */
+        @JvmStatic
+        val remainingNodesForTest: HashMap<String, AtomicLong> = HashMap()
+        init {
+            val options = MqttConnectOptions()
+            options.isAutomaticReconnect = true
+            options.isCleanSession = true
+            options.connectionTimeout = 10
+            try {
+                testEndWatchdog.connect(options)
+            } catch (e: MqttException) {
+                log.error("Could not start testEnd Watchdog ", e)
+            }
+            testEndWatchdog.subscribe(MQTT_TOPIC){
+                topic, message ->  run{
+                if(topic == MQTT_TOPIC && message != null) {
+                    val text = String(message.payload)
+                    if(text.startsWith("nodeEnd")){
+                        val parts = text.split(" ");
+                        if(parts.size < 3){
+                            log.error("TestEnd protocol violation: nodeEnd messages need to be 3 parts separated by spaces!")
+                            return@run
+                        }
+                        val nodeId = parts[1]
+                        val testId = parts[2]
+                        log.info("Test $testId: Node $nodeId is finished!")
+                        if(remainingNodesForTest[testId]?.decrementAndGet() == 0L){
+                            log.info("Test $testId finished!")
+                            testEndWatchdog.publish(MQTT_TOPIC,"testEnd $testId".toByteArray(),1,false)
+                        }
+                    }
+                }
+
+            }
+            }
+        }
     }
 }
 
