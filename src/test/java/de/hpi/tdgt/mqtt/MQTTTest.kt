@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import de.hpi.tdgt.RequestHandlingFramework
 import de.hpi.tdgt.Utils
 import de.hpi.tdgt.WebApplication
+import de.hpi.tdgt.controllers.UploadController
 import de.hpi.tdgt.deserialisation.Deserializer.deserialize
 import de.hpi.tdgt.test.Test
 import de.hpi.tdgt.test.story.UserStory
@@ -15,6 +16,7 @@ import de.hpi.tdgt.test.time_measurement.MqttTimeMessage
 import de.hpi.tdgt.test.time_measurement.TimeStorage
 import de.hpi.tdgt.util.Pair
 import de.hpi.tdgt.util.PropertiesReader
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.LogManager
 import org.eclipse.paho.client.mqttv3.*
@@ -1285,6 +1287,44 @@ class MQTTTest : RequestHandlingFramework() {
             }
         }
         MatcherAssert.assertThat(message, Matchers.notNullValue())
+    }
+
+    @org.junit.jupiter.api.Test
+    @Throws(
+        MqttException::class,
+        InterruptedException::class,
+        ExecutionException::class,
+        IOException::class
+    )
+    fun NodesRespondWithTheirIdentification() {
+        runBlocking {
+            val message: Set<String> = prepareClient(Test.MQTT_TOPIC)
+            UploadController.LOCATION = "someHost"
+            publisher.publish(Test.MQTT_TOPIC, MqttMessage(UploadController.IDENTIFICATION_REQUEST_MESSAGE.toByteArray()))
+            //test that does not do anything is sufficient, no need to waste resources here
+            delay(3000)
+            val hasIDentification = hasMessageStartingWith(message, UploadController.IDENTIFICATION_RESPONSE_MESSAGE)
+            MatcherAssert.assertThat("control topic should have received an \"identification\"!", hasIDentification)
+        }
+    }
+
+    @org.junit.jupiter.api.Test
+    @Throws(
+        MqttException::class,
+        InterruptedException::class,
+        ExecutionException::class,
+        IOException::class
+    )
+    fun NodesDoNotRespondWithTheirIdentificationIfNoneKnown() {
+        runBlocking {
+            val message: Set<String> = prepareClient(Test.MQTT_TOPIC)
+            UploadController.LOCATION = null
+            publisher.publish(Test.MQTT_TOPIC, MqttMessage(UploadController.IDENTIFICATION_REQUEST_MESSAGE.toByteArray()))
+            //test that does not do anything is sufficient, no need to waste resources here
+            delay(3000)
+            val hasIDentification = hasMessageStartingWith(message, UploadController.IDENTIFICATION_RESPONSE_MESSAGE)
+            MatcherAssert.assertThat("control topic should not have received an \"identification\"!", !hasIDentification)
+        }
     }
 
     private fun findMessageStartingWith(

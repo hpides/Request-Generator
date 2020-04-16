@@ -4,6 +4,7 @@ import com.ginsberg.junit.exit.ExpectSystemExitWithStatus
 import de.hpi.tdgt.RequestHandlingFramework
 import de.hpi.tdgt.Utils
 import de.hpi.tdgt.WebApplication
+import de.hpi.tdgt.controllers.UploadController
 import de.hpi.tdgt.util.PropertiesReader
 import org.apache.logging.log4j.LogManager
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener
@@ -12,7 +13,9 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import org.hamcrest.MatcherAssert
+import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
+import org.hamcrest.Matchers.equalTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -112,8 +115,38 @@ class UploadJSONTest : RequestHandlingFramework() {
     @Test
     @Throws(Exception::class)
     @ExpectSystemExitWithStatus(1)
-    fun ExitsWith1IfUnallowedParametersInCliMode() {
+    fun doesNotStartIfNoValidURL() {
         //Since everything is fine, the application should exit with 0
+        val args = arrayOf(
+            "--location",
+            "http://",
+            "./src/test/resources/de/hpi/tdgt",
+            "./src/test/resources/de/hpi/tdgt"
+        )
+        WebApplication.main(args)
+    }
+
+    @Test
+    @Throws(Exception::class)
+    @ExpectSystemExitWithStatus(0)
+    fun setsValidURL() {
+        //Since everything is fine, the application should exit with 0
+        val args = arrayOf(
+            "--location",
+            "http://localhost:8080",
+            "--load",
+            "./src/test/resources/de/hpi/tdgt/RequestExample.json",
+            "./src/test/resources/de/hpi/tdgt",
+            "./src/test/resources/de/hpi/tdgt"
+        )
+        WebApplication.main(args)
+        assertThat(UploadController.LOCATION,equalTo("http://localhost:8080"))
+    }
+
+    @Test
+    @Throws(Exception::class)
+    @ExpectSystemExitWithStatus(1)
+    fun ExitsWith1IfUnallowedParametersInCliMode() {
         val args = arrayOf(
             "cli"
         )

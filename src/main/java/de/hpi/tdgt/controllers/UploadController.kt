@@ -6,8 +6,13 @@ import de.hpi.tdgt.requesthandling.RestClient
 import de.hpi.tdgt.test.Test
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.test.time_measurement.TimeStorage
+import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.LogManager
+import org.eclipse.paho.client.mqttv3.MqttClient
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions
+import org.eclipse.paho.client.mqttv3.MqttMessage
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -15,11 +20,41 @@ import org.springframework.web.bind.annotation.*
 import java.io.*
 import java.lang.IllegalArgumentException
 import java.nio.charset.StandardCharsets
+import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 
 @RestController
 class UploadController {
+    val client:MqttClient
+    init {
+        val publisherId = UUID.randomUUID().toString()
+        //use memory persistence because it is not important that all packets are transferred and we do not want to spam the file system
+        this.client = MqttClient(PropertiesReader.getMqttHost(), publisherId, MemoryPersistence())
+        val options = MqttConnectOptions()
+        options.isAutomaticReconnect = true
+        options.isCleanSession = true
+        options.connectionTimeout = 10
+        client.connect(options)
+        client.subscribe(Test.MQTT_TOPIC) { topic: String?, message: MqttMessage? ->
+            run { if (topic == Test.MQTT_TOPIC && message != null) {
+                    val request = String(message.payload)
+                    if (request.startsWith(IDENTIFICATION_REQUEST_MESSAGE)) {
+                        if (LOCATION == null) {
+                            log.warn("Was requested to join in a test run but I do not know my location!")
+                        } else {
+                            client.publish(
+                                Test.MQTT_TOPIC,
+                                ("$IDENTIFICATION_RESPONSE_MESSAGE $LOCATION").toByteArray(),
+                                2,
+                                false
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
     //will return 500 if exception during test occurs
     @PostMapping(path = ["/upload/{id}"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     @Throws(
@@ -67,7 +102,6 @@ class UploadController {
         RestClient.requestsSent.set(0)
         currentThread = null
     }
-
     //will return 500 if exception during test occurs
     @PostMapping(
         path = ["/uploadPDGF"],
@@ -163,5 +197,13 @@ class UploadController {
         var JAVA_7_DIR: String? = null
         @JvmField
         var PDGF_DIR: String? = null
+
+        @JvmField
+        var LOCATION: String? = null
+
+        @JvmField
+        var IDENTIFICATION_REQUEST_MESSAGE: String = "identify"
+        @JvmField
+        var IDENTIFICATION_RESPONSE_MESSAGE: String = "identification"
     }
 }
