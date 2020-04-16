@@ -904,7 +904,7 @@ class MQTTTest : RequestHandlingFramework() {
         xpaths.put("Bjärk!","user")
         requestAtom.xpaths = xpaths
         requestAtom.extractCSRFTokens(String(Utils().signupHtml.readAllBytes()))
-        sleep(2000)
+        sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
         for (assertion in actuals) {
@@ -999,7 +999,7 @@ class MQTTTest : RequestHandlingFramework() {
         xpathAssertion.name = "Has some text"
         requestAtom.assertions = requestAtom.assertions + arrayOf(xpathAssertion)
         runBlocking {requestAtom.run(HashMap())}
-        sleep(2000)
+        sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
         for (assertion in actuals) {
@@ -1061,7 +1061,7 @@ class MQTTTest : RequestHandlingFramework() {
         xpathAssertion.name = "Has some text"
         requestAtom.assertions = requestAtom.assertions + arrayOf(xpathAssertion)
         runBlocking {requestAtom.run(HashMap())}
-        sleep(2000)
+        sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
         for (assertion in actuals) {
@@ -1150,7 +1150,7 @@ class MQTTTest : RequestHandlingFramework() {
         JSONPATHAssertion.name = "Has param and value"
         requestAtom.assertions = requestAtom.assertions + arrayOf(JSONPATHAssertion)
         runBlocking {requestAtom.run(HashMap())}
-        sleep(2000)
+        sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
         for (assertion in actuals) {
@@ -1213,7 +1213,7 @@ class MQTTTest : RequestHandlingFramework() {
         JSONPATHAssertion.name = "Has some text"
         requestAtom.assertions = requestAtom.assertions + arrayOf(JSONPATHAssertion)
         runBlocking {requestAtom.run(HashMap())}
-        sleep(2000)
+        sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
         for (assertion in actuals) {
@@ -1276,7 +1276,7 @@ class MQTTTest : RequestHandlingFramework() {
         headers["abc"] = ";;;;"
         requestAtom.sendHeaders = headers
         runBlocking {requestAtom.run(HashMap())}
-        sleep(2000)
+        sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
         for (assertion in actuals) {
