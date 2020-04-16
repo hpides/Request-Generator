@@ -929,7 +929,7 @@ class MQTTTest : RequestHandlingFramework() {
         requestAtom.predecessorCount = 0
         requestAtom.repeat = 1
         runBlocking { requestAtom.run(params) }
-        sleep(2000)
+        sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
         for (assertion in actuals) {

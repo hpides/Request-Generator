@@ -67,14 +67,17 @@ public class WebApplication {
             UploadController.JAVA_7_DIR = res.getString("JAVA7");
             val load = res.getString("load");
             val restTest = res.getBoolean("restTest");
-            String[] schemes = {"http","https"};
-            //also allow localhost:* urls
-            UrlValidator urlValidator = new UrlValidator(schemes,UrlValidator.ALLOW_LOCAL_URLS);
-            if (urlValidator.isValid(res.getString("location"))) {
-                UploadController.LOCATION = res.getString("location");
-            } else {
-                log.error("--location: URL is invalid: "+res.getString("location"));
-                System.exit(1);
+            //optional
+            if(res.getString("location") != null) {
+                String[] schemes = {"http", "https"};
+                //also allow localhost:* urls
+                UrlValidator urlValidator = new UrlValidator(schemes, UrlValidator.ALLOW_LOCAL_URLS);
+                if (urlValidator.isValid(res.getString("location"))) {
+                    UploadController.LOCATION = res.getString("location");
+                } else {
+                    log.error("--location: URL is invalid: " + res.getString("location"));
+                    System.exit(1);
+                }
             }
 
 
