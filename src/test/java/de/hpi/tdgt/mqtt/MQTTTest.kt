@@ -904,7 +904,7 @@ class MQTTTest : RequestHandlingFramework() {
         xpaths.put("Bjärk!","user")
         requestAtom.xpaths = xpaths
         requestAtom.extractCSRFTokens(String(Utils().signupHtml.readAllBytes()))
-        sleep(2000)
+        sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
         for (assertion in actuals) {
@@ -1276,7 +1276,7 @@ class MQTTTest : RequestHandlingFramework() {
         headers["abc"] = ";;;;"
         requestAtom.sendHeaders = headers
         runBlocking {requestAtom.run(HashMap())}
-        sleep(2000)
+        sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
         for (assertion in actuals) {
