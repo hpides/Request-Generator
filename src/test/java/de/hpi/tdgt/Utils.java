@@ -66,14 +66,14 @@ public class Utils {
         Assertions.assertTrue(c.isInstance(o), "First atom of first story should be a data generation atom and not a "+o.getClass().getName());
     }
     public InputStream getUsersCSV() {
-        return getClass().getResourceAsStream("users.csv");
+        return getClass().getResourceAsStream("output/users.csv");
     }
     public InputStream getPostsCSV() {
-        return getClass().getResourceAsStream("posts.csv");
+        return getClass().getResourceAsStream("output/posts.csv");
     }
 
     public InputStream getValuesCSV() {
-        return getClass().getResourceAsStream("values.csv");
+        return getClass().getResourceAsStream("output/values.csv");
     }
 
     public InputStream getSignupHtml() {

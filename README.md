@@ -7,13 +7,13 @@ The code offers a web server mode of operation (production, with frontend) and a
 ## How to execute (Command Line only)
 You can run a test like this:
 ```bash
-java -jar request-generator-1.0-SNAPSHOT-jar-with-dependencies.jar cli load ./src/test/resources/de/hpi/tdgt/test_config_example.json ./src/test/resources/de/hpi/tdgt/
+java -jar request-generator-1.0-SNAPSHOT-jar-with-dependencies.jar --load ./src/test/resources/de/hpi/tdgt/test_config_example.json ./src/test/resources/de/hpi/tdgt/ java7
 ```
-First argument is the test file to run, second the directory where the data for the test are.
+First argument is the test file to run, second the directory where the data for the test are, third is the path of the Java interpreter as e.g. execve expects it.
 ## How to execute (Web Server)
-Start the webserver with one argument that states where PDGF should put test data, e.g.:
+Start the webserver with one argument that states where PDGF should put test data and one with the java 7 interpreter path as above, e.g.:
 ```bash
-java -jar request-generator-1.0-SNAPSHOT-jar-with-dependencies.jar ./src/test/resources/de/hpi/tdgt/
+java -jar request-generator-1.0-SNAPSHOT-jar-with-dependencies.jar ./src/test/resources/de/hpi/tdgt/ java7
 ```
 You can execute tests using curl, e.g.:
 ```bash

@@ -166,6 +166,11 @@
             <version>1.0.0</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>net.sourceforge.argparse4j</groupId>
+            <artifactId>argparse4j</artifactId>
+            <version>0.8.1</version>
+        </dependency>
     </dependencies>
     <reporting>
 	    <plugins>
@@ -309,7 +314,7 @@
                         </rule>
                     </rules>
                     <excludes>
-                        <exclude>de.hpi.tdgt.Main</exclude>
+                        <exclude>de.hpi.tdgt.CLI</exclude>
                     </excludes>
                 </configuration>
                 <executions>
