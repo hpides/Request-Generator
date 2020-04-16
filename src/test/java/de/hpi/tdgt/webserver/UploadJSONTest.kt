@@ -116,6 +116,18 @@ class UploadJSONTest : RequestHandlingFramework() {
         //requests to this handler are sent
         assertThat(authHandler.numberFailedLogins, Matchers.greaterThan(0))
     }
+
+    @Test
+    @Throws(Exception::class)
+    fun throwsErrorIfNoNodesAvailable() {
+        //assuming there are no active nodes in the network, this leads to UploadController finding no nodes
+        UploadController.LOCATION = null
+        val requestEntity =
+            RequestEntity.post(URL("http://localhost:" + port + "/upload/" + System.currentTimeMillis()+"/distributed").toURI())
+                .contentType(MediaType.APPLICATION_JSON).body(exampleStory)
+        val response = restTemplate!!.exchange(requestEntity, String::class.java)
+        assertThat(response.statusCode, equalTo(HttpStatus.INTERNAL_SERVER_ERROR))
+    }
     @Test
     @Throws(Exception::class)
     @ExpectSystemExitWithStatus(0)

@@ -29,6 +29,7 @@ import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 import kotlin.collections.HashSet
+import kotlin.system.exitProcess
 import kotlinx.coroutines.delay as delay1
 
 @RestController
@@ -105,13 +106,19 @@ class UploadController {
     )
     fun uploadTestConfigForDistributed(@RequestBody testToRunAsJSON: String?, @PathVariable(required = false) id: Long): ResponseEntity<Int> {
         val test = mapper.readValue(testToRunAsJSON, Object::class.java)
+        var allNodesAccepted = true
         //data might be outdated by now
         knownOtherInstances.clear()
         //clients can receive request multiple times
         client.publish(Test.MQTT_TOPIC, IDENTIFICATION_REQUEST_MESSAGE.toByteArray(),1,false)
         sleep(DISCOVERY_TIMEOUT_MS)
-        var allNodesAccepted = true
         val allNodes = knownOtherInstances.toTypedArray()
+        //make sure that we have same order later when Test is run
+        allNodes.sort()
+        if(allNodes.isEmpty()){
+            log.error("Did not find a single node including myself --> abort!!")
+            return ResponseEntity(0,HttpStatus.INTERNAL_SERVER_ERROR)
+        }
         for(i in allNodes.indices){
             var addr = allNodes[i]
             addr = "$addr/upload/${id}/distributed/${i}/of/${allNodes.size}"
@@ -127,7 +134,7 @@ class UploadController {
             }
             allNodesAccepted = false
         }
-        return  if(allNodesAccepted){ResponseEntity(knownOtherInstances.size,HttpStatus.OK)} else{ResponseEntity(knownOtherInstances.size,HttpStatus.INTERNAL_SERVER_ERROR)}
+        return  if(allNodesAccepted){ResponseEntity(knownOtherInstances.size,HttpStatus.OK)} else{ResponseEntity(0,HttpStatus.INTERNAL_SERVER_ERROR)}
     }
 
     //runs a test as a single node
@@ -258,12 +265,52 @@ class UploadController {
         log.info("---Data Generation finished in " + (endtime - starttime) + " ms.---")
         return ResponseEntity(output.toString(), HttpStatus.OK)
     }
+
+    //will return 500 if exception during test occurs
+    @PostMapping(
+        path = ["/uploadPDGF/distributed"],
+        consumes = [MediaType.APPLICATION_XML_VALUE],
+        produces = [MediaType.TEXT_PLAIN_VALUE]
+    )
+    @Throws(
+        InterruptedException::class, ExecutionException::class
+    )
+    fun uploadDataGenConfigDistributed(@RequestBody pdgfConfig: String?): ResponseEntity<String> {
+        val outputs = StringBuffer()
+        //data might be outdated by now
+        knownOtherInstances.clear()
+        //clients can receive request multiple times
+        client.publish(Test.MQTT_TOPIC, IDENTIFICATION_REQUEST_MESSAGE.toByteArray(),1,false)
+        sleep(DISCOVERY_TIMEOUT_MS)
+        val allNodes = knownOtherInstances.toTypedArray()
+        //make sure that we have same order later when Test is run
+        allNodes.sort()
+        for(i in allNodes.indices){
+            var addr = allNodes[i]
+            addr = "$addr/uploadPDGF"
+            try {
+                val response = template.postForEntity(URL(addr).toURI(), pdgfConfig, String::class.java)
+                if (response.statusCode != HttpStatus.OK) {
+                    val reason = "Node $addr responded with code ${response.statusCode}"
+                    log.error(reason)
+                    outputs.append(reason)
+                } else {
+                    outputs.append("Node $addr response: "+response.body)
+                    continue
+                }
+            } catch (e:Exception){
+                log.error("Could not connect to node $addr ",e)
+                outputs.append("Could not connect to node $addr :"+e.message)
+            }
+        }
+        return ResponseEntity(outputs.toString(), HttpStatus.OK)
+    }
     //will return 500 if exception during test occurs
     @GetMapping(
         path = ["/exit"]
     )
     fun exit(){
-        System.exit(0)
+        exitProcess(0)
     }
 
     companion object {
