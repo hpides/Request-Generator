@@ -97,8 +97,7 @@ class UploadJSONTest : RequestHandlingFramework() {
     fun runsUserStoryAgainstTestServerRunsActualTestAlsoInCliMode() {
         //Since everything is fine, the application should exit with 0
         val args = arrayOf(
-            "cli",
-            "load",
+            "--load",
             "./src/test/resources/de/hpi/tdgt/RequestExample.json",
             "./src/test/resources/de/hpi/tdgt",
             "./src/test/resources/de/hpi/tdgt"
