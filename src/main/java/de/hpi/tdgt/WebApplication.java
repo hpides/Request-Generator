@@ -22,6 +22,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 @Log4j2
@@ -61,7 +63,8 @@ public class WebApplication {
         group.addArgument("--load").type(String.class).dest("load").nargs("?").help("If set, one test is loaded from the filesystem.");
         group.addArgument("--restTest").type(String.class).setConst(true).setDefault(false).nargs("?").dest("restTest").help("If set, some static rquests are run.");
         try {
-            Namespace res = parser.parseArgs(args);
+            //Spring Boot might handle the other params --> ignore those in the list (the unrecognised ones)
+            Namespace res = parser.parseKnownArgs(args, new LinkedList<>());
             Data_Generation.outputDirectory = res.getString("PDGFDirectory") + File.separator + "output";
             UploadController.PDGF_DIR = res.getString("PDGFDirectory");
             UploadController.JAVA_7_DIR = res.getString("JAVA7");

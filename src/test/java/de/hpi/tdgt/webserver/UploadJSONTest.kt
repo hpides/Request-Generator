@@ -136,6 +136,25 @@ class UploadJSONTest : RequestHandlingFramework() {
 
     @Test
     @Throws(Exception::class)
+    @ExpectSystemExitWithStatus(0)
+    fun passesUnknownParamsToSpringBoot() {
+        //Since everything is fine, the application should exit with 0
+        val args = arrayOf(
+            "-Dserver.port=8090",
+            "--load",
+            "./src/test/resources/de/hpi/tdgt/RequestExample.json",
+            "./src/test/resources/de/hpi/tdgt",
+            "./src/test/resources/de/hpi/tdgt"
+        )
+        WebApplication.main(args)
+        //test is run async
+        waitForTestEnd()
+        //requests to this handler are sent
+        assertThat(authHandler.numberFailedLogins, Matchers.greaterThan(0))
+    }
+
+    @Test
+    @Throws(Exception::class)
     @ExpectSystemExitWithStatus(1)
     fun doesNotStartIfNoValidURL() {
         //Since everything is fine, the application should exit with 0
