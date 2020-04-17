@@ -14,6 +14,7 @@ import org.eclipse.paho.client.mqttv3.MqttClient
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.*
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.RestTemplate
@@ -328,7 +329,7 @@ class UploadController {
         const val IDENTIFICATION_REQUEST_MESSAGE: String = "identify"
 
         const val IDENTIFICATION_RESPONSE_MESSAGE: String = "identification"
-
-        const val DISCOVERY_TIMEOUT_MS = 10000L
+        @Value("\${discovery.timeout}")
+        var DISCOVERY_TIMEOUT_MS:Long = 1000L
     }
 }
