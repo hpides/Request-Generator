@@ -743,7 +743,7 @@ class MQTTTest : RequestHandlingFramework() {
         generation.name = "generation"
         runBlocking{generation.perform()}
         val messageStart = "testStart"
-        sleep(3000)
+        sleep(2000)
         val actuals = readAssertion(messages)
         MatcherAssert.assertThat(
             actuals[0].actuals,
