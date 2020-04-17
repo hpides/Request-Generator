@@ -105,8 +105,8 @@ class UploadController {
         var allNodesAccepted = true
         //data might be outdated by now
         knownOtherInstances.clear()
-        //clients can receive request multiple times
-        client.publish(Test.MQTT_TOPIC, IDENTIFICATION_REQUEST_MESSAGE.toByteArray(),1,false)
+        //clients can receive request multiple times; retain this message so that nodes that are "late to the party" can still reply
+        client.publish(Test.MQTT_TOPIC, IDENTIFICATION_REQUEST_MESSAGE.toByteArray(),1,true)
         sleep(DISCOVERY_TIMEOUT_MS)
         val allNodes = knownOtherInstances.toTypedArray()
         //make sure that we have same order later when Test is run
@@ -275,8 +275,8 @@ class UploadController {
         val outputs = StringBuffer()
         //data might be outdated by now
         knownOtherInstances.clear()
-        //clients can receive request multiple times
-        client.publish(Test.MQTT_TOPIC, IDENTIFICATION_REQUEST_MESSAGE.toByteArray(),1,false)
+        //clients can receive request multiple times; retain this message so that nodes that are "late to the party" can still reply
+        client.publish(Test.MQTT_TOPIC, IDENTIFICATION_REQUEST_MESSAGE.toByteArray(),1,true)
         sleep(DISCOVERY_TIMEOUT_MS)
         val allNodes = knownOtherInstances.toTypedArray()
         //else the request is rejected
