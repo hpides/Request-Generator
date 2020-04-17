@@ -58,11 +58,18 @@ class Test {
     private var stories: Array<UserStory> = arrayOf()
     //this is used to be able to repeat them
     var stories_clone: Array<UserStory> = arrayOf()
-    var activeInstancesPerSecond =
-        DEFAULT_ACTIVE_INSTANCES_PER_SECOND_LIMIT
+    var activeInstancesPerSecond = DEFAULT_ACTIVE_INSTANCES_PER_SECOND_LIMIT
+        get(){
+            //every node should only do a part of the task at hand
+            return field / nodes.toInt()
+        }
     var client: MqttClient? = null
     //by default, do not limit number of concurrent requests
     var maximumConcurrentRequests = DEFAULT_CONCURRENT_REQUEST_LIMIT
+        get(){
+            //every node should only do a part of the task at hand
+            return field / nodes.toInt()
+        }
     @JsonIgnore //we can assume this is unique. Probably, only one test at a time is run.
     var testId = System.currentTimeMillis()
 

@@ -33,6 +33,24 @@ public class DeserializeTest {
         MatcherAssert.assertThat(newScale, Matchers.equalTo(oldScale / 10));
     }
 
+    @Test
+    public void correctsConcurrentRequests() throws IOException{
+        val test = Deserializer.deserialize(getExampleJSON());
+        val oldScale = test.getMaximumConcurrentRequests();
+        test.setNodes(10);
+        val newScale = test.getMaximumConcurrentRequests();
+        MatcherAssert.assertThat(newScale, Matchers.equalTo(oldScale / 10));
+    }
+
+    @Test
+    public void correctsInstancesPerSecond() throws IOException{
+        val test = Deserializer.deserialize(getExampleJSON());
+        val oldScale = test.getActiveInstancesPerSecond();
+        test.setNodes(10);
+        val newScale = test.getActiveInstancesPerSecond();
+        MatcherAssert.assertThat(newScale, Matchers.equalTo(oldScale / 10));
+    }
+
 
 
 }
