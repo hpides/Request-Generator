@@ -250,7 +250,7 @@ class Test {
         AssertionStorage.instance.nodeNumber = nodeNumber
         //mapping all files eagerly might improve performance, also this is needed to set an offset in the data
         Arrays.stream(stories).forEach{ story -> Arrays.stream(story.getAtoms()).forEach { atom -> if(atom is Data_Generation){
-            atom.offsetPercentage = scaleFactor * story.scalePercentage * (nodeNumber.toDouble() / nodes)
+            atom.offsetPercentage = nodeNumber.toDouble() / nodes
             runBlocking {
                 atom.initScanner()
             }

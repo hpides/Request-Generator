@@ -1,15 +1,9 @@
 package de.hpi.tdgt.test.story.atom
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.util.MappedFileReader
 import org.apache.logging.log4j.LogManager
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileNotFoundException
-import java.io.InputStream
-import java.lang.Math.floor
-import java.nio.charset.StandardCharsets
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -98,9 +92,9 @@ class Data_Generation : Atom() {
     }
 
     private fun warnNoDataRemain() {
-        log.error("No data remains for atom " + name)
+        log.error("No data remains for atom $name")
         reportFailureToUser(
-                "Data Generation \"" + name + "\" has no data remaining",
+            "Data Generation \"$name\" has no data remaining",
                 "read $readLines lines from file $outputDirectory/$table.csv"
         )
     }
