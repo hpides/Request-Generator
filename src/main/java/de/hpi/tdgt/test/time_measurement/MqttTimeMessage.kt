@@ -6,5 +6,5 @@ class MqttTimeMessage {
     var times: Map<String, Map<String, Map<String, Map<String, String>>>> = ConcurrentHashMap()
     var testId: Long = 0
     var creationTime: Long = 0
-
+    var nodeNumber: Long = 0
 }

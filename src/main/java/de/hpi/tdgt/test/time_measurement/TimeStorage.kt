@@ -25,6 +25,7 @@ class TimeStorage protected constructor() {
     private val mqttReporter: Runnable
     private val running = AtomicBoolean(true)
     private var testID: Long = 0
+    var nodeNumber : Long = 0
     /**
      * Flag for tests. If true, only messages that contain times are sent.
      */
@@ -109,6 +110,7 @@ class TimeStorage protected constructor() {
         val entry = MqttTimeMessage()
         entry.testId = testID
         entry.creationTime = System.currentTimeMillis()
+        entry.nodeNumber = nodeNumber
         entry.times = ret
         return entry
     }

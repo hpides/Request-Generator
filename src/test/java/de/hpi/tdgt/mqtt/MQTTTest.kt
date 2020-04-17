@@ -66,7 +66,7 @@ class MQTTTest : RequestHandlingFramework() {
     fun TimeStorageStreamsTimesUsingMQTT() = runBlocking {
         val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
         TimeStorage.instance.registerTime("POST", "http://localhost:9000/", 10, "story", 0)
-        Thread.sleep(3000)
+        sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
         val response = Vector<MqttTimeMessage>()
@@ -85,7 +85,7 @@ class MQTTTest : RequestHandlingFramework() {
         val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
         val storyName = "story"
         TimeStorage.instance.registerTime("POST", "http://localhost:9000/", 10, storyName, 0)
-        Thread.sleep(3000)
+        sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
         val response = Vector<MqttTimeMessage>()
@@ -114,7 +114,7 @@ class MQTTTest : RequestHandlingFramework() {
         val storyName2 = "story2"
         TimeStorage.instance.registerTime("POST", "http://localhost:9000/", 10, storyName1, 0)
         TimeStorage.instance.registerTime("POST", "http://localhost:9000/", 20, storyName2, 0)
-        Thread.sleep(3000)
+        sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
         val response = Vector<MqttTimeMessage>()
@@ -178,7 +178,7 @@ class MQTTTest : RequestHandlingFramework() {
         val name = mockStoryName
         getWithAuth.setParent(mockParent)
         runBlocking{getWithAuth!!.run(params)}
-        Thread.sleep(3000)
+        sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
         val response = Vector<MqttTimeMessage>()
@@ -204,7 +204,7 @@ class MQTTTest : RequestHandlingFramework() {
             deserialize(Utils().requestExampleWithRequestReplacement)
         //make sure we do not run successors
         test.start()
-        Thread.sleep(3000)
+        sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
         val response = Vector<MqttTimeMessage>()
@@ -234,7 +234,7 @@ class MQTTTest : RequestHandlingFramework() {
         request.timeAggregation = false
         //make sure we do not run successors
         test.start()
-        Thread.sleep(3000)
+        sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
         val response = Vector<MqttTimeMessage>()
@@ -271,7 +271,7 @@ class MQTTTest : RequestHandlingFramework() {
         val name = mockStoryName
         getWithAuth.setParent(mockParent)
         runBlocking{getWithAuth!!.run(params)}
-        Thread.sleep(3000)
+        sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
         val response = Vector<MqttTimeMessage>()
@@ -306,7 +306,7 @@ class MQTTTest : RequestHandlingFramework() {
         val name = mockStoryName
         getWithAuth.setParent(mockParent)
         runBlocking{getWithAuth!!.run(params)}
-        Thread.sleep(3000)
+        sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
         val response = Vector<MqttTimeMessage>()
@@ -337,7 +337,7 @@ class MQTTTest : RequestHandlingFramework() {
         val name = mockStoryName
         getWithAuth.setParent(mockParent)
         runBlocking{getWithAuth!!.run(params)}
-        Thread.sleep(3000)
+        sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
         val response = Vector<MqttTimeMessage>()
@@ -347,6 +347,34 @@ class MQTTTest : RequestHandlingFramework() {
         val times = response[0]
         //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
         MatcherAssert.assertThat(times.creationTime, Matchers.greaterThan(0L))
+    }
+
+    @org.junit.jupiter.api.Test
+    @Throws(
+        MqttException::class,
+        InterruptedException::class,
+        IOException::class,
+        ExecutionException::class
+    )
+    fun TimeStorageStreamsAllTimesUsingMQTTWithANodeNumber() {
+        val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
+        val params = HashMap<String, String>()
+        params["key"] = "wrong"
+        params["value"] = "wrong"
+        val getWithAuth =
+            deserialize(Utils().requestExampleWithAssertionsJSON)
+        getWithAuth.nodeNumber = 10
+        runBlocking{getWithAuth.start()}
+        sleep(3000)
+        val typeRef: TypeReference<MqttTimeMessage?> =
+            object : TypeReference<MqttTimeMessage?>() {}
+        val response = Vector<MqttTimeMessage>()
+        for (item in messages) {
+            response.add(mapper.readValue(item, typeRef))
+        }
+        val times = response[0]
+        //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
+        MatcherAssert.assertThat(times.nodeNumber, Matchers.equalTo(10L))
     }
 
     @Throws(MqttException::class)
@@ -414,7 +442,7 @@ class MQTTTest : RequestHandlingFramework() {
         //make sure we do not run successors
         getWithAuth.setSuccessorLinks(arrayOf())
         runBlocking{getWithAuth!!.run(params)}
-        Thread.sleep(3000)
+        sleep(3000)
         val allActuals =
             getAllActuals(message)
         MatcherAssert.assertThat(
@@ -452,7 +480,7 @@ class MQTTTest : RequestHandlingFramework() {
         //make sure we do not run successors
         getWithAuth.setSuccessorLinks(arrayOf())
         runBlocking{getWithAuth!!.run(params)}
-        Thread.sleep(3000)
+        sleep(3000)
         val allActuals =
             getAllActuals(message)
         val failedAssertioNName = "Request \"" + getWithAuth.name + "\" is sent"
@@ -502,7 +530,7 @@ class MQTTTest : RequestHandlingFramework() {
         //simulate failure
         assertion.contentType = "application/xml"
         runBlocking{postWithBodyAndAssertion.run(params)}
-        Thread.sleep(3000)
+        sleep(3000)
         val allActuals =
             getAllActuals(messages)
         MatcherAssert.assertThat(
@@ -553,7 +581,7 @@ class MQTTTest : RequestHandlingFramework() {
         //simulate failure
         assertion.contentType = "application/xml"
         runBlocking{postWithBodyAndAssertion.run(params)}
-        Thread.sleep(3000)
+        sleep(3000)
         var allActuals =
             getAllActuals(messages)
         MatcherAssert.assertThat(
@@ -564,7 +592,7 @@ class MQTTTest : RequestHandlingFramework() {
         messages.clear()
         assertion.contentType = "application/json"
         runBlocking{postWithBodyAndAssertion.run(params)}
-        Thread.sleep(3000)
+        sleep(3000)
         //other failure should be removed now
         allActuals = getAllActuals(messages)
         //empty values are filtered
@@ -595,7 +623,7 @@ class MQTTTest : RequestHandlingFramework() {
         //simulate failure
         assertion.contentType = "application/xml"
         runBlocking{postWithBodyAndAssertion.run(params)}
-        Thread.sleep(3000)
+        sleep(3000)
         var allActuals =
             getAllActuals(messages)
         MatcherAssert.assertThat(
@@ -605,7 +633,7 @@ class MQTTTest : RequestHandlingFramework() {
         //remove existing values
         messages.clear()
         runBlocking{postWithBodyAndAssertion.run(params)}
-        Thread.sleep(3000)
+        sleep(3000)
         //other failure should be removed now
         allActuals = getAllActuals(messages)
         //empty values are filtered
@@ -637,7 +665,7 @@ class MQTTTest : RequestHandlingFramework() {
         getJsonObjectWithAssertion.setSuccessorLinks(arrayOf())
         getJsonObjectWithAssertion.addr = "http://localhost:9000/empty"
         runBlocking{getJsonObjectWithAssertion.run(params)}
-        Thread.sleep(3000)
+        sleep(3000)
         val allActuals =
             getAllActuals(messages)
         MatcherAssert.assertThat(
@@ -674,7 +702,7 @@ class MQTTTest : RequestHandlingFramework() {
         getJsonObjectWithAssertion.setSuccessorLinks(arrayOf())
         getJsonObjectWithAssertion.addr = "http://localhost:9000/empty"
         runBlocking{getJsonObjectWithAssertion.run(params)}
-        Thread.sleep(3000)
+        sleep(3000)
         val actuals = readAssertion(messages)
         MatcherAssert.assertThat(actuals[0].testId, Matchers.greaterThan(0L))
     }
@@ -715,7 +743,7 @@ class MQTTTest : RequestHandlingFramework() {
         generation.name = "generation"
         runBlocking{generation.perform()}
         val messageStart = "testStart"
-        Thread.sleep(3000)
+        sleep(3000)
         val actuals = readAssertion(messages)
         MatcherAssert.assertThat(
             actuals[0].actuals,
@@ -747,7 +775,7 @@ class MQTTTest : RequestHandlingFramework() {
         generation.repeat = 40
         runBlocking{generation.run(HashMap())}
         val messageStart = "testStart"
-        Thread.sleep(3000)
+        sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
         for (assertion in actuals) {
@@ -790,7 +818,7 @@ class MQTTTest : RequestHandlingFramework() {
         generation.name = "generation"
         generation.repeat = 1
         runBlocking{generation.run(HashMap())}
-        Thread.sleep(3000)
+        sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
         for (assertion in actuals) {

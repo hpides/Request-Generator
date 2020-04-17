@@ -237,6 +237,8 @@ class Test {
     private suspend fun runTest(stories: Array<UserStory>): MutableCollection<Future<*>> {
         //old testStart should be gone by now
         Event.unsignal(testStartEvent)
+        //since only used in some scenarios, it is less shotgun surgery to set it here than to include it in all possible paths through RestClient.
+        TimeStorage.instance.nodeNumber = nodeNumber
         try {
             ConcurrentRequestsThrottler.instance.setMaxParallelRequests(maximumConcurrentRequests)
         } catch (e: ExecutionControl.NotImplementedException) {
