@@ -24,8 +24,11 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.sync.Semaphore
 import java.lang.Exception
+import java.lang.Long.max
 import java.lang.Thread.sleep
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicLong
+import kotlin.collections.HashMap
 
 //allow frontend to store additional information
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -36,13 +39,18 @@ class Test {
         Arrays.stream(stories)
             .forEach({ story: UserStory -> story.parent = this })
     }
-
+    var nodeNumber = 0L
+    var nodes = 1L
     /**
      * Contains the original test config as JSON. This saves time because when broadcasting it, the test does not have to be serialized again.
      */
     var configJSON: String? = null
     var repeat = 0
-    var scaleFactor = 0
+    var scaleFactor = 0L
+    get(){
+        //every node should only do a part of the task at hand, but this should not be 0 (else no node does anything)
+        return kotlin.math.max(field / nodes,1)
+    }
 
     /**
      * True to enable global connection pooling, else false.
@@ -51,11 +59,18 @@ class Test {
     private var stories: Array<UserStory> = arrayOf()
     //this is used to be able to repeat them
     var stories_clone: Array<UserStory> = arrayOf()
-    var activeInstancesPerSecond =
-        DEFAULT_ACTIVE_INSTANCES_PER_SECOND_LIMIT
+    var activeInstancesPerSecond = DEFAULT_ACTIVE_INSTANCES_PER_SECOND_LIMIT
+        get(){
+            //every node should only do a part of the task at hand
+            return kotlin.math.max(field / nodes.toInt(),1)
+        }
     var client: MqttClient? = null
     //by default, do not limit number of concurrent requests
     var maximumConcurrentRequests = DEFAULT_CONCURRENT_REQUEST_LIMIT
+        get(){
+            //every node should only do a part of the task at hand
+            return kotlin.math.max(field / nodes.toInt(),1)
+        }
     @JsonIgnore //we can assume this is unique. Probably, only one test at a time is run.
     var testId = System.currentTimeMillis()
 
@@ -125,6 +140,7 @@ class Test {
         prepareMqttClient()
         try { //clear retained messages from last test
             client!!.publish(MQTT_TOPIC, ByteArray(0), 0, true)
+            remainingNodesForTest[testId.toString()] = AtomicLong(nodes)
             client!!.publish(
                 MQTT_TOPIC,
                 "testStart $testId $configJSON".toByteArray(StandardCharsets.UTF_8),
@@ -175,10 +191,12 @@ class Test {
             //make sure all times are sent
             AssertionStorage.instance.flush()
             TimeStorage.instance.flush()
+            //if there is only this node, the test is over; else, other nodes might still be running
+            val endMessage = (if(nodes == 1L){"testEnd"}else{"nodeEnd $nodeNumber "} +"$testId").toByteArray(StandardCharsets.UTF_8)
             try {
                 client!!.publish(
                         MQTT_TOPIC,
-                        "testEnd $testId".toByteArray(StandardCharsets.UTF_8),
+                        endMessage,
                         2,
                         false
                 )
@@ -227,6 +245,16 @@ class Test {
     private suspend fun runTest(stories: Array<UserStory>): MutableCollection<Future<*>> {
         //old testStart should be gone by now
         Event.unsignal(testStartEvent)
+        //since only used in some scenarios, it is less shotgun surgery to set it here than to include it in all possible paths through RestClient.
+        TimeStorage.instance.nodeNumber = nodeNumber
+        AssertionStorage.instance.nodeNumber = nodeNumber
+        //mapping all files eagerly might improve performance, also this is needed to set an offset in the data
+        Arrays.stream(stories).forEach{ story -> Arrays.stream(story.getAtoms()).forEach { atom -> if(atom is Data_Generation){
+            atom.offsetPercentage = nodeNumber.toDouble() / nodes
+            runBlocking {
+                atom.initScanner()
+            }
+        } }}
         try {
             ConcurrentRequestsThrottler.instance.setMaxParallelRequests(maximumConcurrentRequests)
         } catch (e: ExecutionControl.NotImplementedException) {
@@ -412,6 +440,47 @@ class Test {
         const val DEFAULT_CONCURRENT_REQUEST_LIMIT = 100
         const val DEFAULT_ACTIVE_INSTANCES_PER_SECOND_LIMIT = 10000
         const val testStartEvent = "testStart"
+        @JvmStatic
+        val testEndWatchdog : MqttClient =
+            MqttClient(PropertiesReader.getMqttHost(), UUID.randomUUID().toString(), MemoryPersistence())
+        /**
+         * For every test id the number of nodes that have to finish for it to be over
+         */
+        @JvmStatic
+        val remainingNodesForTest: HashMap<String, AtomicLong> = HashMap()
+        init {
+            val options = MqttConnectOptions()
+            options.isAutomaticReconnect = true
+            options.isCleanSession = true
+            options.connectionTimeout = 10
+            try {
+                testEndWatchdog.connect(options)
+            } catch (e: MqttException) {
+                log.error("Could not start testEnd Watchdog ", e)
+            }
+            testEndWatchdog.subscribe(MQTT_TOPIC){
+                topic, message ->  run{
+                if(topic == MQTT_TOPIC && message != null) {
+                    val text = String(message.payload)
+                    if(text.startsWith("nodeEnd")){
+                        val parts = text.split(" ");
+                        if(parts.size < 3){
+                            log.error("TestEnd protocol violation: nodeEnd messages need to be 3 parts separated by spaces!")
+                            return@run
+                        }
+                        val nodeId = parts[1]
+                        val testId = parts[2]
+                        log.info("Test $testId: Node $nodeId is finished!")
+                        if(remainingNodesForTest[testId]?.decrementAndGet() == 0L){
+                            log.info("Test $testId finished!")
+                            testEndWatchdog.publish(MQTT_TOPIC,"testEnd $testId".toByteArray(),1,false)
+                        }
+                    }
+                }
+
+            }
+            }
+        }
     }
 }
 

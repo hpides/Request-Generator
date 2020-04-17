@@ -4,15 +4,20 @@ import com.ginsberg.junit.exit.ExpectSystemExitWithStatus
 import de.hpi.tdgt.RequestHandlingFramework
 import de.hpi.tdgt.Utils
 import de.hpi.tdgt.WebApplication
+import de.hpi.tdgt.controllers.UploadController
 import de.hpi.tdgt.util.PropertiesReader
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.LogManager
-import org.eclipse.paho.client.mqttv3.IMqttMessageListener
-import org.eclipse.paho.client.mqttv3.MqttClient
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions
-import org.eclipse.paho.client.mqttv3.MqttMessage
+import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import org.hamcrest.MatcherAssert
+import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
+import org.hamcrest.Matchers.equalTo
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -28,6 +33,8 @@ import java.io.IOException
 import java.lang.Thread.sleep
 import java.net.URL
 import java.util.*
+import java.util.concurrent.ExecutionException
+import kotlin.collections.HashSet
 
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(classes = [WebApplication::class], webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -39,6 +46,15 @@ class UploadJSONTest : RequestHandlingFramework() {
     @Throws(IOException::class)
     fun prepare() {
         exampleStory = Utils().requestExampleJSON
+        val options = MqttConnectOptions()
+        options.isAutomaticReconnect = true
+        options.isCleanSession = true
+        options.connectionTimeout = 10
+        publisher.connect(options)
+    }
+    @AfterEach
+    fun closeDown(){
+        publisher.disconnect()
     }
 
     @Autowired
@@ -52,21 +68,15 @@ class UploadJSONTest : RequestHandlingFramework() {
                 .contentType(MediaType.APPLICATION_JSON).body(exampleStory)
         val response =
             restTemplate!!.exchange(requestEntity, String::class.java)
-        MatcherAssert.assertThat(
+        assertThat(
             response.statusCode,
-            Matchers.equalTo(HttpStatus.OK)
+            equalTo(HttpStatus.OK)
         )
     }
-
+    val publisherId = UUID.randomUUID().toString()
+    val publisher = MqttClient(PropertiesReader.getMqttHost(), publisherId, MemoryPersistence())
     private fun waitForTestEnd(){
         var finished = false;
-        val publisherId = UUID.randomUUID().toString()
-        val publisher = MqttClient(PropertiesReader.getMqttHost(), publisherId, MemoryPersistence())
-        val options = MqttConnectOptions()
-        options.isAutomaticReconnect = true
-        options.isCleanSession = true
-        options.connectionTimeout = 10
-        (publisher as MqttClient).connect(options)
         publisher.subscribe(de.hpi.tdgt.test.Test.MQTT_TOPIC, IMqttMessageListener { s: String, mqttMessage: MqttMessage ->
             //hamcrest can't handle empty sets in the list for contains, so filter them out
             if(String(mqttMessage.payload).startsWith("testEnd")){
@@ -89,7 +99,34 @@ class UploadJSONTest : RequestHandlingFramework() {
         //test is run async
         waitForTestEnd()
         //requests to this handler are sent
-        MatcherAssert.assertThat(authHandler.numberFailedLogins, Matchers.greaterThan(0))
+        assertThat(authHandler.numberFailedLogins, Matchers.greaterThan(0))
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun runsUserStoryAgainstTestServerRunsActualTestWhenDistributed() {
+        UploadController.LOCATION = "http://localhost:$port"
+        val requestEntity =
+            RequestEntity.post(URL("http://localhost:" + port + "/upload/" + System.currentTimeMillis()+"/distributed").toURI())
+                .contentType(MediaType.APPLICATION_JSON).body(exampleStory)
+        val response = restTemplate!!.exchange(requestEntity, String::class.java)
+        assertThat(response.statusCode, equalTo(HttpStatus.OK))
+        //test is run async
+        waitForTestEnd()
+        //requests to this handler are sent
+        assertThat(authHandler.numberFailedLogins, Matchers.greaterThan(0))
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun throwsErrorIfNoNodesAvailable() {
+        //assuming there are no active nodes in the network, this leads to UploadController finding no nodes
+        UploadController.LOCATION = null
+        val requestEntity =
+            RequestEntity.post(URL("http://localhost:" + port + "/upload/" + System.currentTimeMillis()+"/distributed").toURI())
+                .contentType(MediaType.APPLICATION_JSON).body(exampleStory)
+        val response = restTemplate!!.exchange(requestEntity, String::class.java)
+        assertThat(response.statusCode, equalTo(HttpStatus.INTERNAL_SERVER_ERROR))
     }
     @Test
     @Throws(Exception::class)
@@ -106,14 +143,63 @@ class UploadJSONTest : RequestHandlingFramework() {
         //test is run async
         waitForTestEnd()
         //requests to this handler are sent
-        MatcherAssert.assertThat(authHandler.numberFailedLogins, Matchers.greaterThan(0))
+        assertThat(authHandler.numberFailedLogins, Matchers.greaterThan(0))
+    }
+
+    @Test
+    @Throws(Exception::class)
+    @ExpectSystemExitWithStatus(0)
+    fun passesUnknownParamsToSpringBoot() {
+        //Since everything is fine, the application should exit with 0
+        val args = arrayOf(
+            "-Dserver.port=8090",
+            "--load",
+            "./src/test/resources/de/hpi/tdgt/RequestExample.json",
+            "./src/test/resources/de/hpi/tdgt",
+            "./src/test/resources/de/hpi/tdgt"
+        )
+        WebApplication.main(args)
+        //test is run async
+        waitForTestEnd()
+        //requests to this handler are sent
+        assertThat(authHandler.numberFailedLogins, Matchers.greaterThan(0))
+    }
+
+    @Test
+    @Throws(Exception::class)
+    @ExpectSystemExitWithStatus(1)
+    fun doesNotStartIfNoValidURL() {
+        //Since everything is fine, the application should exit with 0
+        val args = arrayOf(
+            "--location",
+            "http://",
+            "./src/test/resources/de/hpi/tdgt",
+            "./src/test/resources/de/hpi/tdgt"
+        )
+        WebApplication.main(args)
+    }
+
+    @Test
+    @Throws(Exception::class)
+    @ExpectSystemExitWithStatus(0)
+    fun setsValidURL() {
+        //Since everything is fine, the application should exit with 0
+        val args = arrayOf(
+            "--location",
+            "http://localhost:8080",
+            "--load",
+            "./src/test/resources/de/hpi/tdgt/RequestExample.json",
+            "./src/test/resources/de/hpi/tdgt",
+            "./src/test/resources/de/hpi/tdgt"
+        )
+        WebApplication.main(args)
+        assertThat(UploadController.LOCATION,equalTo("http://localhost:8080"))
     }
 
     @Test
     @Throws(Exception::class)
     @ExpectSystemExitWithStatus(1)
     fun ExitsWith1IfUnallowedParametersInCliMode() {
-        //Since everything is fine, the application should exit with 0
         val args = arrayOf(
             "cli"
         )
@@ -128,9 +214,9 @@ class UploadJSONTest : RequestHandlingFramework() {
                 .contentType(MediaType.APPLICATION_PDF).body(exampleStory)
         val response =
             restTemplate!!.exchange(requestEntity, String::class.java)
-        MatcherAssert.assertThat(
+        assertThat(
             response.statusCode,
-            Matchers.equalTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+            equalTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
         )
     }
 
@@ -142,9 +228,9 @@ class UploadJSONTest : RequestHandlingFramework() {
                 .contentType(MediaType.APPLICATION_JSON).body("{")
         val response =
             restTemplate!!.exchange(requestEntity, String::class.java)
-        MatcherAssert.assertThat(
+        assertThat(
             response.statusCode,
-            Matchers.equalTo(HttpStatus.BAD_REQUEST)
+            equalTo(HttpStatus.BAD_REQUEST)
         )
     }
 
@@ -156,10 +242,33 @@ class UploadJSONTest : RequestHandlingFramework() {
                 .contentType(MediaType.APPLICATION_JSON).body("")
         val response =
             restTemplate!!.exchange(requestEntity, String::class.java)
-        MatcherAssert.assertThat(
+        assertThat(
             response.statusCode,
-            Matchers.equalTo(HttpStatus.BAD_REQUEST)
+            equalTo(HttpStatus.BAD_REQUEST)
         )
+    }
+    @Autowired
+    private val controller:UploadController? = null;
+
+    @org.junit.jupiter.api.Test
+    @Throws(
+        MqttException::class,
+        InterruptedException::class,
+        ExecutionException::class,
+        IOException::class
+    )
+    fun masterNodeCollectsWorkerNodes() {
+        runBlocking {
+            UploadController.LOCATION = null
+            val job = GlobalScope.launch { controller!!.uploadTestConfigForDistributed("{}",0) }
+            val urls = HashSet<String>()
+            for(i in 1..20){
+                publisher.publish(de.hpi.tdgt.test.Test.MQTT_TOPIC, MqttMessage((UploadController.IDENTIFICATION_RESPONSE_MESSAGE + " " +i).toByteArray()))
+                urls.add(i.toString())
+            }
+            job.join()
+            assertThat(controller!!.knownOtherInstances, equalTo(urls))
+        }
     }
 
     companion object {

@@ -1,14 +1,9 @@
 package de.hpi.tdgt.test.story.atom
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.util.MappedFileReader
 import org.apache.logging.log4j.LogManager
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileNotFoundException
-import java.io.InputStream
-import java.nio.charset.StandardCharsets
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -17,6 +12,10 @@ class Data_Generation : Atom() {
     var table: String? = null
 
     var staticValues: Map<String,String> = HashMap()
+    /**
+     * Proportion of lines that should be skipped over in the target file --> used to split data on nodes
+     */
+    var offsetPercentage : Double = 0.0
 
     //should not be serialized or accessible from other classes
     @JsonIgnore
@@ -29,7 +28,7 @@ class Data_Generation : Atom() {
     }
 
     public override fun performClone(): Atom {
-        val ret = Data_Generation()
+        val ret = if(actuallyPerformClone){ Data_Generation() } else {this}
         ret.table = table
         ret.data = data
         return ret
@@ -93,24 +92,48 @@ class Data_Generation : Atom() {
     }
 
     private fun warnNoDataRemain() {
-        log.error("No data remains for atom " + name)
+        log.error("No data remains for atom $name")
         reportFailureToUser(
-                "Data Generation \"" + name + "\" has no data remaining",
+            "Data Generation \"$name\" has no data remaining",
                 "read $readLines lines from file $outputDirectory/$table.csv"
         )
     }
 
 
-    private fun initScanner() { //only one Thread is allowed to add a scanner at the same time; only need to synchronise scanner creation and retrieval
+    suspend fun initScanner() { //only one Thread is allowed to add a scanner at the same time; only need to synchronise scanner creation and retrieval
 //stream might be null, if no file found
         if (sc == null) {
             synchronized(association) {
                 if (association.containsKey(table)) {
                     sc = association[table]
                 } else {
-                    sc = MappedFileReader("$outputDirectory/$table.csv")
+                    sc = MappedFileReader("$outputDirectory${File.separator}$table.csv")
                     association.put(table, sc)
                 }
+            }
+        }
+        if(offsetPercentage > 0){
+            var lines = 0.0
+            //since every line might have a different length, there is no way around reading the whole file once...
+            while(sc!!.hasNextLine()){
+                sc!!.nextLine()
+                lines++
+            }
+            var target = kotlin.math.floor(offsetPercentage * lines).toLong()
+            //to prevent repetition of this
+            offsetPercentage = 0.0
+            //we need a new scanner with reset offset
+            sc!!.close()
+            synchronized(association){
+                association.remove(table)
+            }
+            sc = null
+            //this re-initialises a fresh instance of sc; since offsetPercentage is 0.0, there will not be infinite recursion
+            initScanner()
+            //once this is done, the offset inside the scanner is where we want it
+            //as a side effect, the next blocks are probably already prefetched by now
+            for(i in 0L until target){
+                sc?.nextLine()
             }
         }
     }
@@ -171,4 +194,9 @@ class Data_Generation : Atom() {
         @JvmField
         var outputDirectory = "."
     }
+
+    /**
+     * Only to be used by tests!
+     */
+    var actuallyPerformClone = true
 }
