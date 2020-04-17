@@ -113,7 +113,7 @@ class Data_Generation : Atom() {
                 if (association.containsKey(table)) {
                     sc = association[table]
                 } else {
-                    sc = MappedFileReader("$outputDirectory/$table.csv")
+                    sc = MappedFileReader("$outputDirectory${File.separator}$table.csv")
                     association.put(table, sc)
                 }
             }
