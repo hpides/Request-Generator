@@ -24,6 +24,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.sync.Semaphore
 import java.lang.Exception
+import java.lang.Long.max
 import java.lang.Thread.sleep
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicLong
@@ -47,8 +48,8 @@ class Test {
     var repeat = 0
     var scaleFactor = 0L
     get(){
-        //every node should only do a part of the task at hand
-        return field / nodes
+        //every node should only do a part of the task at hand, but this should not be 0 (else no node does anything)
+        return kotlin.math.max(field / nodes,1)
     }
 
     /**
@@ -61,14 +62,14 @@ class Test {
     var activeInstancesPerSecond = DEFAULT_ACTIVE_INSTANCES_PER_SECOND_LIMIT
         get(){
             //every node should only do a part of the task at hand
-            return field / nodes.toInt()
+            return kotlin.math.max(field / nodes.toInt(),1)
         }
     var client: MqttClient? = null
     //by default, do not limit number of concurrent requests
     var maximumConcurrentRequests = DEFAULT_CONCURRENT_REQUEST_LIMIT
         get(){
             //every node should only do a part of the task at hand
-            return field / nodes.toInt()
+            return kotlin.math.max(field / nodes.toInt(),1)
         }
     @JsonIgnore //we can assume this is unique. Probably, only one test at a time is run.
     var testId = System.currentTimeMillis()
@@ -247,6 +248,13 @@ class Test {
         //since only used in some scenarios, it is less shotgun surgery to set it here than to include it in all possible paths through RestClient.
         TimeStorage.instance.nodeNumber = nodeNumber
         AssertionStorage.instance.nodeNumber = nodeNumber
+        //mapping all files eagerly might improve performance, also this is needed to set an offset in the data
+        Arrays.stream(stories).forEach{ story -> Arrays.stream(story.getAtoms()).forEach { atom -> if(atom is Data_Generation){
+            atom.offsetPercentage = scaleFactor * story.scalePercentage * (nodeNumber.toDouble() / nodes)
+            runBlocking {
+                atom.initScanner()
+            }
+        } }}
         try {
             ConcurrentRequestsThrottler.instance.setMaxParallelRequests(maximumConcurrentRequests)
         } catch (e: ExecutionControl.NotImplementedException) {
