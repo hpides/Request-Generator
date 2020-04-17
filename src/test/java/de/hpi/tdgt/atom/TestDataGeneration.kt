@@ -1,6 +1,7 @@
 package de.hpi.tdgt.atom
 
 import de.hpi.tdgt.Utils
+import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.Atom
 import de.hpi.tdgt.test.story.atom.Data_Generation
 import de.hpi.tdgt.test.story.atom.Data_Generation.Companion.reset
@@ -288,6 +289,31 @@ class TestDataGeneration {
             dataGeneration.run(HashMap())
         }
         assertThat(dataGeneration.knownParams, equalTo(valuesToGenerate))
+    }
+
+    @Test
+    @Throws(InterruptedException::class, ExecutionException::class)
+    fun dataGenerationCanSeekToItsOffsetInAFile() {
+        val mockTest = de.hpi.tdgt.test.Test()
+        //file is 70 lines long, so this data generation should produce one line exactly (second line of the file)
+        mockTest.nodes = 70
+        mockTest.nodeNumber = 1
+        mockTest.scaleFactor = 1
+        mockTest.repeat = 1
+        val mockStory = UserStory()
+        mockTest.setStories(arrayOf(mockStory))
+        mockStory.scalePercentage = 1.0
+        mockStory.setAtoms(arrayOf(firstGeneration!!))
+        firstGeneration!!.setParent(mockStory)
+        //else knownParams would be gone
+        firstGeneration!!.actuallyPerformClone = false
+        var params: Map<String, String> = HashMap()
+        runBlocking{mockTest.start()}
+        params = firstGeneration!!.knownParams
+        assertThat<Map<String, String>>(
+            params,
+            Matchers.hasEntry("username", "ATP.Aaren")
+        )
     }
 
     companion object {

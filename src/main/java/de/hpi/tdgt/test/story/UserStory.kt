@@ -26,11 +26,11 @@ class UserStory : Cloneable {
     var name: String? = null
 
     /**
-     * Holds connections to be shared for every atom
+     * Holds connections to be shared for every atom.
+     * Expensive resource, will be initialized only if needed
      */
     @JsonIgnore
-    val pool= DefaultChannelPool(atoms.size,-1, DefaultChannelPool.PoolLeaseStrategy.FIFO, timer, 1000)
-
+    lateinit var pool : DefaultChannelPool
     /**
      * Client that represents this user
      */
@@ -42,6 +42,7 @@ class UserStory : Cloneable {
             field = value
             //Windows resource leakage: One can not create e.g. 100.000 clients, so start off with the assumption only one is wanted and create them if necessary; Event makes sure that this is not counted as test time
             if(value?.noSession == false && client === staticClient){
+                pool = DefaultChannelPool(atoms.size,-1, DefaultChannelPool.PoolLeaseStrategy.FIFO, timer, 1000)
                 client = Dsl.asyncHttpClient(DefaultAsyncHttpClientConfig.Builder().setConnectTimeout(60000).setReadTimeout(120000).setFollowRedirect(true).setKeepAlive(true).setChannelPool(pool).setNettyTimer(timer))
             }
         }

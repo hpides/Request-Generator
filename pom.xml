@@ -171,6 +171,12 @@
             <artifactId>argparse4j</artifactId>
             <version>0.8.1</version>
         </dependency>
+        <!-- Validating URLs-->
+        <dependency>
+            <groupId>commons-validator</groupId>
+            <artifactId>commons-validator</artifactId>
+            <version>1.6</version>
+        </dependency>
     </dependencies>
     <reporting>
 	    <plugins>

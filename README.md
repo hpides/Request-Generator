@@ -25,3 +25,11 @@ curl -H "Content-Type: application/json" -X POST --data @src/test/resources/de/h
 The default logging level is "info". It will provide a lot of output which will slow the application down. Feel free to overwrite "logging.level.root=info" in application.properties with "warn" or "error".  
 Also, the logging level can be set at run time via the argument "--logging.level.root="error"".  
 Output of times will happen at the error level.
+
+## A note on distributed usage
+To use the distribution feature, connect as many nodes as you like to the same broker.   
+Each node should have a private PDGF instance (because data of the same name might have to be generated).   
+Also, at startup a node needs to be told it's URL relative to the other nodes (parameter --location).   
+The frontend needs to be able to contact one of the nodes (there is no dedicated master node).  
+If these steps are followed, the system should automatically distribute benchmarking to all nodes in the system.  
+Finally, this system can not tolerate adding nodes after the PDGF run of a test (re-run the PDGF step in this case) or losing nodes during the test run (test will never finish).

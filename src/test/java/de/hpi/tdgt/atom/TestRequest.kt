@@ -124,7 +124,7 @@ class TestRequest : RequestHandlingFramework() {
         assertion.contentType = "application/xml"
         runBlocking{postWithBodyAndAssertion!!.run(params)}
         MatcherAssert.assertThat(
-            AssertionStorage.instance.getFails("postWithBody returns JSON"),
+            AssertionStorage.instance.getFails("postWithBody returns JSON (node 0)"),
             Matchers.`is`(1)
         )
     }
@@ -141,7 +141,7 @@ class TestRequest : RequestHandlingFramework() {
         assertion.contentType = "application/xml"
         runBlocking{postWithBodyAndAssertion!!.run(params)}
         MatcherAssert.assertThat(
-            AssertionStorage.instance.getActual("postWithBody returns JSON"),
+            AssertionStorage.instance.getActual("postWithBody returns JSON (node 0)"),
             Matchers.contains("application/json")
         )
     }
@@ -165,7 +165,7 @@ class TestRequest : RequestHandlingFramework() {
         getJsonObjectWithAssertion!!.addr = "http://localhost:9000/empty"
         runBlocking{getJsonObjectWithAssertion!!.run(params)}
         MatcherAssert.assertThat(
-            AssertionStorage.instance.getFails("jsonObject returns something"),
+            AssertionStorage.instance.getFails("jsonObject returns something (node 0)"),
             Matchers.`is`(1)
         )
     }
@@ -178,7 +178,7 @@ class TestRequest : RequestHandlingFramework() {
         getJsonObjectWithAssertion!!.addr = "http://localhost:9000/empty"
         runBlocking{getJsonObjectWithAssertion!!.run(params)}
         MatcherAssert.assertThat(
-            AssertionStorage.instance.getActual("jsonObject returns something"),
+            AssertionStorage.instance.getActual("jsonObject returns something (node 0)"),
             Matchers.contains("")
         )
     }
@@ -204,7 +204,7 @@ class TestRequest : RequestHandlingFramework() {
         params["value"] = "wrong"
         runBlocking{getWithAuth!!.run(params)}
         MatcherAssert.assertThat(
-            AssertionStorage.instance.getFails("auth does not return 401"),
+            AssertionStorage.instance.getFails("auth does not return 401 (node 0)"),
             Matchers.`is`(1)
         )
     }
@@ -217,7 +217,7 @@ class TestRequest : RequestHandlingFramework() {
         params["value"] = "wrong"
         runBlocking{getWithAuth!!.run(params)}
         MatcherAssert.assertThat(
-            AssertionStorage.instance.getActual("auth does not return 401"),
+            AssertionStorage.instance.getActual("auth does not return 401 (node 0)"),
             Matchers.contains("401")
         )
     }
@@ -231,7 +231,7 @@ class TestRequest : RequestHandlingFramework() {
         getWithAuth!!.verb = "DELETE"
         runBlocking{getWithAuth!!.run(params)}
         MatcherAssert.assertThat(
-            AssertionStorage.instance.getActual("auth does not return 401"),
+            AssertionStorage.instance.getActual("auth does not return 401 (node 0)"),
             Matchers.contains("401")
         )
     }
