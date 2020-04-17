@@ -24,6 +24,7 @@ class AssertionStorage private constructor() {
     private val mqttRunnable: Runnable
     private val running = AtomicBoolean(true)
     private var testid: Long = 0
+    var nodeNumber = 0L
     //needs to be synchronized, because concurrently client might be reset
     @Synchronized
     private fun sendCurrentActualsViaMqtt() { //might be called subsequently if reset is called subsequently
@@ -90,9 +91,9 @@ class AssertionStorage private constructor() {
     ) { //we can assume there is just ne test running at any given time, so this is sufficient
         this.testid = testid
         if (isStoreEntriesAsynch) { //needs quite some synchronization time and might run some time, so run it async if possible
-            ThreadRecycler.instance.executorService.submit { doAddFailure(assertionName, actual) }
+            ThreadRecycler.instance.executorService.submit { doAddFailure("$assertionName (node $nodeNumber)", actual) }
         } else {
-            doAddFailure(assertionName, actual)
+            doAddFailure("$assertionName (node $nodeNumber)", actual)
         }
     }
 

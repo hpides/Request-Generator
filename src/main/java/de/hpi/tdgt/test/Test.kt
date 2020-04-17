@@ -239,6 +239,7 @@ class Test {
         Event.unsignal(testStartEvent)
         //since only used in some scenarios, it is less shotgun surgery to set it here than to include it in all possible paths through RestClient.
         TimeStorage.instance.nodeNumber = nodeNumber
+        AssertionStorage.instance.nodeNumber = nodeNumber
         try {
             ConcurrentRequestsThrottler.instance.setMaxParallelRequests(maximumConcurrentRequests)
         } catch (e: ExecutionControl.NotImplementedException) {
