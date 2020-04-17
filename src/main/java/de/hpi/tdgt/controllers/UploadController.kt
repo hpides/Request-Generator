@@ -14,14 +14,10 @@ import org.eclipse.paho.client.mqttv3.MqttClient
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
+import org.springframework.http.*
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.RestTemplate
 import java.io.*
-import java.lang.IllegalArgumentException
 import java.lang.Thread.sleep
 import java.net.URL
 import java.nio.charset.StandardCharsets
@@ -30,7 +26,7 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 import kotlin.collections.HashSet
 import kotlin.system.exitProcess
-import kotlinx.coroutines.delay as delay1
+
 
 @RestController
 class UploadController {
@@ -283,13 +279,17 @@ class UploadController {
         client.publish(Test.MQTT_TOPIC, IDENTIFICATION_REQUEST_MESSAGE.toByteArray(),1,false)
         sleep(DISCOVERY_TIMEOUT_MS)
         val allNodes = knownOtherInstances.toTypedArray()
+        //else the request is rejected
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_XML
         //make sure that we have same order later when Test is run
         allNodes.sort()
         for(i in allNodes.indices){
             var addr = allNodes[i]
             addr = "$addr/uploadPDGF"
             try {
-                val response = template.postForEntity(URL(addr).toURI(), pdgfConfig, String::class.java)
+                val request = HttpEntity(pdgfConfig, headers)
+                val response = template.postForEntity(URL(addr).toURI(), request, String::class.java)
                 if (response.statusCode != HttpStatus.OK) {
                     val reason = "Node $addr responded with code ${response.statusCode}"
                     log.error(reason)
