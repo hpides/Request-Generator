@@ -2,20 +2,21 @@ package de.hpi.tdgt.test.story.atom
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.core.JsonParseException
-import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
+import de.hpi.tdgt.requesthandling.HttpConstants
+import de.hpi.tdgt.requesthandling.Request
 import de.hpi.tdgt.requesthandling.RestClient
 import de.hpi.tdgt.requesthandling.RestResult
 import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.assertion.Assertion
 import de.hpi.tdgt.test.story.atom.assertion.RequestIsSent
+import de.hpi.tdgt.test.time_measurement.TimeStorage
 import org.apache.logging.log4j.LogManager
 import org.htmlcleaner.CleanerProperties
 import org.htmlcleaner.DomSerializer
 import org.htmlcleaner.HtmlCleaner
 import java.io.IOException
-import java.net.MalformedURLException
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -26,8 +27,8 @@ import javax.xml.xpath.XPathFactory
 import kotlin.collections.HashMap
 
 
-class Request : Atom() {
-    var verb: String? = null
+class RequestAtom : Atom() {
+    var verb: String = HttpConstants.GET
     var addr: String? = null
         get() {
             if(field != null) {
@@ -170,10 +171,8 @@ class Request : Atom() {
             implicitNotFailedAssertion = RequestIsSent()
             (implicitNotFailedAssertion as RequestIsSent).name = "Request \"$name\" is sent"
         }
-        val request = de.hpi.tdgt.requesthandling.Request()
-        request.method = verb
+        val request = Request(URL(addr), verb)
         request.recordName = getRecordName()
-        request.url = URL(addr)
         if (requestJSONObject != null) {
             request.body = replaceWithKnownParams(requestJSONObject!!, true)
             request.isForm = false
@@ -200,7 +199,7 @@ class Request : Atom() {
         request.testId = ((getParent()?:UserStory()).parent?.testId)?:0L
         request.receiveCookies = receiveCookies.keys.toTypedArray()
         request.sendCookies = prepareCookies()
-        extractResponseParams(rc.exchangeWithEndpoint(request))
+        extractResponseParams(request, rc.exchangeWithEndpoint(request))
     }
 
     /**
@@ -210,7 +209,7 @@ class Request : Atom() {
 
     public override fun performClone(): Atom {
         cloning = true;
-        val ret = Request()
+        val ret = RequestAtom()
         ret.cloning = true
         ret.addr = addr
         ret.verb = verb
@@ -243,7 +242,7 @@ class Request : Atom() {
     }
 
     @Throws(IOException::class, JsonParseException::class, JsonMappingException::class)
-    private suspend fun extractResponseParams(result: RestResult?) {
+    private suspend fun extractResponseParams(request: Request, result: RestResult) {
         if (result != null && result.isJSON) {
             try {
                 if (result.toJson()!!.isObject) {
@@ -263,7 +262,7 @@ class Request : Atom() {
                     log.info(result)
                 }
             } catch (e: JsonParseException){
-                reportFailureToUser("Request $name can parse response JSON",e.message)
+                TimeStorage.instance.addError(request.endpoint, e.originalMessage);
             }
         } else {
             log.info("Not JSON! Response is ignored.")
@@ -284,9 +283,9 @@ class Request : Atom() {
         //in some tests, this might not exist
         if (getParent() != null && getParent()!!.parent != null) { //check assertions after request
             for (assertion in assertions) {
-                assertion!!.check(result, getParent()!!.parent!!.testId, this)
+                assertion!!.check(request.endpoint, result, this)
             }
-            implicitNotFailedAssertion!!.check(result, getParent()!!.parent!!.testId, this)
+            implicitNotFailedAssertion!!.check(request.endpoint, result, this)
         } else {
             log.error("Can not check assertions because I do not have a parent or grandparent: $name")
         }
@@ -362,7 +361,7 @@ class Request : Atom() {
 
     override fun equals(other: Any?): Boolean {
         if (other === this) return true
-        if (other !is Request) return false
+        if (other !is RequestAtom) return false
         if (!other.canEqual(this as Any)) return false
         if (!super.equals(other)) return false
         val `this$verb`: Any? = verb
@@ -387,7 +386,7 @@ class Request : Atom() {
     }
 
     override fun canEqual(other: Any?): Boolean {
-        return other is Request
+        return other is RequestAtom
     }
 
     override fun hashCode(): Int {
@@ -426,7 +425,7 @@ class Request : Atom() {
 
     companion object {
         private val log =
-                LogManager.getLogger(Request::class.java)
+                LogManager.getLogger(RequestAtom::class.java)
         @JsonIgnore
         private val rc = RestClient()
         @JsonIgnore

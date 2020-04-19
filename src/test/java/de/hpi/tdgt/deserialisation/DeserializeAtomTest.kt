@@ -26,9 +26,9 @@ class DeserializeAtomTest {
     private var thirdAtomOfFirstStory: Atom? = null
     private var seventhAtomOfFirstStory: Atom? = null
     private var secondAtomOfSecondStory: Atom? = null
-    private var postWithBodyAndAssertion: Request? = null
-    private var getJSONObject: Request? = null
-    private var getWithAuth: Request? = null
+    private var postWithBodyAndAssertion: RequestAtom? = null
+    private var getJSONObject: RequestAtom? = null
+    private var getWithAuth: RequestAtom? = null
     @BeforeEach
     @Throws(IOException::class)
     fun prepareTest() {
@@ -43,11 +43,11 @@ class DeserializeAtomTest {
         secondAtomOfSecondStory =
             deserialize(exampleJSON).getStories()[1].getAtoms()[3]
         postWithBodyAndAssertion =
-            deserialize(Utils().requestExampleWithAssertionsJSON).getStories()[0].getAtoms()[1] as Request
+            deserialize(Utils().requestExampleWithAssertionsJSON).getStories()[0].getAtoms()[1] as RequestAtom
         getJSONObject =
-            deserialize(Utils().requestExampleWithAssertionsJSON).getStories()[0].getAtoms()[2] as Request
+            deserialize(Utils().requestExampleWithAssertionsJSON).getStories()[0].getAtoms()[2] as RequestAtom
         getWithAuth =
-            deserialize(Utils().requestExampleWithAssertionsJSON).getStories()[0].getAtoms()[3] as Request
+            deserialize(Utils().requestExampleWithAssertionsJSON).getStories()[0].getAtoms()[3] as RequestAtom
     }
 
     @Test
@@ -62,7 +62,7 @@ class DeserializeAtomTest {
 
     @Test
     fun secondAtomOfSecondStoryIsRequest() {
-        Utils.assertInstanceOf(secondAtomOfSecondStory, Request::class.java)
+        Utils.assertInstanceOf(secondAtomOfSecondStory, RequestAtom::class.java)
     }
 
     @Test
@@ -86,14 +86,14 @@ class DeserializeAtomTest {
     @Test
     fun secondAtomOfSecondStorySendsGETRequest() {
         val secondAtomOfSecondStory =
-            secondAtomOfSecondStory as Request?
+            secondAtomOfSecondStory as RequestAtom?
         Assertions.assertEquals("GET", secondAtomOfSecondStory!!.verb)
     }
 
     @Test
     fun secondAtomOfSecondStoryHasCorrectAddress() {
         val secondAtomOfSecondStory =
-            secondAtomOfSecondStory as Request?
+            secondAtomOfSecondStory as RequestAtom?
         //I sometimes disable this endpoint to test assertions by appending "/not"
         MatcherAssert.assertThat(
             secondAtomOfSecondStory!!.addr,
@@ -104,7 +104,7 @@ class DeserializeAtomTest {
     @Test
     fun secondAtomOfSecondStoryHasCorrectRequestParams() {
         val secondAtomOfSecondStory =
-            secondAtomOfSecondStory as Request?
+            secondAtomOfSecondStory as RequestAtom?
         Assertions.assertArrayEquals(
             arrayOf("key"),
             secondAtomOfSecondStory!!.requestParams
@@ -114,7 +114,7 @@ class DeserializeAtomTest {
     @Test
     fun secondAtomOfSecondStoryHasCorrectResponseParams() {
         val secondAtomOfSecondStory =
-            secondAtomOfSecondStory as Request?
+            secondAtomOfSecondStory as RequestAtom?
         Assertions.assertArrayEquals(arrayOf(), secondAtomOfSecondStory!!.responseParams)
     }
 
@@ -202,6 +202,6 @@ class DeserializeAtomTest {
     @Test
     fun canDeseserializeTokens(){
         val test = deserialize(Utils().getRequestExampleWithTokens())
-        MatcherAssert.assertThat((test.getStories()[0].getAtoms()[2] as Request).tokenNames, Matchers.hasEntry(Matchers.equalTo("_csrf"), Matchers.equalTo("_csrf")))
+        MatcherAssert.assertThat((test.getStories()[0].getAtoms()[2] as RequestAtom).tokenNames, Matchers.hasEntry(Matchers.equalTo("_csrf"), Matchers.equalTo("_csrf")))
     }
 }

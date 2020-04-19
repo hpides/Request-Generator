@@ -3,7 +3,6 @@ package de.hpi.tdgt
 import com.sun.net.httpserver.HttpServer
 import de.hpi.tdgt.test.Test
 import de.hpi.tdgt.test.story.atom.Data_Generation.Companion.reset
-import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.test.time_measurement.TimeStorage
 import org.apache.commons.io.IOUtils
 import org.apache.logging.log4j.LogManager
@@ -74,8 +73,6 @@ open class RequestHandlingFramework {
         val os = FileOutputStream(values)
         IOUtils.copy(Utils().valuesCSV, os)
         os.close()
-        //tests want predictable behaviour in regards to when an entry is stored
-        AssertionStorage.instance.isStoreEntriesAsynch = false
     }
 
     @AfterEach
@@ -90,7 +87,6 @@ open class RequestHandlingFramework {
         handlers = ArrayList()
         server.stop(0)
         TimeStorage.instance.reset()
-        AssertionStorage.instance.reset()
         Thread.sleep(200)
     }
 

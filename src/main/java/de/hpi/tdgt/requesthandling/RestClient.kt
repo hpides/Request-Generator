@@ -20,21 +20,19 @@ import java.util.stream.Collectors
 class RestClient {
     @Throws(IOException::class)
     suspend fun getFromEndpoint(
-        story: UserStory?, recordName:String?,
-        testId: Long,
-        url: URL?,
-        receiveCookies: Array<String>,
-        sendCookies: Map<String, String>,
-        getParams: Map<String, String>
+            story: UserStory?, recordName: String?,
+            testId: Long,
+            url: URL,
+            receiveCookies: Array<String>,
+            sendCookies: Map<String, String>,
+            getParams: Map<String, String>
     ): RestResult? {
-        val request = Request()
-        request.url = url
+        val request = Request(url, HttpConstants.GET)
         request.receiveCookies = receiveCookies
         request.sendCookies = sendCookies
         request.receiveCookies = receiveCookies
         request.sendCookies = sendCookies
         request.params = getParams
-        request.method = HttpConstants.GET
         request.story = story
         request.testId = testId
         request.recordName = recordName
@@ -43,18 +41,16 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun getBodyFromEndpoint(
-        story: UserStory?, recordName:String?,
-        testId: Long,
-        url: URL?,
-        receiveCookies: Array<String>,
-        sendCookies: Map<String, String>,
-        body: String?
+            story: UserStory?, recordName: String?,
+            testId: Long,
+            url: URL,
+            receiveCookies: Array<String>,
+            sendCookies: Map<String, String>,
+            body: String?
     ): RestResult? {
-        val request = Request()
-        request.url = url
+        val request = Request(url, HttpConstants.GET)
         request.receiveCookies = receiveCookies
         request.sendCookies = sendCookies
-        request.method = HttpConstants.GET
         request.body = body
         request.isForm = false
         request.story = story
@@ -65,19 +61,17 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun postFormToEndpoint(
-        story: UserStory?, recordName:String?,
-        testId: Long,
-        url: URL?,
-        receiveCookies: Array<String>,
-        sendCookies: Map<String, String>,
-        getParams: Map<String, String>
+            story: UserStory?, recordName: String?,
+            testId: Long,
+            url: URL,
+            receiveCookies: Array<String>,
+            sendCookies: Map<String, String>,
+            getParams: Map<String, String>
     ): RestResult? {
-        val request = Request()
-        request.url = url
+        val request = Request(url, HttpConstants.POST)
         request.receiveCookies = receiveCookies
         request.sendCookies = sendCookies
         request.params = getParams
-        request.method = HttpConstants.POST
         request.isForm = true
         request.story = story
         request.testId = testId
@@ -86,13 +80,11 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun postBodyToEndpoint(story: UserStory?, recordName:String?, testId: Long, url: URL?, receiveCookies: Array<String>,
-        sendCookies: Map<String, String>, body: String?): RestResult? {
-        val request = Request()
-        request.url = url
+    suspend fun postBodyToEndpoint(story: UserStory?, recordName: String?, testId: Long, url: URL, receiveCookies: Array<String>,
+                                   sendCookies: Map<String, String>, body: String?): RestResult? {
+        val request = Request(url, HttpConstants.POST)
         request.receiveCookies = receiveCookies
         request.sendCookies = sendCookies
-        request.method = HttpConstants.POST
         request.isForm = false
         request.body = body
         request.story = story
@@ -103,19 +95,17 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun putFormToEndpoint(
-        story: UserStory?, recordName:String?,
-        testId: Long,
-        url: URL?,
-        receiveCookies: Array<String>,
-        sendCookies: Map<String, String>,
-        getParams: Map<String, String>
+            story: UserStory?, recordName: String?,
+            testId: Long,
+            url: URL,
+            receiveCookies: Array<String>,
+            sendCookies: Map<String, String>,
+            getParams: Map<String, String>
     ): RestResult? {
-        val request = Request()
-        request.url = url
+        val request = Request(url, HttpConstants.PUT)
         request.receiveCookies = receiveCookies
         request.sendCookies = sendCookies
         request.params = getParams
-        request.method = HttpConstants.PUT
         request.isForm = true
         request.story = story
         request.testId = testId
@@ -124,13 +114,11 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun putBodyToEndpoint(story: UserStory?, recordName:String?, testId: Long, url: URL?, receiveCookies: Array<String>,
-        sendCookies: Map<String, String>, body: String?): RestResult? {
-        val request = Request()
-        request.url = url
+    suspend fun putBodyToEndpoint(story: UserStory?, recordName: String?, testId: Long, url: URL, receiveCookies: Array<String>,
+                                  sendCookies: Map<String, String>, body: String?): RestResult? {
+        val request = Request(url, HttpConstants.PUT)
         request.receiveCookies = receiveCookies
         request.sendCookies = sendCookies
-        request.method = HttpConstants.PUT
         request.isForm = false
         request.body = body
         request.story = story
@@ -141,21 +129,19 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun getFromEndpointWithAuth(
-        story: UserStory?, recordName:String?,
-        testId: Long,
-        url: URL?,
-        receiveCookies: Array<String>,
-        sendCookies: Map<String, String>,
-        getParams: Map<String, String>,
-        username: String?,
-        password: String?
+            story: UserStory?, recordName: String?,
+            testId: Long,
+            url: URL,
+            receiveCookies: Array<String>,
+            sendCookies: Map<String, String>,
+            getParams: Map<String, String>,
+            username: String?,
+            password: String?
     ): RestResult? {
-        val request = Request()
-        request.url = url
+        val request = Request(url, HttpConstants.GET)
         request.receiveCookies = receiveCookies
         request.sendCookies = sendCookies
         request.params = getParams
-        request.method = HttpConstants.GET
         request.username = username
         request.password = password
         request.story = story
@@ -166,20 +152,18 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun getBodyFromEndpointWithAuth(
-        story: UserStory?, recordName:String?,
-        testId: Long,
-        url: URL?,
-        receiveCookies: Array<String>,
-        sendCookies: Map<String, String>,
-        body: String?,
-        username: String?,
-        password: String?
+            story: UserStory?, recordName: String?,
+            testId: Long,
+            url: URL,
+            receiveCookies: Array<String>,
+            sendCookies: Map<String, String>,
+            body: String?,
+            username: String?,
+            password: String?
     ): RestResult? {
-        val request = Request()
-        request.url = url
+        val request = Request(url, HttpConstants.GET)
         request.receiveCookies = receiveCookies
         request.sendCookies = sendCookies
-        request.method = HttpConstants.GET
         request.body = body
         request.isForm = false
         request.username = username
@@ -192,21 +176,19 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun postFormToEndpointWithAuth(
-        story: UserStory?, recordName:String?,
-        testId: Long,
-        url: URL?,
-        receiveCookies: Array<String>,
-        sendCookies: Map<String, String>,
-        getParams: Map<String, String>,
-        username: String?,
-        password: String?
+            story: UserStory?, recordName: String?,
+            testId: Long,
+            url: URL,
+            receiveCookies: Array<String>,
+            sendCookies: Map<String, String>,
+            getParams: Map<String, String>,
+            username: String?,
+            password: String?
     ): RestResult? {
-        val request = Request()
-        request.url = url
+        val request = Request(url, HttpConstants.POST)
         request.receiveCookies = receiveCookies
         request.sendCookies = sendCookies
         request.params = getParams
-        request.method = HttpConstants.POST
         request.isForm = true
         request.username = username
         request.password = password
@@ -218,20 +200,18 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun postBodyToEndpointWithAuth(
-        story: UserStory?, recordName:String?,
-        testId: Long,
-        url: URL?,
-        receiveCookies: Array<String>,
-        sendCookies: Map<String, String>,
-        body: String?,
-        username: String?,
-        password: String?
+            story: UserStory?, recordName: String?,
+            testId: Long,
+            url: URL,
+            receiveCookies: Array<String>,
+            sendCookies: Map<String, String>,
+            body: String?,
+            username: String?,
+            password: String?
     ): RestResult? {
-        val request = Request()
-        request.url = url
+        val request = Request(url, HttpConstants.POST)
         request.receiveCookies = receiveCookies
         request.sendCookies = sendCookies
-        request.method = HttpConstants.POST
         request.isForm = false
         request.body = body
         request.username = username
@@ -244,21 +224,19 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun putFormToEndpointWithAuth(
-        story: UserStory?, recordName:String?,
-        testId: Long,
-        url: URL?,
-        receiveCookies: Array<String>,
-        sendCookies: Map<String, String>,
-        getParams: Map<String, String>,
-        username: String?,
-        password: String?
+            story: UserStory?, recordName: String?,
+            testId: Long,
+            url: URL,
+            receiveCookies: Array<String>,
+            sendCookies: Map<String, String>,
+            getParams: Map<String, String>,
+            username: String?,
+            password: String?
     ): RestResult? {
-        val request = Request()
-        request.url = url
+        val request = Request(url, HttpConstants.PUT)
         request.receiveCookies = receiveCookies
         request.sendCookies = sendCookies
         request.params = getParams
-        request.method = HttpConstants.PUT
         request.isForm = true
         request.username = username
         request.password = password
@@ -270,20 +248,18 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun putBodyToEndpointWithAuth(
-        story: UserStory?, recordName:String?,
-        testId: Long,
-        url: URL?,
-        receiveCookies: Array<String>,
-        sendCookies: Map<String, String>,
-        body: String?,
-        username: String?,
-        password: String?
+            story: UserStory?, recordName: String?,
+            testId: Long,
+            url: URL,
+            receiveCookies: Array<String>,
+            sendCookies: Map<String, String>,
+            body: String?,
+            username: String?,
+            password: String?
     ): RestResult? {
-        val request = Request()
-        request.url = url
+        val request = Request(url, HttpConstants.PUT)
         request.receiveCookies = receiveCookies
         request.sendCookies = sendCookies
-        request.method = HttpConstants.PUT
         request.isForm = false
         request.body = body
         request.username = username
@@ -296,19 +272,17 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun deleteFromEndpoint(
-        story: UserStory?, recordName:String?,
-        testId: Long,
-        url: URL?,
-        receiveCookies: Array<String>,
-        sendCookies: Map<String, String>,
-        getParams: Map<String, String>
+            story: UserStory?, recordName: String?,
+            testId: Long,
+            url: URL,
+            receiveCookies: Array<String>,
+            sendCookies: Map<String, String>,
+            getParams: Map<String, String>
     ): RestResult? {
-        val request = Request()
-        request.url = url
+        val request = Request(url, HttpConstants.DELETE)
         request.receiveCookies = receiveCookies
         request.sendCookies = sendCookies
         request.params = getParams
-        request.method = HttpConstants.DELETE
         request.testId = testId
         request.recordName = recordName
         request.story = story
@@ -317,21 +291,19 @@ class RestClient {
 
     @Throws(IOException::class)
     suspend fun deleteFromEndpointWithAuth(
-            story: UserStory?, recordName:String?,
+            story: UserStory?, recordName: String?,
             testId: Long,
-            url: URL?,
+            url: URL,
             receiveCookies: Array<String>,
             sendCookies: Map<String, String>,
             getParams: Map<String, String>,
             username: String?,
             password: String?
     ): RestResult? {
-        val request = Request()
-        request.url = url
+        val request = Request(url, HttpConstants.DELETE)
         request.receiveCookies = receiveCookies
         request.sendCookies = sendCookies
         request.params = getParams
-        request.method = HttpConstants.DELETE
         request.username = username
         request.password = password
         request.story = story
@@ -339,115 +311,114 @@ class RestClient {
         request.recordName = recordName
         return exchangeWithEndpoint(request)
     }
-     //above methods are for user's convenience, this method does the actual request
+
+    //above methods are for user's convenience, this method does the actual request
     @Throws(IOException::class)
-    suspend fun exchangeWithEndpoint(request: Request): RestResult? {
-         //in case global connection sharing is enabled, clients of stories might be null
-         val client = (request.story?.client)?:UserStory.staticClient
+    suspend fun exchangeWithEndpoint(request: Request): RestResult {
+        //in case global connection sharing is enabled, clients of stories might be null
+        val client = (request.story?.client) ?: UserStory.staticClient
 
-         //if got a connection or error occurs
-         val result = RestResult()
+        //if got a connection or error occurs
+        val result = RestResult()
+        val method = request.endpoint.method;
         //append GET parameters if necessary
-        if(request.url == null || request.method == null){
-            return null;
-        }
         val url =
-            appendGetParametersToUrlIfNecessary(request.url!!, request.params, request.method!!)
-
-        val preparedRequest = Dsl.request(request.method, url.toString())
+                appendGetParametersToUrlIfNecessary(request.endpoint.url, request.params, method)
+        val preparedRequest = Dsl.request(request.endpoint.method, url.toString())
         val start = System.nanoTime()
         //set auth header if required
         if (request.username != null && request.password != null) {
             preparedRequest.setHeader(
-                HttpConstants.HEADER_AUTHORIZATION,
-                "Basic " + Base64.getEncoder().encodeToString(
-                    (request.username + ":" + request.password).toByteArray(StandardCharsets.UTF_8)
-                )
+                    HttpConstants.HEADER_AUTHORIZATION,
+                    "Basic " + Base64.getEncoder().encodeToString(
+                            (request.username + ":" + request.password).toByteArray(StandardCharsets.UTF_8)
+                    )
             )
         }
         //set POST Body to contain formencoded data
-        if (request.isForm && (request.method == HttpConstants.POST || request.method == HttpConstants.PUT)) {
+        if (request.isForm && (method == HttpConstants.POST || method == HttpConstants.PUT)) {
             preparedRequest.setHeader("Content-Type", HttpConstants.APPLICATION_X_WWW_FORM_URLENCODED)
             val body = request.params?.entries?.stream()?.map { entry -> Param(entry.key, entry.value) }?.collect(Collectors.toList())
             preparedRequest.setFormParams(body)
         }
         //set POST body to what was passed
-        if (!request.isForm && (request.method == HttpConstants.POST || request.method == HttpConstants.PUT || request.method == HttpConstants.GET) && request.body != null) {
+        if (!request.isForm && (method == HttpConstants.POST || method == HttpConstants.PUT || method == HttpConstants.GET) && request.body != null) {
             preparedRequest.setHeader("Content-Type", HttpConstants.CONTENT_TYPE_APPLICATION_JSON)
-            if(request.body != null) {
+            if (request.body != null) {
                 preparedRequest.setBody(request.body!!.toByteArray(StandardCharsets.UTF_8))
             }
         }
 
-        for(cookie in request.sendCookies.entries){
-            preparedRequest.addCookie(DefaultCookie(cookie.key,cookie.value))
+        for (cookie in request.sendCookies.entries) {
+            preparedRequest.addCookie(DefaultCookie(cookie.key, cookie.value))
         }
         try {
             for (header in request.sendHeaders.entries) {
                 preparedRequest.setHeader(header.key, header.value)
             }
-        } catch (e: Exception){
+        } catch (e: Exception) {
             result.errorCondition = e
         }
 
         //try to connect
         var retry: Int = -1
 
-        var future:ListenableFuture<Response>? = null
+        var future: ListenableFuture<Response>? = null
 
         while (retry < request.retries) {
-            try{
-            Test.ConcurrentRequestsThrottler.instance.allowRequest()
-            //Exceptions might be thrown here as well as later when waiting for the response
             try {
-                future = client.executeRequest(preparedRequest)
-            } catch (e: Exception) {
-                log.error("Could not connect to $url", e)
-                result.errorCondition = e
-                retry ++
-                continue
-            }
-        if(future == null){
-            log.error("Unknown error while sending request!")
-            retry++
-            continue
-        }
-        result.startTime = start
-        val response:Response
-        try {
-            if(!PropertiesReader.AsyncIO()) {
-                response = future.get()
-            }else{
-                response = future.toCompletableFuture().await()
-            }
-        } catch (e: Exception) {
-            log.error("Could not connect to $url", e)
-            result.errorCondition = e
-            retry ++
-            continue
-        }
-        readResponse(response, result, request)
-        return result;
-        }
-            finally{
+                Test.ConcurrentRequestsThrottler.instance.allowRequest()
+                //Exceptions might be thrown here as well as later when waiting for the response
+                try {
+                    future = client.executeRequest(preparedRequest)
+                } catch (e: Exception) {
+                    log.error("Could not connect to $url", e)
+                    result.errorCondition = e
+                    retry++
+                    continue
+                }
+                if (future == null) {
+                    log.error("Unknown error while sending request!")
+                    retry++
+                    continue
+                }
+                result.startTime = start
+                val response: Response
+                try {
+                    if (!PropertiesReader.AsyncIO()) {
+                        response = future.get()
+                    } else {
+                        response = future.toCompletableFuture().await()
+                    }
+                } catch (e: Exception) {
+                    log.error("Could not connect to $url", e)
+                    result.errorCondition = e
+                    retry++
+                    continue
+                }
+                readResponse(response, result, request)
+                return result;
+            } finally {
                 //created a new story for this request that also created a new client
-                if(request.story == null){
+                if (request.story == null) {
                     client.close()
                 }
                 Test.ConcurrentRequestsThrottler.instance.requestDone()
             }
 
         }
-         //clients created because no story was given have to be closed
-         if(request.story == null){client.close()}
-         return result
+        //clients created because no story was given have to be closed
+        if (request.story == null) {
+            client.close()
+        }
+        return result
     }
 
     @Throws(MalformedURLException::class)
     private fun appendGetParametersToUrlIfNecessary(
-        url: URL,
-        params: Map<String, String?>?,
-        method: String
+            url: URL,
+            params: Map<String, String?>?,
+            method: String
     ): URL { //add URL parameters
         var requestURL = url
         if ((method == HttpConstants.GET || method == HttpConstants.DELETE) && params != null && !params.isEmpty()) {
@@ -501,25 +472,25 @@ class RestClient {
         res.contentType = response.contentType
         res.headers = response.headers
         res.returnCode = response.statusCode
-        for(cookie in request.receiveCookies){
+        for (cookie in request.receiveCookies) {
             var foundCookie = false;
-            for(responseCookie in response.cookies){
+            for (responseCookie in response.cookies) {
                 //accept first cookie, second one is probably a mistake
-                if(cookie == responseCookie.name() && !foundCookie){
+                if (cookie == responseCookie.name() && !foundCookie) {
                     res.receivedCookies.put(cookie, responseCookie.value())
                     foundCookie = true;
                 }
-                if(cookie == responseCookie.name() && foundCookie){
+                if (cookie == responseCookie.name() && foundCookie) {
                     log.warn("Duplicate cookie key $cookie")
                 }
             }
         }
-        storage.registerTime(
-            request.method,
-            request.recordName?:"",
-            res.durationNanos(),
-            request.story?.name,
-            request.testId
+        storage.addSample(
+                request.endpoint,
+                res.durationMillis(),
+                res.contentLength,
+                request.story?.name,
+                request.testId
         )
         log.info("Request took " + res.durationMillis() + " ms.")
         requestsSent.incrementAndGet()
@@ -527,8 +498,9 @@ class RestClient {
 
     companion object {
         private val log =
-            LogManager.getLogger(RestClient::class.java)
+                LogManager.getLogger(RestClient::class.java)
         private val storage = TimeStorage.instance
+
         /**
          * Counts how many requests the application as a whole sent. Resetted each time a test is over.
          */

@@ -40,6 +40,9 @@ class RestResult {
             ""
         ).toLowerCase().contains("html")
 
+    val contentLength : Int
+        get() = response.size;
+
     //use directly or deserialize
     override fun toString(): String {
         return if (isPlainText || isJSON) {

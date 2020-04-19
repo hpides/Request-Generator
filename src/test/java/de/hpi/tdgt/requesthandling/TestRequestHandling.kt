@@ -4,9 +4,8 @@ import de.hpi.tdgt.HttpHandlers
 import de.hpi.tdgt.RequestHandlingFramework
 import de.hpi.tdgt.Utils
 import de.hpi.tdgt.deserialisation.Deserializer.deserialize
-import de.hpi.tdgt.test.ThreadRecycler.Companion.instance
 import de.hpi.tdgt.test.story.UserStory
-import de.hpi.tdgt.test.story.atom.Request
+import de.hpi.tdgt.test.story.atom.RequestAtom
 import de.hpi.tdgt.util.Pair
 import jdk.jshell.spi.ExecutionControl
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -28,7 +27,6 @@ import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
-import java.util.concurrent.Future
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TestRequestHandling : RequestHandlingFramework() {
@@ -161,7 +159,7 @@ class TestRequestHandling : RequestHandlingFramework() {
     @Test
     @Throws(IOException::class, InterruptedException::class, ExecutionException::class)
     fun testJSONWithInteger() = runBlocking {
-        val rq = Request()
+        val rq = RequestAtom()
         rq.addr = "http://localhost:9000/jsonObject"
         rq.requestParams = arrayOf("param")
         rq.verb = "POST"

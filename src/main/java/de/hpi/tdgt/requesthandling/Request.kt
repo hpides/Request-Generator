@@ -1,5 +1,6 @@
 package de.hpi.tdgt.requesthandling
 
+import de.hpi.tdgt.Stats.Endpoint
 import de.hpi.tdgt.test.story.UserStory
 import java.net.URL
 import java.util.HashMap
@@ -8,7 +9,6 @@ import java.util.HashMap
  * Represents a HTTP Request.
  */
 class Request {
-    var url: URL? = null
     /**
      * Params for GET URL / POST / PUT Form-Encoded data.
      */
@@ -17,7 +17,7 @@ class Request {
      * Name for this request in time storage
      */
     var recordName:String? = null
-    var method: String? = null
+    var endpoint: Endpoint;
     var isFollowsRedirects = true
     var connectTimeout = -1
     var responseTimeout = -1
@@ -71,9 +71,8 @@ class Request {
         story: UserStory?,
         testId: Long
     ) {
-        this.url = url
+        this.endpoint = Endpoint(url, method)
         this.params = params
-        this.method = method
         isFollowsRedirects = followsRedirects
         this.connectTimeout = connectTimeout
         this.responseTimeout = responseTimeout
@@ -87,6 +86,7 @@ class Request {
         this.testId = testId
     }
 
-    constructor() {}
-
+    constructor(url: URL, method: String) {
+        this.endpoint = Endpoint(url, method)
+    }
 }

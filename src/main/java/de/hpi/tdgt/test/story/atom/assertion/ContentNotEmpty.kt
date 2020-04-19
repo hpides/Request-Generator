@@ -1,14 +1,16 @@
 package de.hpi.tdgt.test.story.atom.assertion
 
+import de.hpi.tdgt.Stats.Endpoint
 import de.hpi.tdgt.requesthandling.RestResult
-import de.hpi.tdgt.test.story.atom.Request
+import de.hpi.tdgt.test.story.atom.RequestAtom
+import de.hpi.tdgt.test.time_measurement.TimeStorage
 import org.apache.logging.log4j.LogManager
 
 class ContentNotEmpty : Assertion() {
-    override fun check(restResult: RestResult?, testid: Long, parent: Request) {
-        if (restResult != null && restResult.response.isEmpty()) {
+    override suspend fun check(endpoint: Endpoint, restResult: RestResult, parent: RequestAtom) {
+        if (restResult.response.isEmpty()) {
             log.error("Failed content not empty assertion\"$name\": response was empty!")
-            AssertionStorage.instance.addFailure(name, "", testid)
+            TimeStorage.instance.addError(endpoint, "Response not empty");
         }
     }
 

@@ -1,15 +1,17 @@
 package de.hpi.tdgt.test.story.atom.assertion
 
+import de.hpi.tdgt.Stats.Endpoint
 import de.hpi.tdgt.requesthandling.RestResult
-import de.hpi.tdgt.test.story.atom.Request
+import de.hpi.tdgt.test.story.atom.RequestAtom
+import de.hpi.tdgt.test.time_measurement.TimeStorage
 import org.apache.logging.log4j.LogManager
 
 class ResponseCode : Assertion() {
     var responseCode = 0
-    override fun check(restResult: RestResult?, testid: Long, parent: Request) {
-        if (restResult != null && responseCode != restResult.returnCode) {
+    override suspend fun check(endpoint: Endpoint, restResult: RestResult, parent: RequestAtom) {
+        if (responseCode != restResult.returnCode) {
             log.error("Failed response code assertion\"" + name + "\": expected \"" + responseCode + "\" but is actually \"" + restResult.returnCode + "\"!")
-            AssertionStorage.instance.addFailure(name, "" + restResult.returnCode, testid)
+            TimeStorage.instance.addError(endpoint, "Wrong Response Code");
         }
     }
 

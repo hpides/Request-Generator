@@ -1,18 +1,9 @@
 package de.hpi.tdgt.time_measurement
 
 import de.hpi.tdgt.RequestHandlingFramework
-import de.hpi.tdgt.Utils
-import de.hpi.tdgt.deserialisation.Deserializer.deserialize
-import de.hpi.tdgt.test.story.atom.Request
-import de.hpi.tdgt.test.time_measurement.TimeStorage
-import org.apache.logging.log4j.LogManager
-import org.hamcrest.MatcherAssert
-import org.hamcrest.Matchers
-import org.junit.jupiter.api.Test
-import java.io.IOException
-import java.util.concurrent.ExecutionException
 
 class TimeStorageTest : RequestHandlingFramework() {
+    /*
     @Test
     @Throws(IOException::class, InterruptedException::class, ExecutionException::class)
     fun testFirstRequestOfFirstStoryTakesTime() {
@@ -85,5 +76,5 @@ class TimeStorageTest : RequestHandlingFramework() {
         private val log = LogManager.getLogger(
             TimeStorageTest::class.java
         )
-    }
+    }*/
 }

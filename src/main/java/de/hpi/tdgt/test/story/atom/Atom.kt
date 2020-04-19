@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import de.hpi.tdgt.test.ThreadRecycler
 import de.hpi.tdgt.test.story.UserStory
-import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.*
 import org.apache.logging.log4j.LogManager
@@ -24,7 +23,7 @@ import java.util.stream.Collectors
     property = "type"
 ) //tell Jackson which subtypes are allowed
 @JsonSubTypes(
-    JsonSubTypes.Type(value = Request::class, name = "REQUEST"),
+    JsonSubTypes.Type(value = RequestAtom::class, name = "REQUEST"),
     JsonSubTypes.Type(value = Data_Generation::class, name = "DATA_GENERATION"),
     JsonSubTypes.Type(value = Delay::class, name = "DELAY"),
     JsonSubTypes.Type(value = Start::class, name = "START"),
@@ -55,11 +54,7 @@ abstract class Atom : Cloneable {
     abstract suspend fun perform()
 
     protected fun reportFailureToUser(assertionName: String, message: String?) {
-        var testId: Long = 0
-        if (getParent() != null && getParent()!!.parent != null) {
-            testId = getParent()!!.parent!!.testId
-        }
-        AssertionStorage.instance.addFailure(assertionName, message!!, testId)
+        log.error("%s: %s".format(assertionName, message));
     }
 
     @Throws(InterruptedException::class, ExecutionException::class)

@@ -1,7 +1,7 @@
 package de.hpi.tdgt.test.time_measurement
 
 import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.databind.ObjectMapper
+import de.hpi.tdgt.Stats.Endpoint
 import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -17,6 +17,9 @@ import java.nio.charset.StandardCharsets
 import java.text.NumberFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import de.hpi.tdgt.Stats.Statistic;
+import org.springframework.web.util.HtmlUtils
+
 
 class TimeStorage protected constructor() {
     //can't be re-connected, create a new instance everytime the thread is run
@@ -25,7 +28,8 @@ class TimeStorage protected constructor() {
     private val mqttReporter: Runnable
     private val running = AtomicBoolean(true)
     private var testID: Long = 0
-    var nodeNumber : Long = 0
+    var nodeNumber: Long = 0
+
     /**
      * Flag for tests. If true, only messages that contain times are sent.
      */
@@ -35,19 +39,13 @@ class TimeStorage protected constructor() {
     private val entryMutex = Semaphore(1)
 
     //might be called while client is disconnected by other thread
-    private suspend fun sendTimesViaMqtt() = sendMutex.withPermit{ //prevent error
+    private suspend fun sendTimesViaMqtt() = sendMutex.withPermit { //prevent error
+        if (stats.IsEmpty())
+            return;
+
         var message = ByteArray(0)
-        try { //needs to be synchronized so we do not miss entries
-            entryMutex.withPermit {
-                val entry = toMQTTSummaryMap(registeredTimesLastSecond)
-                // tests only want actual times
-                if (!sendOnlyNonEmpty || entry.times.isNotEmpty()) {
-                    message = mapper.writeValueAsString(entry).toByteArray(StandardCharsets.UTF_8)
-                }
-                registeredTimesLastSecond.clear()
-            }
-        } catch (e: JsonProcessingException) {
-            log.error(e)
+        entryMutex.withPermit {
+            message =  HtmlUtils.htmlEscape(toMQTTMessage()).toByteArray(StandardCharsets.ISO_8859_1)
         }
         val mqttMessage = MqttMessage(message)
         //we want to receive every packet EXACTLY once
@@ -68,55 +66,16 @@ class TimeStorage protected constructor() {
         sendTimesViaMqtt()
     }
 
-    /**
-     * Outermost String is the request.
-     * Second string from outside is the method.
-     * Innermost String is story the request belonged to.
-     * TODO remove and replace by real-time aggregation
-     */
-    private val registeredTimes: MutableMap<String, MutableMap<String, MutableMap<String, MutableList<Long>>>> = HashMap()
-    /**
-     * Outermost String is the request.
-     * Second string from outside is the method.
-     * Innermost String is story the request belonged to.
-     */
-    private val registeredTimesLastSecond: MutableMap<String, MutableMap<String, MutableMap<String, MutableList<Long>>>> = HashMap()
 
-    private fun toMQTTSummaryMap(currentValues: MutableMap<String, MutableMap<String, MutableMap<String, MutableList<Long>>>> = HashMap()): MqttTimeMessage {
-        log.trace("Is empty: " + currentValues.isEmpty())
-        val ret: MutableMap<String, MutableMap<String, MutableMap<String, MutableMap<String, String>>>> = HashMap()
-        //re-create the structure, but using average of the innermost values
-        for ((key, value) in currentValues) {
-            ret[key] = HashMap()
-            for ((key1, value1) in value) {
-                ret[key]!![key1] = HashMap()
-                for ((key2, value2) in value1) {
-                    val avg = value2.stream().mapToLong { obj: Long -> obj }.average().orElse(0.0)
-                    val min = value2.stream().mapToLong { obj: Long -> obj }.min().orElse(0)
-                    val max = value2.stream().mapToLong { obj: Long -> obj }.max().orElse(0)
-                    //number of times this request was sent this second
-                    val throughput = value2.size.toLong()
-                    val times = HashMap<String, String>()
-                    times[THROUGHPUT_STRING] = "" + throughput
-                    times[MIN_LATENCY_STRING] = "" + min
-                    times[MAX_LATENCY_STRING] = "" + max
-                    val nf_out = NumberFormat.getNumberInstance(Locale.UK)
-                    nf_out.isGroupingUsed = false
-                    times[AVG_LATENCY_STRING] = nf_out.format(avg)
-                    ret[key]!![key1]!![key2] = times
-                }
-            }
-        }
-        val entry = MqttTimeMessage()
-        entry.testId = testID
-        entry.creationTime = System.currentTimeMillis()
-        entry.nodeNumber = nodeNumber
-        entry.times = ret
-        return entry
+    private var stats: Statistic = Statistic();
+
+    private fun toMQTTMessage(): String {
+        val msg = stats.toString();
+        //stats.Clear();
+        return msg;
     }
 
-    private val mapper = ObjectMapper()
-    suspend fun registerTime(verb: String?, addr: String, latency: Long, story: String?, testid: Long) {
+    suspend fun addSample(endpoint: Endpoint, latency: Long, contentLength: Int, story: String?, testid: Long) {
         testID = testid
         if (reporter == null) { //multiple threads might do this simultaneously
             sendMutex.withPermit {
@@ -134,61 +93,22 @@ class TimeStorage protected constructor() {
         //triggers exception
         if (story != null) {
             entryMutex.withPermit {
-                registeredTimes.computeIfAbsent(addr) { HashMap() }
-                registeredTimes[addr]!!.computeIfAbsent(verb!!) { HashMap() }
-                registeredTimes[addr]!![verb]!!.computeIfAbsent(story) { Vector() }.add(latency)
-                registeredTimesLastSecond.computeIfAbsent(addr) { HashMap() }
-                registeredTimesLastSecond[addr]!!.computeIfAbsent(verb) { HashMap() }
-                registeredTimesLastSecond[addr]!![verb]!!.computeIfAbsent(story) { Vector() }.add(latency)
+                stats.AddSample(endpoint, latency, contentLength)
             }
         }
     }
 
-    /**
-     * Times for a certain endpoint.
-     * @param verb Like POST, GET, ...
-     * @param addr Endpoint
-     * @return Array with all times
-     */
-    fun getTimes(verb: String?, addr: String?): Array<Long?> { //stub
-        if (registeredTimes[addr] == null) {
-            return arrayOfNulls(0)
+    suspend fun addError(endpoint: Endpoint, error: String) {
+        entryMutex.withPermit {
+            stats.AddError(endpoint, error);
         }
-        if (registeredTimes[addr]!![verb] == null) {
-            return arrayOfNulls(0)
-        }
-        val allTimes = Vector<Long?>()
-        for ((_, value) in registeredTimes[addr]!![verb]!!) {
-            allTimes.addAll(value)
-        }
-        return allTimes.toTypedArray()
-    }
-
-    // min, max, avg over the complete run or 0 if can not be computed
-    fun getMax(verb: String?, addr: String?): Long {
-        val values = getTimes(verb, addr)
-        return Arrays.stream(values).mapToLong { obj: Long? -> obj?:0 }.max().orElse(0)
-    }
-
-    fun getMin(verb: String?, addr: String?): Long {
-        val values = getTimes(verb, addr)
-        return Arrays.stream(values).mapToLong { obj: Long? -> obj?:0 }.min().orElse(0)
-    }
-
-    fun getAvg(verb: String?, addr: String?): Double {
-        val values = getTimes(verb, addr)
-        return Arrays.stream(values).mapToLong { obj: Long? -> obj?:0 }.average().orElse(0.0)
     }
 
     /**
      * Print nice summry to the console
      */
     fun printSummary() {
-        for ((key, value) in registeredTimes) {
-            for ((key1) in value) {
-                log.error("Endpoint " + key1 + " " + key + " min: " + getMin(key1, key) / MS_IN_NS + " ms, max: " + getMax(key1, key) / MS_IN_NS + " ms, avg: " + getAvg(key1, key) / MS_IN_NS + " ms.")
-            }
-        }
+        log.info(stats.toString());
     }
 
     fun reset() { //reset might be called twice, so make sure we do not encounter Nullpointer
@@ -197,8 +117,7 @@ class TimeStorage protected constructor() {
             reporter!!.interrupt()
         }
         reporter = null
-        registeredTimesLastSecond.clear()
-        registeredTimes.clear()
+        stats = Statistic();
     }
 
     fun setSendOnlyNonEmpty(sendOnlyNonEmpty: Boolean) {
@@ -209,12 +128,6 @@ class TimeStorage protected constructor() {
         private val log = LogManager.getLogger(TimeStorage::class.java)
         val instance = TimeStorage()
 
-        const val THROUGHPUT_STRING = "throughput"
-        const val MIN_LATENCY_STRING = "minLatency"
-        const val MAX_LATENCY_STRING = "maxLatency"
-        const val AVG_LATENCY_STRING = "avgLatency"
-        const val STORY_STRING = "story"
-        private const val MS_IN_NS = 1000000.0
         const val MQTT_TOPIC = "de.hpi.tdgt.times"
     }
 
@@ -222,7 +135,7 @@ class TimeStorage protected constructor() {
         mqttReporter = Runnable {
             try {
                 runBlocking { performTimeSending() }
-            } catch (e: InterruptedException){
+            } catch (e: InterruptedException) {
                 //willingly ignored
             }
         }

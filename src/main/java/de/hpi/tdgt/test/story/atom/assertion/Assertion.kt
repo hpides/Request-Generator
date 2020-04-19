@@ -2,8 +2,9 @@ package de.hpi.tdgt.test.story.atom.assertion
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import de.hpi.tdgt.Stats.Endpoint
 import de.hpi.tdgt.requesthandling.RestResult
-import de.hpi.tdgt.test.story.atom.Request
+import de.hpi.tdgt.test.story.atom.RequestAtom
 import org.apache.logging.log4j.LogManager
 
 //tell Jackson to use subclasses by type attribute
@@ -28,7 +29,7 @@ abstract class Assertion {
 
     constructor()
 
-    abstract fun check(restResult: RestResult?, testid: Long, parent: Request)
+    abstract suspend fun check(endpoint: Endpoint, restResult: RestResult, parent: RequestAtom)
 
     override fun equals(other: Any?): Boolean {
         if (other === this) return true

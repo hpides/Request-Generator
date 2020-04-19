@@ -6,7 +6,6 @@ import de.hpi.tdgt.concurrency.Event
 import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.Data_Generation
 import de.hpi.tdgt.test.story.atom.WarmupEnd
-import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.test.time_measurement.TimeStorage
 import de.hpi.tdgt.util.PropertiesReader
 import jdk.jshell.spi.ExecutionControl
@@ -189,7 +188,6 @@ class Test {
                 log.info("Test run $i complete!")
             }
             //make sure all times are sent
-            AssertionStorage.instance.flush()
             TimeStorage.instance.flush()
             //if there is only this node, the test is over; else, other nodes might still be running
             val endMessage = (if(nodes == 1L){"testEnd"}else{"nodeEnd $nodeNumber "} +"$testId").toByteArray(StandardCharsets.UTF_8)
@@ -245,9 +243,6 @@ class Test {
     private suspend fun runTest(stories: Array<UserStory>): MutableCollection<Future<*>> {
         //old testStart should be gone by now
         Event.unsignal(testStartEvent)
-        //since only used in some scenarios, it is less shotgun surgery to set it here than to include it in all possible paths through RestClient.
-        TimeStorage.instance.nodeNumber = nodeNumber
-        AssertionStorage.instance.nodeNumber = nodeNumber
         //mapping all files eagerly might improve performance, also this is needed to set an offset in the data
         Arrays.stream(stories).forEach{ story -> Arrays.stream(story.getAtoms()).forEach { atom -> if(atom is Data_Generation){
             atom.offsetPercentage = nodeNumber.toDouble() / nodes

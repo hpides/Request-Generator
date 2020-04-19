@@ -5,7 +5,6 @@ import de.hpi.tdgt.concurrency.Event
 import de.hpi.tdgt.deserialisation.Deserializer
 import de.hpi.tdgt.requesthandling.RestClient
 import de.hpi.tdgt.test.Test
-import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.test.time_measurement.TimeStorage
 import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.runBlocking
@@ -175,10 +174,7 @@ class UploadController {
         log.error("---Test finished in " + (endtime - testToRun.testStart) + " ms.---")
         log.error("---Times---")
         TimeStorage.instance.printSummary()
-        log.error("---Assertions---")
-        AssertionStorage.instance.printSummary()
         TimeStorage.instance.reset()
-        AssertionStorage.instance.reset()
         log.error(RestClient.requestsSent.get().toString() + " requests sent.")
         RestClient.requestsSent.set(0)
         currentThread = null
