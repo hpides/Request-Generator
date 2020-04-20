@@ -194,6 +194,13 @@
             <artifactId>disruptor</artifactId>
             <version>3.4.0</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>3.11.4</version>
+        </dependency>
+
     </dependencies>
     <reporting>
 	    <plugins>

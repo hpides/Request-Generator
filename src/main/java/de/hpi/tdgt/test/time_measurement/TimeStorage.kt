@@ -1,7 +1,7 @@
 package de.hpi.tdgt.test.time_measurement
 
-import com.fasterxml.jackson.core.JsonProcessingException
 import de.hpi.tdgt.Stats.Endpoint
+import de.hpi.tdgt.Stats.Statistic
 import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -13,12 +13,10 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttException
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
+import org.springframework.web.util.HtmlUtils
 import java.nio.charset.StandardCharsets
-import java.text.NumberFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import de.hpi.tdgt.Stats.Statistic;
-import org.springframework.web.util.HtmlUtils
 
 
 class TimeStorage protected constructor() {
@@ -45,7 +43,7 @@ class TimeStorage protected constructor() {
 
         var message = ByteArray(0)
         entryMutex.withPermit {
-            message =  HtmlUtils.htmlEscape(toMQTTMessage()).toByteArray(StandardCharsets.ISO_8859_1)
+            message =  toMQTTMessage()
         }
         val mqttMessage = MqttMessage(message)
         //we want to receive every packet EXACTLY once
@@ -69,8 +67,18 @@ class TimeStorage protected constructor() {
 
     private var stats: Statistic = Statistic();
 
-    private fun toMQTTMessage(): String {
-        val msg = stats.toString();
+    private fun toMQTTMessage(): ByteArray {
+        //val msg = HtmlUtils.htmlEscape(stats.toString()).toByteArray(StandardCharsets.ISO_8859_1);
+        val bytes = stats.Serialize().toByteArray();
+        val HEX_ARRAY = "0123456789ABCDEF".toCharArray()
+        val hexChars = CharArray(bytes.size * 2)
+        for (j in bytes.indices) {
+            val v: Int = bytes[j].toInt() and 0xFF
+            hexChars[j * 2] = HEX_ARRAY.get(v ushr 4)
+            hexChars[j * 2 + 1] = HEX_ARRAY.get(v and 0x0F)
+        }
+        val msgt = String(hexChars);
+        val msg = msgt.toByteArray();
         //stats.Clear();
         return msg;
     }

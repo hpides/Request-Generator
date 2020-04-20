@@ -36,4 +36,11 @@ public class ErrorEntry {
     public int hashCode() {
         return GetHashCode(endpoint, error);
     }
+
+    public StatisticProtos.ErrorEntry Serialize() {
+        return StatisticProtos.ErrorEntry.newBuilder()
+                .setEndpoint(endpoint.Serialize())
+                .setError(error)
+                .setCount(occurences).build();
+    }
 }

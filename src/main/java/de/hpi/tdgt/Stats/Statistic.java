@@ -4,6 +4,7 @@ import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.procedure.TIntObjectProcedure;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -18,7 +19,11 @@ public class Statistic {
     TIntObjectMap<ErrorEntry> errors;
 
     public Statistic() {
-        total = new Population(this, new Endpoint(null, ""));
+        try {
+            total = new Population(this, new Endpoint(new URL("http://total"), "GET"));
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
         populations = new HashMap<>();
         errors = new TIntObjectHashMap<>();
     }
@@ -102,6 +107,17 @@ public class Statistic {
 
     public boolean IsEmpty() {
         return errors.size() == 0 && total.IsEmpty();
+    }
+
+    public StatisticProtos.Statistic Serialize(){
+        StatisticProtos.Statistic.Builder builder = StatisticProtos.Statistic.newBuilder();
+        builder.setTotal(total.Serialize());
+        populations.values().forEach((val) -> {builder.addPopulations(val.Serialize());});
+        errors.forEachValue((val) -> {
+            builder.addErrors(val.Serialize());
+            return true;
+        });
+        return builder.build();
     }
 
     @Override

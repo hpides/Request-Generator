@@ -1,0 +1,50 @@
+syntax="proto3";
+
+package statistics;
+
+option java_package = "de.hpi.tdgt.Stats";
+option java_outer_classname = "StatisticProtos";
+
+message Statistic {
+  Population total = 1;
+  repeated Population populations = 2;
+  repeated ErrorEntry errors = 3;
+}
+
+message Population {
+  Endpoint ep = 1;
+  repeated LongIntEntry requestsPerSecond = 2;
+  repeated LongIntEntry failuresPerSecond = 3;
+  repeated LongIntEntry responseTimes = 4;
+  uint32 numRequests = 5;
+  uint32 numFailures = 6;
+  uint64 totalResponseTime = 7;
+  uint64 minResponseTime = 8;
+  uint64 maxResponseTime = 9;
+  uint32 totalContentLength = 10;
+  uint64 startTime = 11;
+  uint64 latestRequestTime = 12;
+}
+
+message Endpoint {
+  string url = 1;
+  Method method = 2;
+
+  enum Method {
+    POST = 0;
+    GET = 1;
+    PUT = 2;
+    DELETE = 3;
+  }
+}
+
+message ErrorEntry {
+  string error = 1;
+  uint32 count = 2;
+  Endpoint endpoint = 3;
+}
+
+message LongIntEntry {
+  uint64 key = 1;
+  uint32 value = 2;
+}

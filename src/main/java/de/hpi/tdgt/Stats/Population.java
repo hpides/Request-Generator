@@ -97,6 +97,45 @@ public class Population {
         Reset();
     }
 
+    public StatisticProtos.Population Serialize() {
+        var builder = StatisticProtos.Population.newBuilder()
+                .setEp(endpoint.Serialize())
+                .setNumRequests(numRequests)
+                .setNumFailures(numFailures)
+                .setTotalResponseTime(totalResponseTime)
+                .setMinResponseTime(minResponseTime)
+                .setMaxResponseTime(maxResponseTime)
+                .setTotalContentLength(totalContentLength)
+                .setStartTime(startTime)
+                .setLatestRequestTime(latestRequestTime);
+
+        numRequestsPerSecond.forEachEntry((key, value) -> {
+            builder.addRequestsPerSecond(StatisticProtos.LongIntEntry.newBuilder()
+                    .setKey(key)
+                    .setValue(value)
+                    .build());
+            return true;
+        });
+
+        failuresPerSecond.forEachEntry((key, value) -> {
+            builder.addFailuresPerSecond(StatisticProtos.LongIntEntry.newBuilder()
+                    .setKey(key)
+                    .setValue(value)
+                    .build());
+            return true;
+        });
+
+        responseTimes.forEachEntry((key, value) -> {
+            builder.addResponseTimes(StatisticProtos.LongIntEntry.newBuilder()
+                    .setKey(key)
+                    .setValue(value)
+                    .build());
+            return true;
+        });
+
+        return builder.build();
+    }
+
     public void Reset() {
         numRequests = 0;
         numFailures = 0;
