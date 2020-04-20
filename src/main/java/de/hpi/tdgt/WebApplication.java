@@ -87,7 +87,7 @@ public class WebApplication {
             if (load != null) {
                 //If we do not start Spring Boot, many properties like logging get half-way initialized. So we start Spring boot and terminate it when the test is done.
                 ConfigurableApplicationContext ctx = new SpringApplicationBuilder(WebApplication.class)
-                        .web(WebApplicationType.NONE).run();
+                        .web(WebApplicationType.NONE).run(args);
                 CLI.loadTest(load);
                 int code = SpringApplication.exit(ctx, () -> {
                     // return the error code

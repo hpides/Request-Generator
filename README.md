@@ -24,7 +24,8 @@ curl -H "Content-Type: application/json" -X POST --data @src/test/resources/de/h
 ## A note on logging
 The default logging level is "info". It will provide a lot of output which will slow the application down. Feel free to overwrite "logging.level.root=info" in application.properties with "warn" or "error".  
 Also, the logging level can be set at run time via the argument "--logging.level.root="error"".  
-Output of times will happen at the error level.
+Output of times will happen at the error level.  
+Also, all other Spring Boot arguments should work as expected.
 
 ## A note on distributed usage
 To use the distribution feature, connect as many nodes as you like to the same broker.   
