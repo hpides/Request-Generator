@@ -70,7 +70,7 @@ class TimeStorage protected constructor() {
     private fun toMQTTMessage(): ByteArray {
         //val msg = HtmlUtils.htmlEscape(stats.toString()).toByteArray(StandardCharsets.ISO_8859_1);
         val bytes = stats.Serialize().toByteArray();
-        val HEX_ARRAY = "0123456789ABCDEF".toCharArray()
+        /*val HEX_ARRAY = "0123456789ABCDEF".toCharArray()
         val hexChars = CharArray(bytes.size * 2)
         for (j in bytes.indices) {
             val v: Int = bytes[j].toInt() and 0xFF
@@ -78,9 +78,9 @@ class TimeStorage protected constructor() {
             hexChars[j * 2 + 1] = HEX_ARRAY.get(v and 0x0F)
         }
         val msgt = String(hexChars);
-        val msg = msgt.toByteArray();
+        val msg = msgt.toByteArray();*/
         //stats.Clear();
-        return msg;
+        return bytes;
     }
 
     suspend fun addSample(endpoint: Endpoint, latency: Long, contentLength: Int, story: String?, testid: Long) {
