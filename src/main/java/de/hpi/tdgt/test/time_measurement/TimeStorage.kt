@@ -1,7 +1,7 @@
 package de.hpi.tdgt.test.time_measurement
 
-import de.hpi.tdgt.Stats.Endpoint
-import de.hpi.tdgt.Stats.Statistic
+import de.hpi.tdgt.stats.Endpoint
+import de.hpi.tdgt.stats.Statistic
 import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking

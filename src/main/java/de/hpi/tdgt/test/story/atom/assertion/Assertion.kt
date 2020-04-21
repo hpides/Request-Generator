@@ -1,8 +1,8 @@
 package de.hpi.tdgt.test.story.atom.assertion
 
+import de.hpi.tdgt.stats.Endpoint
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import de.hpi.tdgt.Stats.Endpoint
 import de.hpi.tdgt.requesthandling.RestResult
 import de.hpi.tdgt.test.story.atom.RequestAtom
 import org.apache.logging.log4j.LogManager

@@ -1,6 +1,6 @@
 package de.hpi.tdgt.test.story.atom.assertion
 
-import de.hpi.tdgt.Stats.Endpoint
+import de.hpi.tdgt.stats.Endpoint
 import de.hpi.tdgt.requesthandling.RestResult
 import de.hpi.tdgt.test.story.atom.RequestAtom
 import de.hpi.tdgt.test.time_measurement.TimeStorage

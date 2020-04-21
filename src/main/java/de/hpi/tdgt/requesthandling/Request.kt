@@ -1,6 +1,6 @@
 package de.hpi.tdgt.requesthandling
 
-import de.hpi.tdgt.Stats.Endpoint
+import de.hpi.tdgt.stats.Endpoint
 import de.hpi.tdgt.test.story.UserStory
 import java.net.URL
 import java.util.HashMap
