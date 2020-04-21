@@ -7,8 +7,9 @@ option java_outer_classname = "StatisticProtos";
 
 message Statistic {
   Population total = 1;
-  repeated Population populations = 2;
-  repeated ErrorEntry errors = 3;
+  uint64 id = 2;
+  repeated Population populations = 3;
+  repeated ErrorEntry errors = 4;
 }
 
 message Population {

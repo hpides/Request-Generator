@@ -34,49 +34,55 @@ public final class StatisticProtos {
     de.hpi.tdgt.Stats.StatisticProtos.PopulationOrBuilder getTotalOrBuilder();
 
     /**
-     * <code>repeated .statistics.Population populations = 2;</code>
+     * <code>uint64 id = 2;</code>
+     * @return The id.
+     */
+    long getId();
+
+    /**
+     * <code>repeated .statistics.Population populations = 3;</code>
      */
     java.util.List<de.hpi.tdgt.Stats.StatisticProtos.Population> 
         getPopulationsList();
     /**
-     * <code>repeated .statistics.Population populations = 2;</code>
+     * <code>repeated .statistics.Population populations = 3;</code>
      */
     de.hpi.tdgt.Stats.StatisticProtos.Population getPopulations(int index);
     /**
-     * <code>repeated .statistics.Population populations = 2;</code>
+     * <code>repeated .statistics.Population populations = 3;</code>
      */
     int getPopulationsCount();
     /**
-     * <code>repeated .statistics.Population populations = 2;</code>
+     * <code>repeated .statistics.Population populations = 3;</code>
      */
     java.util.List<? extends de.hpi.tdgt.Stats.StatisticProtos.PopulationOrBuilder> 
         getPopulationsOrBuilderList();
     /**
-     * <code>repeated .statistics.Population populations = 2;</code>
+     * <code>repeated .statistics.Population populations = 3;</code>
      */
     de.hpi.tdgt.Stats.StatisticProtos.PopulationOrBuilder getPopulationsOrBuilder(
         int index);
 
     /**
-     * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+     * <code>repeated .statistics.ErrorEntry errors = 4;</code>
      */
     java.util.List<de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry> 
         getErrorsList();
     /**
-     * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+     * <code>repeated .statistics.ErrorEntry errors = 4;</code>
      */
     de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry getErrors(int index);
     /**
-     * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+     * <code>repeated .statistics.ErrorEntry errors = 4;</code>
      */
     int getErrorsCount();
     /**
-     * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+     * <code>repeated .statistics.ErrorEntry errors = 4;</code>
      */
     java.util.List<? extends de.hpi.tdgt.Stats.StatisticProtos.ErrorEntryOrBuilder> 
         getErrorsOrBuilderList();
     /**
-     * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+     * <code>repeated .statistics.ErrorEntry errors = 4;</code>
      */
     de.hpi.tdgt.Stats.StatisticProtos.ErrorEntryOrBuilder getErrorsOrBuilder(
         int index);
@@ -142,7 +148,12 @@ public final class StatisticProtos {
 
               break;
             }
-            case 18: {
+            case 16: {
+
+              id_ = input.readUInt64();
+              break;
+            }
+            case 26: {
               if (!((mutable_bitField0_ & 0x00000001) != 0)) {
                 populations_ = new java.util.ArrayList<de.hpi.tdgt.Stats.StatisticProtos.Population>();
                 mutable_bitField0_ |= 0x00000001;
@@ -151,7 +162,7 @@ public final class StatisticProtos {
                   input.readMessage(de.hpi.tdgt.Stats.StatisticProtos.Population.parser(), extensionRegistry));
               break;
             }
-            case 26: {
+            case 34: {
               if (!((mutable_bitField0_ & 0x00000002) != 0)) {
                 errors_ = new java.util.ArrayList<de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry>();
                 mutable_bitField0_ |= 0x00000002;
@@ -221,70 +232,80 @@ public final class StatisticProtos {
       return getTotal();
     }
 
-    public static final int POPULATIONS_FIELD_NUMBER = 2;
+    public static final int ID_FIELD_NUMBER = 2;
+    private long id_;
+    /**
+     * <code>uint64 id = 2;</code>
+     * @return The id.
+     */
+    public long getId() {
+      return id_;
+    }
+
+    public static final int POPULATIONS_FIELD_NUMBER = 3;
     private java.util.List<de.hpi.tdgt.Stats.StatisticProtos.Population> populations_;
     /**
-     * <code>repeated .statistics.Population populations = 2;</code>
+     * <code>repeated .statistics.Population populations = 3;</code>
      */
     public java.util.List<de.hpi.tdgt.Stats.StatisticProtos.Population> getPopulationsList() {
       return populations_;
     }
     /**
-     * <code>repeated .statistics.Population populations = 2;</code>
+     * <code>repeated .statistics.Population populations = 3;</code>
      */
     public java.util.List<? extends de.hpi.tdgt.Stats.StatisticProtos.PopulationOrBuilder> 
         getPopulationsOrBuilderList() {
       return populations_;
     }
     /**
-     * <code>repeated .statistics.Population populations = 2;</code>
+     * <code>repeated .statistics.Population populations = 3;</code>
      */
     public int getPopulationsCount() {
       return populations_.size();
     }
     /**
-     * <code>repeated .statistics.Population populations = 2;</code>
+     * <code>repeated .statistics.Population populations = 3;</code>
      */
     public de.hpi.tdgt.Stats.StatisticProtos.Population getPopulations(int index) {
       return populations_.get(index);
     }
     /**
-     * <code>repeated .statistics.Population populations = 2;</code>
+     * <code>repeated .statistics.Population populations = 3;</code>
      */
     public de.hpi.tdgt.Stats.StatisticProtos.PopulationOrBuilder getPopulationsOrBuilder(
         int index) {
       return populations_.get(index);
     }
 
-    public static final int ERRORS_FIELD_NUMBER = 3;
+    public static final int ERRORS_FIELD_NUMBER = 4;
     private java.util.List<de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry> errors_;
     /**
-     * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+     * <code>repeated .statistics.ErrorEntry errors = 4;</code>
      */
     public java.util.List<de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry> getErrorsList() {
       return errors_;
     }
     /**
-     * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+     * <code>repeated .statistics.ErrorEntry errors = 4;</code>
      */
     public java.util.List<? extends de.hpi.tdgt.Stats.StatisticProtos.ErrorEntryOrBuilder> 
         getErrorsOrBuilderList() {
       return errors_;
     }
     /**
-     * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+     * <code>repeated .statistics.ErrorEntry errors = 4;</code>
      */
     public int getErrorsCount() {
       return errors_.size();
     }
     /**
-     * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+     * <code>repeated .statistics.ErrorEntry errors = 4;</code>
      */
     public de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry getErrors(int index) {
       return errors_.get(index);
     }
     /**
-     * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+     * <code>repeated .statistics.ErrorEntry errors = 4;</code>
      */
     public de.hpi.tdgt.Stats.StatisticProtos.ErrorEntryOrBuilder getErrorsOrBuilder(
         int index) {
@@ -308,11 +329,14 @@ public final class StatisticProtos {
       if (total_ != null) {
         output.writeMessage(1, getTotal());
       }
+      if (id_ != 0L) {
+        output.writeUInt64(2, id_);
+      }
       for (int i = 0; i < populations_.size(); i++) {
-        output.writeMessage(2, populations_.get(i));
+        output.writeMessage(3, populations_.get(i));
       }
       for (int i = 0; i < errors_.size(); i++) {
-        output.writeMessage(3, errors_.get(i));
+        output.writeMessage(4, errors_.get(i));
       }
       unknownFields.writeTo(output);
     }
@@ -327,13 +351,17 @@ public final class StatisticProtos {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(1, getTotal());
       }
+      if (id_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(2, id_);
+      }
       for (int i = 0; i < populations_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(2, populations_.get(i));
+          .computeMessageSize(3, populations_.get(i));
       }
       for (int i = 0; i < errors_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(3, errors_.get(i));
+          .computeMessageSize(4, errors_.get(i));
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -355,6 +383,8 @@ public final class StatisticProtos {
         if (!getTotal()
             .equals(other.getTotal())) return false;
       }
+      if (getId()
+          != other.getId()) return false;
       if (!getPopulationsList()
           .equals(other.getPopulationsList())) return false;
       if (!getErrorsList()
@@ -374,6 +404,9 @@ public final class StatisticProtos {
         hash = (37 * hash) + TOTAL_FIELD_NUMBER;
         hash = (53 * hash) + getTotal().hashCode();
       }
+      hash = (37 * hash) + ID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getId());
       if (getPopulationsCount() > 0) {
         hash = (37 * hash) + POPULATIONS_FIELD_NUMBER;
         hash = (53 * hash) + getPopulationsList().hashCode();
@@ -523,6 +556,8 @@ public final class StatisticProtos {
           total_ = null;
           totalBuilder_ = null;
         }
+        id_ = 0L;
+
         if (populationsBuilder_ == null) {
           populations_ = java.util.Collections.emptyList();
           bitField0_ = (bitField0_ & ~0x00000001);
@@ -567,6 +602,7 @@ public final class StatisticProtos {
         } else {
           result.total_ = totalBuilder_.build();
         }
+        result.id_ = id_;
         if (populationsBuilder_ == null) {
           if (((bitField0_ & 0x00000001) != 0)) {
             populations_ = java.util.Collections.unmodifiableList(populations_);
@@ -635,6 +671,9 @@ public final class StatisticProtos {
         if (other == de.hpi.tdgt.Stats.StatisticProtos.Statistic.getDefaultInstance()) return this;
         if (other.hasTotal()) {
           mergeTotal(other.getTotal());
+        }
+        if (other.getId() != 0L) {
+          setId(other.getId());
         }
         if (populationsBuilder_ == null) {
           if (!other.populations_.isEmpty()) {
@@ -837,6 +876,36 @@ public final class StatisticProtos {
         return totalBuilder_;
       }
 
+      private long id_ ;
+      /**
+       * <code>uint64 id = 2;</code>
+       * @return The id.
+       */
+      public long getId() {
+        return id_;
+      }
+      /**
+       * <code>uint64 id = 2;</code>
+       * @param value The id to set.
+       * @return This builder for chaining.
+       */
+      public Builder setId(long value) {
+        
+        id_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint64 id = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearId() {
+        
+        id_ = 0L;
+        onChanged();
+        return this;
+      }
+
       private java.util.List<de.hpi.tdgt.Stats.StatisticProtos.Population> populations_ =
         java.util.Collections.emptyList();
       private void ensurePopulationsIsMutable() {
@@ -850,7 +919,7 @@ public final class StatisticProtos {
           de.hpi.tdgt.Stats.StatisticProtos.Population, de.hpi.tdgt.Stats.StatisticProtos.Population.Builder, de.hpi.tdgt.Stats.StatisticProtos.PopulationOrBuilder> populationsBuilder_;
 
       /**
-       * <code>repeated .statistics.Population populations = 2;</code>
+       * <code>repeated .statistics.Population populations = 3;</code>
        */
       public java.util.List<de.hpi.tdgt.Stats.StatisticProtos.Population> getPopulationsList() {
         if (populationsBuilder_ == null) {
@@ -860,7 +929,7 @@ public final class StatisticProtos {
         }
       }
       /**
-       * <code>repeated .statistics.Population populations = 2;</code>
+       * <code>repeated .statistics.Population populations = 3;</code>
        */
       public int getPopulationsCount() {
         if (populationsBuilder_ == null) {
@@ -870,7 +939,7 @@ public final class StatisticProtos {
         }
       }
       /**
-       * <code>repeated .statistics.Population populations = 2;</code>
+       * <code>repeated .statistics.Population populations = 3;</code>
        */
       public de.hpi.tdgt.Stats.StatisticProtos.Population getPopulations(int index) {
         if (populationsBuilder_ == null) {
@@ -880,7 +949,7 @@ public final class StatisticProtos {
         }
       }
       /**
-       * <code>repeated .statistics.Population populations = 2;</code>
+       * <code>repeated .statistics.Population populations = 3;</code>
        */
       public Builder setPopulations(
           int index, de.hpi.tdgt.Stats.StatisticProtos.Population value) {
@@ -897,7 +966,7 @@ public final class StatisticProtos {
         return this;
       }
       /**
-       * <code>repeated .statistics.Population populations = 2;</code>
+       * <code>repeated .statistics.Population populations = 3;</code>
        */
       public Builder setPopulations(
           int index, de.hpi.tdgt.Stats.StatisticProtos.Population.Builder builderForValue) {
@@ -911,7 +980,7 @@ public final class StatisticProtos {
         return this;
       }
       /**
-       * <code>repeated .statistics.Population populations = 2;</code>
+       * <code>repeated .statistics.Population populations = 3;</code>
        */
       public Builder addPopulations(de.hpi.tdgt.Stats.StatisticProtos.Population value) {
         if (populationsBuilder_ == null) {
@@ -927,7 +996,7 @@ public final class StatisticProtos {
         return this;
       }
       /**
-       * <code>repeated .statistics.Population populations = 2;</code>
+       * <code>repeated .statistics.Population populations = 3;</code>
        */
       public Builder addPopulations(
           int index, de.hpi.tdgt.Stats.StatisticProtos.Population value) {
@@ -944,7 +1013,7 @@ public final class StatisticProtos {
         return this;
       }
       /**
-       * <code>repeated .statistics.Population populations = 2;</code>
+       * <code>repeated .statistics.Population populations = 3;</code>
        */
       public Builder addPopulations(
           de.hpi.tdgt.Stats.StatisticProtos.Population.Builder builderForValue) {
@@ -958,7 +1027,7 @@ public final class StatisticProtos {
         return this;
       }
       /**
-       * <code>repeated .statistics.Population populations = 2;</code>
+       * <code>repeated .statistics.Population populations = 3;</code>
        */
       public Builder addPopulations(
           int index, de.hpi.tdgt.Stats.StatisticProtos.Population.Builder builderForValue) {
@@ -972,7 +1041,7 @@ public final class StatisticProtos {
         return this;
       }
       /**
-       * <code>repeated .statistics.Population populations = 2;</code>
+       * <code>repeated .statistics.Population populations = 3;</code>
        */
       public Builder addAllPopulations(
           java.lang.Iterable<? extends de.hpi.tdgt.Stats.StatisticProtos.Population> values) {
@@ -987,7 +1056,7 @@ public final class StatisticProtos {
         return this;
       }
       /**
-       * <code>repeated .statistics.Population populations = 2;</code>
+       * <code>repeated .statistics.Population populations = 3;</code>
        */
       public Builder clearPopulations() {
         if (populationsBuilder_ == null) {
@@ -1000,7 +1069,7 @@ public final class StatisticProtos {
         return this;
       }
       /**
-       * <code>repeated .statistics.Population populations = 2;</code>
+       * <code>repeated .statistics.Population populations = 3;</code>
        */
       public Builder removePopulations(int index) {
         if (populationsBuilder_ == null) {
@@ -1013,14 +1082,14 @@ public final class StatisticProtos {
         return this;
       }
       /**
-       * <code>repeated .statistics.Population populations = 2;</code>
+       * <code>repeated .statistics.Population populations = 3;</code>
        */
       public de.hpi.tdgt.Stats.StatisticProtos.Population.Builder getPopulationsBuilder(
           int index) {
         return getPopulationsFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .statistics.Population populations = 2;</code>
+       * <code>repeated .statistics.Population populations = 3;</code>
        */
       public de.hpi.tdgt.Stats.StatisticProtos.PopulationOrBuilder getPopulationsOrBuilder(
           int index) {
@@ -1030,7 +1099,7 @@ public final class StatisticProtos {
         }
       }
       /**
-       * <code>repeated .statistics.Population populations = 2;</code>
+       * <code>repeated .statistics.Population populations = 3;</code>
        */
       public java.util.List<? extends de.hpi.tdgt.Stats.StatisticProtos.PopulationOrBuilder> 
            getPopulationsOrBuilderList() {
@@ -1041,14 +1110,14 @@ public final class StatisticProtos {
         }
       }
       /**
-       * <code>repeated .statistics.Population populations = 2;</code>
+       * <code>repeated .statistics.Population populations = 3;</code>
        */
       public de.hpi.tdgt.Stats.StatisticProtos.Population.Builder addPopulationsBuilder() {
         return getPopulationsFieldBuilder().addBuilder(
             de.hpi.tdgt.Stats.StatisticProtos.Population.getDefaultInstance());
       }
       /**
-       * <code>repeated .statistics.Population populations = 2;</code>
+       * <code>repeated .statistics.Population populations = 3;</code>
        */
       public de.hpi.tdgt.Stats.StatisticProtos.Population.Builder addPopulationsBuilder(
           int index) {
@@ -1056,7 +1125,7 @@ public final class StatisticProtos {
             index, de.hpi.tdgt.Stats.StatisticProtos.Population.getDefaultInstance());
       }
       /**
-       * <code>repeated .statistics.Population populations = 2;</code>
+       * <code>repeated .statistics.Population populations = 3;</code>
        */
       public java.util.List<de.hpi.tdgt.Stats.StatisticProtos.Population.Builder> 
            getPopulationsBuilderList() {
@@ -1090,7 +1159,7 @@ public final class StatisticProtos {
           de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry, de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry.Builder, de.hpi.tdgt.Stats.StatisticProtos.ErrorEntryOrBuilder> errorsBuilder_;
 
       /**
-       * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+       * <code>repeated .statistics.ErrorEntry errors = 4;</code>
        */
       public java.util.List<de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry> getErrorsList() {
         if (errorsBuilder_ == null) {
@@ -1100,7 +1169,7 @@ public final class StatisticProtos {
         }
       }
       /**
-       * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+       * <code>repeated .statistics.ErrorEntry errors = 4;</code>
        */
       public int getErrorsCount() {
         if (errorsBuilder_ == null) {
@@ -1110,7 +1179,7 @@ public final class StatisticProtos {
         }
       }
       /**
-       * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+       * <code>repeated .statistics.ErrorEntry errors = 4;</code>
        */
       public de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry getErrors(int index) {
         if (errorsBuilder_ == null) {
@@ -1120,7 +1189,7 @@ public final class StatisticProtos {
         }
       }
       /**
-       * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+       * <code>repeated .statistics.ErrorEntry errors = 4;</code>
        */
       public Builder setErrors(
           int index, de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry value) {
@@ -1137,7 +1206,7 @@ public final class StatisticProtos {
         return this;
       }
       /**
-       * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+       * <code>repeated .statistics.ErrorEntry errors = 4;</code>
        */
       public Builder setErrors(
           int index, de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry.Builder builderForValue) {
@@ -1151,7 +1220,7 @@ public final class StatisticProtos {
         return this;
       }
       /**
-       * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+       * <code>repeated .statistics.ErrorEntry errors = 4;</code>
        */
       public Builder addErrors(de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry value) {
         if (errorsBuilder_ == null) {
@@ -1167,7 +1236,7 @@ public final class StatisticProtos {
         return this;
       }
       /**
-       * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+       * <code>repeated .statistics.ErrorEntry errors = 4;</code>
        */
       public Builder addErrors(
           int index, de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry value) {
@@ -1184,7 +1253,7 @@ public final class StatisticProtos {
         return this;
       }
       /**
-       * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+       * <code>repeated .statistics.ErrorEntry errors = 4;</code>
        */
       public Builder addErrors(
           de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry.Builder builderForValue) {
@@ -1198,7 +1267,7 @@ public final class StatisticProtos {
         return this;
       }
       /**
-       * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+       * <code>repeated .statistics.ErrorEntry errors = 4;</code>
        */
       public Builder addErrors(
           int index, de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry.Builder builderForValue) {
@@ -1212,7 +1281,7 @@ public final class StatisticProtos {
         return this;
       }
       /**
-       * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+       * <code>repeated .statistics.ErrorEntry errors = 4;</code>
        */
       public Builder addAllErrors(
           java.lang.Iterable<? extends de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry> values) {
@@ -1227,7 +1296,7 @@ public final class StatisticProtos {
         return this;
       }
       /**
-       * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+       * <code>repeated .statistics.ErrorEntry errors = 4;</code>
        */
       public Builder clearErrors() {
         if (errorsBuilder_ == null) {
@@ -1240,7 +1309,7 @@ public final class StatisticProtos {
         return this;
       }
       /**
-       * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+       * <code>repeated .statistics.ErrorEntry errors = 4;</code>
        */
       public Builder removeErrors(int index) {
         if (errorsBuilder_ == null) {
@@ -1253,14 +1322,14 @@ public final class StatisticProtos {
         return this;
       }
       /**
-       * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+       * <code>repeated .statistics.ErrorEntry errors = 4;</code>
        */
       public de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry.Builder getErrorsBuilder(
           int index) {
         return getErrorsFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+       * <code>repeated .statistics.ErrorEntry errors = 4;</code>
        */
       public de.hpi.tdgt.Stats.StatisticProtos.ErrorEntryOrBuilder getErrorsOrBuilder(
           int index) {
@@ -1270,7 +1339,7 @@ public final class StatisticProtos {
         }
       }
       /**
-       * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+       * <code>repeated .statistics.ErrorEntry errors = 4;</code>
        */
       public java.util.List<? extends de.hpi.tdgt.Stats.StatisticProtos.ErrorEntryOrBuilder> 
            getErrorsOrBuilderList() {
@@ -1281,14 +1350,14 @@ public final class StatisticProtos {
         }
       }
       /**
-       * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+       * <code>repeated .statistics.ErrorEntry errors = 4;</code>
        */
       public de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry.Builder addErrorsBuilder() {
         return getErrorsFieldBuilder().addBuilder(
             de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry.getDefaultInstance());
       }
       /**
-       * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+       * <code>repeated .statistics.ErrorEntry errors = 4;</code>
        */
       public de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry.Builder addErrorsBuilder(
           int index) {
@@ -1296,7 +1365,7 @@ public final class StatisticProtos {
             index, de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry.getDefaultInstance());
       }
       /**
-       * <code>repeated .statistics.ErrorEntry errors = 3;</code>
+       * <code>repeated .statistics.ErrorEntry errors = 4;</code>
        */
       public java.util.List<de.hpi.tdgt.Stats.StatisticProtos.ErrorEntry.Builder> 
            getErrorsBuilderList() {
@@ -5857,28 +5926,28 @@ public final class StatisticProtos {
   static {
     java.lang.String[] descriptorData = {
       "\n/src/main/java/de/hpi/tdgt/Stats/statis" +
-      "tic.proto\022\nstatistics\"\207\001\n\tStatistic\022%\n\005t" +
-      "otal\030\001 \001(\0132\026.statistics.Population\022+\n\013po" +
-      "pulations\030\002 \003(\0132\026.statistics.Population\022" +
-      "&\n\006errors\030\003 \003(\0132\026.statistics.ErrorEntry\"" +
-      "\212\003\n\nPopulation\022 \n\002ep\030\001 \001(\0132\024.statistics." +
-      "Endpoint\0223\n\021requestsPerSecond\030\002 \003(\0132\030.st" +
-      "atistics.LongIntEntry\0223\n\021failuresPerSeco" +
-      "nd\030\003 \003(\0132\030.statistics.LongIntEntry\022/\n\rre" +
-      "sponseTimes\030\004 \003(\0132\030.statistics.LongIntEn" +
-      "try\022\023\n\013numRequests\030\005 \001(\r\022\023\n\013numFailures\030" +
-      "\006 \001(\r\022\031\n\021totalResponseTime\030\007 \001(\004\022\027\n\017minR" +
-      "esponseTime\030\010 \001(\004\022\027\n\017maxResponseTime\030\t \001" +
-      "(\004\022\032\n\022totalContentLength\030\n \001(\r\022\021\n\tstartT" +
-      "ime\030\013 \001(\004\022\031\n\021latestRequestTime\030\014 \001(\004\"v\n\010" +
-      "Endpoint\022\013\n\003url\030\001 \001(\t\022+\n\006method\030\002 \001(\0162\033." +
-      "statistics.Endpoint.Method\"0\n\006Method\022\010\n\004" +
-      "POST\020\000\022\007\n\003GET\020\001\022\007\n\003PUT\020\002\022\n\n\006DELETE\020\003\"R\n\n" +
-      "ErrorEntry\022\r\n\005error\030\001 \001(\t\022\r\n\005count\030\002 \001(\r" +
-      "\022&\n\010endpoint\030\003 \001(\0132\024.statistics.Endpoint" +
-      "\"*\n\014LongIntEntry\022\013\n\003key\030\001 \001(\004\022\r\n\005value\030\002" +
-      " \001(\rB$\n\021de.hpi.tdgt.StatsB\017StatisticProt" +
-      "osb\006proto3"
+      "tic.proto\022\nstatistics\"\223\001\n\tStatistic\022%\n\005t" +
+      "otal\030\001 \001(\0132\026.statistics.Population\022\n\n\002id" +
+      "\030\002 \001(\004\022+\n\013populations\030\003 \003(\0132\026.statistics" +
+      ".Population\022&\n\006errors\030\004 \003(\0132\026.statistics" +
+      ".ErrorEntry\"\212\003\n\nPopulation\022 \n\002ep\030\001 \001(\0132\024" +
+      ".statistics.Endpoint\0223\n\021requestsPerSecon" +
+      "d\030\002 \003(\0132\030.statistics.LongIntEntry\0223\n\021fai" +
+      "luresPerSecond\030\003 \003(\0132\030.statistics.LongIn" +
+      "tEntry\022/\n\rresponseTimes\030\004 \003(\0132\030.statisti" +
+      "cs.LongIntEntry\022\023\n\013numRequests\030\005 \001(\r\022\023\n\013" +
+      "numFailures\030\006 \001(\r\022\031\n\021totalResponseTime\030\007" +
+      " \001(\004\022\027\n\017minResponseTime\030\010 \001(\004\022\027\n\017maxResp" +
+      "onseTime\030\t \001(\004\022\032\n\022totalContentLength\030\n \001" +
+      "(\r\022\021\n\tstartTime\030\013 \001(\004\022\031\n\021latestRequestTi" +
+      "me\030\014 \001(\004\"v\n\010Endpoint\022\013\n\003url\030\001 \001(\t\022+\n\006met" +
+      "hod\030\002 \001(\0162\033.statistics.Endpoint.Method\"0" +
+      "\n\006Method\022\010\n\004POST\020\000\022\007\n\003GET\020\001\022\007\n\003PUT\020\002\022\n\n\006" +
+      "DELETE\020\003\"R\n\nErrorEntry\022\r\n\005error\030\001 \001(\t\022\r\n" +
+      "\005count\030\002 \001(\r\022&\n\010endpoint\030\003 \001(\0132\024.statist" +
+      "ics.Endpoint\"*\n\014LongIntEntry\022\013\n\003key\030\001 \001(" +
+      "\004\022\r\n\005value\030\002 \001(\rB$\n\021de.hpi.tdgt.StatsB\017S" +
+      "tatisticProtosb\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -5889,7 +5958,7 @@ public final class StatisticProtos {
     internal_static_statistics_Statistic_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_statistics_Statistic_descriptor,
-        new java.lang.String[] { "Total", "Populations", "Errors", });
+        new java.lang.String[] { "Total", "Id", "Populations", "Errors", });
     internal_static_statistics_Population_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_statistics_Population_fieldAccessorTable = new

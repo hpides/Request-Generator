@@ -65,10 +65,16 @@ class TimeStorage protected constructor() {
     }
 
 
-    private var stats: Statistic = Statistic();
+    private var stats: Statistic = Statistic(0);
 
     private fun toMQTTMessage(): ByteArray {
         //val msg = HtmlUtils.htmlEscape(stats.toString()).toByteArray(StandardCharsets.ISO_8859_1);
+
+        // hack to set id, under assumption, that only 1 test runs.
+        // this assumption is valid, cause the stats class couldn't handle multiple threads anyway.
+        // also who in there right mind would ever run 2 load tests at the same time on the same machine.
+        stats.id = testID;
+
         val bytes = stats.Serialize().toByteArray();
         /*val HEX_ARRAY = "0123456789ABCDEF".toCharArray()
         val hexChars = CharArray(bytes.size * 2)
@@ -125,7 +131,7 @@ class TimeStorage protected constructor() {
             reporter!!.interrupt()
         }
         reporter = null
-        stats = Statistic();
+        stats = Statistic(0);
     }
 
     fun setSendOnlyNonEmpty(sendOnlyNonEmpty: Boolean) {

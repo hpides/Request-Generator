@@ -17,13 +17,11 @@ public class Statistic {
     Population total;
     Map<Endpoint, Population> populations;
     TIntObjectMap<ErrorEntry> errors;
+    public long id;
 
-    public Statistic() {
-        try {
-            total = new Population(this, new Endpoint(new URL("http://total"), "GET"));
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+    public Statistic(long id) throws MalformedURLException {
+        total = new Population(this, new Endpoint(new URL("http://total"), "GET"));
+        this.id = id;
         populations = new HashMap<>();
         errors = new TIntObjectHashMap<>();
     }
@@ -112,6 +110,7 @@ public class Statistic {
     public StatisticProtos.Statistic Serialize(){
         StatisticProtos.Statistic.Builder builder = StatisticProtos.Statistic.newBuilder();
         builder.setTotal(total.Serialize());
+        builder.setId(this.id);
         populations.values().forEach((val) -> {builder.addPopulations(val.Serialize());});
         errors.forEachValue((val) -> {
             builder.addErrors(val.Serialize());
