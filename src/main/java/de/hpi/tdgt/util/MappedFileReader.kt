@@ -7,6 +7,7 @@ import java.io.Closeable
 import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousFileChannel
 import java.nio.channels.CompletionHandler
+import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.CompletableFuture
@@ -48,7 +49,7 @@ class MappedFileReader//e.g. file not found//async reading taken from http://www
         }
     }
     private val mutex = Semaphore(1)
-    private var currentBufferOffset = 0;
+    private var currentBufferOffset = 0
     suspend fun nextLine(): String? {
 
         if(closed){
@@ -58,15 +59,16 @@ class MappedFileReader//e.g. file not found//async reading taken from http://www
         if (!readData) {
             readData()
         }
+        //method is synchronized
         val line = StringBuilder()
-        if(offset >= channel.size()){
+        if(offset >= fileSize){
             close()
             return line.toString()
         }
         var current = mappedData[currentBufferOffset].toChar()
         //left when line break is detected
         while (true) {
-            if(offset + 1 >= channel.size()){
+            if(offset + 1 >= fileSize){
                 close()
                 return line.toString()
             }
@@ -82,11 +84,12 @@ class MappedFileReader//e.g. file not found//async reading taken from http://www
                 advanceBuffer()
                 break
             } else {
-                line.append(current)
+                //IntelliJ warned the append method with a char might be blocking
+                line.append(current.toString())
             }
             offset++
             advanceBuffer()
-            if(offset >= channel.size()){
+            if(offset >= fileSize){
                 close()
                 return line.toString()
             }
@@ -99,7 +102,7 @@ class MappedFileReader//e.g. file not found//async reading taken from http://www
     private suspend fun advanceBuffer() {
         currentBufferOffset++
         //passed mapped file segement --> map next segment
-        if(currentBufferOffset == bufferSizeBytes - 1){
+        if(currentBufferOffset == bufferSize - 1){
             currentBufferOffset = 0
             readData()
         }
@@ -107,7 +110,7 @@ class MappedFileReader//e.g. file not found//async reading taken from http://www
 
     fun hasNextLine(): Boolean {
         if(closed) return false
-        return  offset <= channel.size()
+        return  offset <= fileSize
     }
 
     fun ioException(): Exception? {
@@ -120,6 +123,7 @@ class MappedFileReader//e.g. file not found//async reading taken from http://www
         if(::channel.isInitialized) {
             channel.close()
         }
+	buffer.clear()
     }
 
     companion object {
@@ -128,14 +132,17 @@ class MappedFileReader//e.g. file not found//async reading taken from http://www
         )
         //1 mb is almost guaranteed to be available, yet large enough to make sense (almost certainly multiple of system block size)
         @JvmStatic
-        private val bufferSizeBytes = 1024*1024
+        public var bufferSize:Int = 1024*1024*64
     }
 
+    private var fileSize:Long = 0
+    
     init {
         try {
             val path = Paths.get(filepath)
+            fileSize = Files.size(path)
             channel = AsynchronousFileChannel.open(path, StandardOpenOption.READ)
-            buffer = ByteBuffer.allocate(bufferSizeBytes)
+            buffer = ByteBuffer.allocate(bufferSize)
             //e.g. file not found
         } catch (e:Exception){
             log.error("Error creating mappedFileReader: ",e)
