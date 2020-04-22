@@ -52,12 +52,12 @@ class DeserializeAtomTest {
 
     @Test
     fun firstAtomOfFirstStoryIsDataGeneration() {
-        Utils.assertInstanceOf(secondAtomOfFirstStory, Data_Generation::class.java)
+        Utils.assertInstanceOf(secondAtomOfFirstStory, Data_GenerationAtom::class.java)
     }
 
     @Test
     fun sixthAtomOfFirstStoryIsDelay() {
-        Utils.assertInstanceOf(seventhAtomOfFirstStory, Delay::class.java)
+        Utils.assertInstanceOf(seventhAtomOfFirstStory, DelayAtom::class.java)
     }
 
     @Test
@@ -68,7 +68,7 @@ class DeserializeAtomTest {
     @Test
     @Throws(IOException::class)
     fun firstAtomOfFirstStoryGetsUsernameAndPasswordFromUsers() {
-        val firstAtomOfFirstStory = secondAtomOfFirstStory as Data_Generation?
+        val firstAtomOfFirstStory = secondAtomOfFirstStory as Data_GenerationAtom?
         Assertions.assertArrayEquals(
             arrayOf("username", "password"),
             firstAtomOfFirstStory!!.data
@@ -79,7 +79,7 @@ class DeserializeAtomTest {
     @Test
     fun sixthAtomOfFirstStoryWaitsOneSecond() {
         val sixthAtomOfFirstStory =
-            seventhAtomOfFirstStory as Delay?
+            seventhAtomOfFirstStory as DelayAtom?
         Assertions.assertEquals(1000, sixthAtomOfFirstStory!!.delayMs)
     }
 
@@ -196,7 +196,7 @@ class DeserializeAtomTest {
     fun setFirstAtomOfFirstStoryIsStart() {
         MatcherAssert.assertThat(
             firstAtomOfFirstStory,
-            Matchers.instanceOf(Start::class.java)
+            Matchers.instanceOf(StartAtom::class.java)
         )
     }
     @Test

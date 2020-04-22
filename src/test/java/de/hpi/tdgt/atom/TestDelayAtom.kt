@@ -1,28 +1,27 @@
 package de.hpi.tdgt.atom
 
-import de.hpi.tdgt.test.story.atom.Delay
+import de.hpi.tdgt.test.story.atom.DelayAtom
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.hamcrest.MatcherAssert
-import org.hamcrest.Matchers
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-class TestDelay {
-    private var delayAtom: Delay? = null
+class TestDelayAtom {
+    private var delayAtomAtom: DelayAtom? = null
 
     @BeforeEach
     fun prepareTest() {
-        delayAtom = Delay()
+        delayAtomAtom = DelayAtom()
     }
 
     @Test
     fun delay100ms(){
-        delayAtom!!.delayMs = 100
+        delayAtomAtom!!.delayMs = 100
         val startTime = System.currentTimeMillis()
         runBlocking {
-            delayAtom!!.perform()
+            delayAtomAtom!!.perform()
         }
         val endTime = System.currentTimeMillis()
         Assertions.assertTrue(endTime - startTime > 90)
@@ -30,11 +29,11 @@ class TestDelay {
 
     @Test
     fun delay1000ms() {
-        delayAtom!!.delayMs = 1000
+        delayAtomAtom!!.delayMs = 1000
         val startTime = System.currentTimeMillis()
         //else we will not wait at all
         runBlocking {
-            delayAtom!!.perform()
+            delayAtomAtom!!.perform()
         }
         val endTime = System.currentTimeMillis()
         Assertions.assertTrue(endTime - startTime > 990)
@@ -42,13 +41,13 @@ class TestDelay {
 
     @Test
     fun cloneCreatesEquivalentObject() = runBlockingTest {
-        val clone = delayAtom!!.clone()
-        MatcherAssert.assertThat("Clone should equal the cloned object!",clone.equals(delayAtom))
+        val clone = delayAtomAtom!!.clone()
+        MatcherAssert.assertThat("Clone should equal the cloned object!",clone.equals(delayAtomAtom))
     }
 
     @Test
     fun cloneCreatesOtherObject() = runBlockingTest {
-        val clone = delayAtom!!.clone()
-        Assertions.assertNotSame(clone, delayAtom)
+        val clone = delayAtomAtom!!.clone()
+        Assertions.assertNotSame(clone, delayAtomAtom)
     }
 }

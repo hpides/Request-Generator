@@ -3,7 +3,7 @@ package de.hpi.tdgt.test.story.atom
 import lombok.EqualsAndHashCode
 
 @EqualsAndHashCode(callSuper = false)
-class Start : Atom() {
+class StartAtom : Atom() {
     @Throws(InterruptedException::class)
     override suspend fun perform() {
         //Noop, just supposed to start the following atoms
@@ -11,6 +11,6 @@ class Start : Atom() {
 
     override fun performClone(): Atom {
         //stateless
-        return Start()
+        return StartAtom()
     }
 }

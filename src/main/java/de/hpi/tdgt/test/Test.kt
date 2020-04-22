@@ -4,9 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import de.hpi.tdgt.concurrency.Event
 import de.hpi.tdgt.test.story.UserStory
-import de.hpi.tdgt.test.story.atom.Data_Generation
-import de.hpi.tdgt.test.story.atom.WarmupEnd
-import de.hpi.tdgt.test.time_measurement.TimeStorage
+import de.hpi.tdgt.test.story.atom.Data_GenerationAtom
+import de.hpi.tdgt.test.story.atom.WarmupEndAtom
 import de.hpi.tdgt.util.PropertiesReader
 import jdk.jshell.spi.ExecutionControl
 import org.apache.logging.log4j.LogManager
@@ -23,7 +22,6 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.sync.Semaphore
 import java.lang.Exception
-import java.lang.Long.max
 import java.lang.Thread.sleep
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicLong
@@ -95,7 +93,7 @@ class Test {
         val watchdog = Thread(ActiveInstancesThrottler.instance)
         watchdog.priority = Thread.MAX_PRIORITY
         watchdog.start()
-        Event.unsignal(WarmupEnd.eventName)
+        Event.unsignal(WarmupEndAtom.eventName)
         //will run stories with warmup only, so they can run until WarmupEnd is reached
         val threads =
             runTest(
@@ -108,8 +106,8 @@ class Test {
                 .sum()
         //wait for all warmup ends to be stuck
         val future = Thread {
-            while (waitersToExpect > WarmupEnd.waiting) {
-                log.info("Waiting for warmup to complete: " + WarmupEnd.waiting + " of " + waitersToExpect + " complete!")
+            while (waitersToExpect > WarmupEndAtom.waiting) {
+                log.info("Waiting for warmup to complete: " + WarmupEndAtom.waiting + " of " + waitersToExpect + " complete!")
                 sleep(1000)
             }
         }
@@ -153,7 +151,7 @@ class Test {
             for (i in 0 until repeat) {
                 log.info("Starting test run $i of $repeat")
                 //start all warmup tasks
-                WarmupEnd.startTest()
+                WarmupEndAtom.startTest()
                 //this thread makes sure that requests per second get limited
                 ActiveInstancesThrottler.setInstance(activeInstancesPerSecond)
                 val watchdog = Thread(ActiveInstancesThrottler.instance)
@@ -177,7 +175,7 @@ class Test {
                 watchdog.interrupt()
                 //remove global state
                 ActiveInstancesThrottler.reset()
-                Data_Generation.reset()
+                Data_GenerationAtom.reset()
                 //this resets all state atoms might have
                 stories = cloneStories(stories_clone)
                 //do not run another warmup after the last run, because it would not be finished
@@ -187,8 +185,6 @@ class Test {
 
                 log.info("Test run $i complete!")
             }
-            //make sure all times are sent
-            TimeStorage.instance.flush()
             //if there is only this node, the test is over; else, other nodes might still be running
             val endMessage = (if(nodes == 1L){"testEnd"}else{"nodeEnd $nodeNumber "} +"$testId").toByteArray(StandardCharsets.UTF_8)
             try {
@@ -244,7 +240,7 @@ class Test {
         //old testStart should be gone by now
         Event.unsignal(testStartEvent)
         //mapping all files eagerly might improve performance, also this is needed to set an offset in the data
-        Arrays.stream(stories).forEach{ story -> Arrays.stream(story.getAtoms()).forEach { atom -> if(atom is Data_Generation){
+        Arrays.stream(stories).forEach{ story -> Arrays.stream(story.getAtoms()).forEach { atom -> if(atom is Data_GenerationAtom){
             atom.offsetPercentage = nodeNumber.toDouble() / nodes
             runBlocking {
                 atom.initScanner()

@@ -3,8 +3,8 @@ package de.hpi.tdgt.atom
 import de.hpi.tdgt.Utils
 import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.Atom
-import de.hpi.tdgt.test.story.atom.Data_Generation
-import de.hpi.tdgt.test.story.atom.Data_Generation.Companion.reset
+import de.hpi.tdgt.test.story.atom.Data_GenerationAtom
+import de.hpi.tdgt.test.story.atom.Data_GenerationAtom.Companion.reset
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.io.IOUtils
 import org.apache.logging.log4j.LogManager
@@ -22,26 +22,26 @@ import java.util.*
 import java.util.concurrent.ExecutionException
 
 class TestDataGeneration {
-    private var firstGeneration: Data_Generation? = null
-    private var secondGeneration: Data_Generation? = null
-    private var thirdGeneration: Data_Generation? = null
+    private var firstGenerationAtom: Data_GenerationAtom? = null
+    private var secondGenerationAtom: Data_GenerationAtom? = null
+    private var thirdGenerationAtom: Data_GenerationAtom? = null
     private var users: File? = null
     private var posts: File? = null
     @BeforeEach
     @Throws(IOException::class)
     fun beforeEach() {
-        firstGeneration = Data_Generation()
-        firstGeneration!!.data = arrayOf("username", "password")
-        firstGeneration!!.table = "users"
-        firstGeneration!!.repeat = 1
-        secondGeneration = Data_Generation()
-        secondGeneration!!.data = arrayOf("username", "password")
-        secondGeneration!!.table = "users"
-        secondGeneration!!.repeat = 1
-        thirdGeneration = Data_Generation()
-        thirdGeneration!!.data = arrayOf("title", "text")
-        thirdGeneration!!.table = "posts"
-        thirdGeneration!!.repeat = 1
+        firstGenerationAtom = Data_GenerationAtom()
+        firstGenerationAtom!!.data = arrayOf("username", "password")
+        firstGenerationAtom!!.table = "users"
+        firstGenerationAtom!!.repeat = 1
+        secondGenerationAtom = Data_GenerationAtom()
+        secondGenerationAtom!!.data = arrayOf("username", "password")
+        secondGenerationAtom!!.table = "users"
+        secondGenerationAtom!!.repeat = 1
+        thirdGenerationAtom = Data_GenerationAtom()
+        thirdGenerationAtom!!.data = arrayOf("title", "text")
+        thirdGenerationAtom!!.table = "posts"
+        thirdGenerationAtom!!.repeat = 1
         users = File("users.csv")
         users!!.deleteOnExit()
         var os = FileOutputStream(users)
@@ -65,8 +65,8 @@ class TestDataGeneration {
     @Throws(InterruptedException::class, ExecutionException::class)
     fun firstGenerationShouldContainFirstElementOfUsersCSV() {
         var params: Map<String, String> = HashMap()
-        runBlocking{firstGeneration!!.run(params)}
-        params = firstGeneration!!.knownParams
+        runBlocking{firstGenerationAtom!!.run(params)}
+        params = firstGenerationAtom!!.knownParams
         MatcherAssert.assertThat<Map<String, String>>(
             params,
             Matchers.hasEntry("username", "AMAR.Aaccf")
@@ -81,9 +81,9 @@ class TestDataGeneration {
     @Throws(InterruptedException::class, ExecutionException::class)
     fun firstGenerationShouldContainSecondElementOfUsersCSV() {
         var params: Map<String, String> = HashMap()
-        runBlocking{firstGeneration!!.run(params)}
-        runBlocking{firstGeneration!!.run(params)}
-        params = firstGeneration!!.knownParams
+        runBlocking{firstGenerationAtom!!.run(params)}
+        runBlocking{firstGenerationAtom!!.run(params)}
+        params = firstGenerationAtom!!.knownParams
         MatcherAssert.assertThat<Map<String, String>>(
             params,
             Matchers.hasEntry("username", "ATP.Aaren")
@@ -100,8 +100,8 @@ class TestDataGeneration {
         var params: Map<String, String> = HashMap()
         var otherParams: Map<String, String> =
             HashMap()
-        runBlocking{firstGeneration!!.run(params)}
-        params = firstGeneration!!.knownParams
+        runBlocking{firstGenerationAtom!!.run(params)}
+        params = firstGenerationAtom!!.knownParams
         //pointer to thread-local storage that will be overwritten immediately
         MatcherAssert.assertThat<Map<String, String>>(
             params,
@@ -111,8 +111,8 @@ class TestDataGeneration {
             params,
             Matchers.hasEntry("password", "Dsa9h")
         )
-        runBlocking{secondGeneration!!.run(params)}
-        otherParams = secondGeneration!!.knownParams
+        runBlocking{secondGenerationAtom!!.run(params)}
+        otherParams = secondGenerationAtom!!.knownParams
         MatcherAssert.assertThat<Map<String, String>>(
             otherParams,
             Matchers.hasEntry("username", "ATP.Aaren")
@@ -124,7 +124,7 @@ class TestDataGeneration {
     }
 
     private inner class DataGenRunnable : Runnable {
-        private var gen: Data_Generation? = null
+        private var gen: Data_GenerationAtom? = null
         //make sure to access state in the thread the operation ran in
         var knownParams: Map<String, String>? = null
             private set
@@ -142,14 +142,14 @@ class TestDataGeneration {
             knownParams = gen!!.knownParams
         }
 
-        fun setGen(gen: Data_Generation?) {
+        fun setGen(gen: Data_GenerationAtom?) {
             this.gen = gen
         }
     }
 
-    private fun runAsync(generation: Data_Generation?): DataGenRunnable {
+    private fun runAsync(generationAtom: Data_GenerationAtom?): DataGenRunnable {
         val ret = DataGenRunnable()
-        ret.setGen(generation)
+        ret.setGen(generationAtom)
         return ret
     }
 
@@ -158,8 +158,8 @@ class TestDataGeneration {
     fun differentGenerationsWithSameTableProduceDifferentDataInDifferentThreads() {
         val params: Map<String, String>
         val otherParams: Map<String, String>
-        val generationRunnable = runAsync(firstGeneration)
-        val otherGenerationRunnable = runAsync(secondGeneration)
+        val generationRunnable = runAsync(firstGenerationAtom)
+        val otherGenerationRunnable = runAsync(secondGenerationAtom)
         val generationThread = Thread(generationRunnable)
         generationThread.start()
         val otherGenerationThread = Thread(otherGenerationRunnable)
@@ -184,9 +184,9 @@ class TestDataGeneration {
         val params: Map<String, String>
         val otherParams: Map<String, String>
         val thirdParams: Map<String, String>
-        val generationRunnable = runAsync(firstGeneration)
-        val otherGenerationRunnable = runAsync(secondGeneration)
-        val thirdGenerationRunnable = runAsync(thirdGeneration)
+        val generationRunnable = runAsync(firstGenerationAtom)
+        val otherGenerationRunnable = runAsync(secondGenerationAtom)
+        val thirdGenerationRunnable = runAsync(thirdGenerationAtom)
         val generationThread = Thread(generationRunnable)
         generationThread.start()
         val otherGenerationThread = Thread(otherGenerationRunnable)
@@ -226,8 +226,8 @@ class TestDataGeneration {
     @Throws(InterruptedException::class, ExecutionException::class)
     fun testClone() {
         val params: Map<String, String> = HashMap()
-        val clone = firstGeneration!!.clone()
-        runBlocking{firstGeneration!!.run(params)}
+        val clone = firstGenerationAtom!!.clone()
+        runBlocking{firstGenerationAtom!!.run(params)}
         MatcherAssert.assertThat<Map<String, String>>(
             clone.knownParams,
             Matchers.anEmptyMap()
@@ -237,19 +237,19 @@ class TestDataGeneration {
     @Test
     fun cloneCreatesEquivalentObject() {
         val params: Map<String, String> = HashMap()
-        val clone = firstGeneration!!.clone()
-        MatcherAssert.assertThat(clone, Matchers.equalTo<Atom?>(firstGeneration))
+        val clone = firstGenerationAtom!!.clone()
+        MatcherAssert.assertThat(clone, Matchers.equalTo<Atom?>(firstGenerationAtom))
     }
 
     @Test
     @Throws(InterruptedException::class, ExecutionException::class)
     fun dataGenerationCanHandleEmptyValuesInLastCSVColumn() {
         for (i in 0..16) {
-            runBlocking{firstGeneration!!.run(HashMap())}
+            runBlocking{firstGenerationAtom!!.run(HashMap())}
         }
         //17th line is "Abdul-Nour.Abdallah;"
         val params: Map<String, String>
-        params = firstGeneration!!.knownParams
+        params = firstGenerationAtom!!.knownParams
         MatcherAssert.assertThat<Map<String, String>>(
             params,
             Matchers.hasEntry("username", "Abdul-Nour.Abdallah")
@@ -263,7 +263,7 @@ class TestDataGeneration {
     @Test
     @Throws(InterruptedException::class, ExecutionException::class)
     fun dataGenerationThrowsNoErrorsIfEmpty() {
-        val dataGeneration = Data_Generation()
+        val dataGeneration = Data_GenerationAtom()
         dataGeneration.data = arrayOf()
         dataGeneration.table = ""
         dataGeneration.predecessorCount = 0
@@ -276,7 +276,7 @@ class TestDataGeneration {
     @Test
     @Throws(InterruptedException::class, ExecutionException::class)
     fun dataGenerationCanGenerateStaticValues() {
-        val dataGeneration = Data_Generation()
+        val dataGeneration = Data_GenerationAtom()
         dataGeneration.data = arrayOf()
         val valuesToGenerate:MutableMap<String,String> = HashMap<String, String>()
         valuesToGenerate["val1"] = "abc"
@@ -303,13 +303,13 @@ class TestDataGeneration {
         val mockStory = UserStory()
         mockTest.setStories(arrayOf(mockStory))
         mockStory.scalePercentage = 1.0
-        mockStory.setAtoms(arrayOf(firstGeneration!!))
-        firstGeneration!!.setParent(mockStory)
+        mockStory.setAtoms(arrayOf(firstGenerationAtom!!))
+        firstGenerationAtom!!.setParent(mockStory)
         //else knownParams would be gone
-        firstGeneration!!.actuallyPerformClone = false
+        firstGenerationAtom!!.actuallyPerformClone = false
         var params: Map<String, String> = HashMap()
         runBlocking{mockTest.start()}
-        params = firstGeneration!!.knownParams
+        params = firstGenerationAtom!!.knownParams
         assertThat<Map<String, String>>(
             params,
             Matchers.hasEntry("username", "ATP.Aaren")

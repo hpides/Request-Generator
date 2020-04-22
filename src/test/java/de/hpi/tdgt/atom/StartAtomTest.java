@@ -3,18 +3,16 @@ package de.hpi.tdgt.atom;
 import de.hpi.tdgt.Utils;
 import de.hpi.tdgt.deserialisation.Deserializer;
 import de.hpi.tdgt.test.story.atom.Atom;
-import de.hpi.tdgt.test.story.atom.Start;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 
-public class StartTest {
+public class StartAtomTest {
 
     private Atom firstAtomOfFirstStory;
 

@@ -488,9 +488,7 @@ class RestClient {
         storage.addSample(
                 request.endpoint,
                 res.durationMillis(),
-                res.contentLength,
-                request.story?.name,
-                request.testId
+                res.contentLength
         )
         log.info("Request took " + res.durationMillis() + " ms.")
         requestsSent.incrementAndGet()

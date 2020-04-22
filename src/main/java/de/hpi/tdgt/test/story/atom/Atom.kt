@@ -24,10 +24,10 @@ import java.util.stream.Collectors
 ) //tell Jackson which subtypes are allowed
 @JsonSubTypes(
     JsonSubTypes.Type(value = RequestAtom::class, name = "REQUEST"),
-    JsonSubTypes.Type(value = Data_Generation::class, name = "DATA_GENERATION"),
-    JsonSubTypes.Type(value = Delay::class, name = "DELAY"),
-    JsonSubTypes.Type(value = Start::class, name = "START"),
-    JsonSubTypes.Type(value = WarmupEnd::class, name = "WARMUP_END")
+    JsonSubTypes.Type(value = Data_GenerationAtom::class, name = "DATA_GENERATION"),
+    JsonSubTypes.Type(value = DelayAtom::class, name = "DELAY"),
+    JsonSubTypes.Type(value = StartAtom::class, name = "START"),
+    JsonSubTypes.Type(value = WarmupEndAtom::class, name = "WARMUP_END")
 )
 abstract class Atom : Cloneable {
     var name: String? = null

@@ -1,6 +1,5 @@
 package de.hpi.tdgt.mqtt
 
-import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import de.hpi.tdgt.RequestHandlingFramework
 import de.hpi.tdgt.Utils
@@ -9,11 +8,6 @@ import de.hpi.tdgt.controllers.UploadController
 import de.hpi.tdgt.deserialisation.Deserializer.deserialize
 import de.hpi.tdgt.test.Test
 import de.hpi.tdgt.test.story.UserStory
-import de.hpi.tdgt.test.story.atom.Data_Generation
-import de.hpi.tdgt.test.story.atom.RequestAtom
-import de.hpi.tdgt.test.story.atom.assertion.*
-import de.hpi.tdgt.test.time_measurement.TimeStorage
-import de.hpi.tdgt.util.Pair
 import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -22,7 +16,6 @@ import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -37,7 +30,6 @@ import java.lang.Thread.sleep
 import java.net.URL
 import java.util.*
 import java.util.concurrent.ExecutionException
-import kotlin.collections.HashMap
 
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(classes = [WebApplication::class], webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -56,7 +48,6 @@ class MQTTTest : RequestHandlingFramework() {
     fun beforeEach() { //this test MUST handle asynch behaviour
         //AssertionStorage.instance.isStoreEntriesAsynch = true
         //scenario that a message we want and a message we don't want arrive at the same time is prevented
-        TimeStorage.instance.setSendOnlyNonEmpty(true)
         val mockTest = Test()
         mockParent.parent = mockTest
         mockParent.name = mockStoryName
@@ -909,7 +900,7 @@ class MQTTTest : RequestHandlingFramework() {
             startMessage = findMessageStartingWith(message, messageStart)
             sleep(1000)
         }
-        val parts = startMessage!!.split(" ".toRegex()).toTypedArray()
+        val parts = startMessage.split(" ".toRegex()).toTypedArray()
         //if there are whitespaces in the string, it will be split by them to
         MatcherAssert.assertThat(parts.size, Matchers.greaterThanOrEqualTo(3))
         MatcherAssert.assertThat(

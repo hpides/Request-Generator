@@ -88,6 +88,12 @@ class UploadController {
             log.error(e)
             return ResponseEntity(HttpStatus.BAD_REQUEST)
         }
+        if(currentThread?.isAlive == true)
+        {
+            log.error("Multiple tests running at the same time are not allowed")
+            return ResponseEntity(HttpStatus.FORBIDDEN)
+        }
+
         val ret = ResponseEntity<String>(HttpStatus.OK)
         currentThread = Thread {runTest(testToRun, id)}
         currentThread!!.start()
@@ -150,6 +156,12 @@ class UploadController {
             log.error(e)
             return ResponseEntity(HttpStatus.BAD_REQUEST)
         }
+        if(currentThread?.isAlive == true)
+        {
+            log.error("Multiple tests running at the same time are not allowed")
+            return ResponseEntity(HttpStatus.FORBIDDEN)
+        }
+
         val ret = ResponseEntity<String>(HttpStatus.OK)
         //e.g. to adapt the scale factor
         testToRun.nodes = nodes
@@ -165,6 +177,7 @@ class UploadController {
     var currentThread: Thread? = null
     private fun runTest(testToRun: Test, id: Long) {
         testToRun.testId = id
+        TimeStorage.instance.setTestId(id)
         runBlocking {
             Event.reset()
             val threads: MutableCollection<Future<*>> = testToRun.warmup()
@@ -177,7 +190,6 @@ class UploadController {
         TimeStorage.instance.reset()
         log.error(RestClient.requestsSent.get().toString() + " requests sent.")
         RestClient.requestsSent.set(0)
-        currentThread = null
     }
     //will return 500 if exception during test occurs
     @PostMapping(

@@ -6,7 +6,7 @@ import de.hpi.tdgt.test.Test
 import de.hpi.tdgt.test.Test.ActiveInstancesThrottler
 import de.hpi.tdgt.test.ThreadRecycler
 import de.hpi.tdgt.test.story.atom.Atom
-import de.hpi.tdgt.test.story.atom.WarmupEnd
+import de.hpi.tdgt.test.story.atom.WarmupEndAtom
 import de.hpi.tdgt.util.PropertiesReader
 import io.netty.util.HashedWheelTimer
 import kotlinx.coroutines.*
@@ -124,7 +124,7 @@ class UserStory : Cloneable {
 
     fun hasWarmup(): Boolean {
         for (atom in atoms) {
-            if (atom is WarmupEnd) {
+            if (atom is WarmupEndAtom) {
                 return true
             }
         }
@@ -144,7 +144,7 @@ class UserStory : Cloneable {
     fun numberOfWarmupEnds(): Int {
         var warmupEnds = 0
         for (atom in atoms) {
-            if (atom is WarmupEnd) {
+            if (atom is WarmupEndAtom) {
                 warmupEnds += atom.repeat
             }
         }

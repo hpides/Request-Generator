@@ -4,7 +4,7 @@ import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.delay
 import org.apache.logging.log4j.LogManager
 
-class Delay : Atom() {
+class DelayAtom : Atom() {
     var delayMs = 0
     override suspend fun perform() {
         try {
@@ -21,14 +21,14 @@ class Delay : Atom() {
     }
 
     public override fun performClone(): Atom {
-        val ret = Delay()
+        val ret = DelayAtom()
         ret.delayMs = delayMs
         return ret
     }
 
     override fun equals(other: Any?): Boolean {
         if (other === this) return true
-        if (other !is Delay) return false
+        if (other !is DelayAtom) return false
         val otherObject = other
         if (!otherObject.canEqual(this as Any)) return false
         if (!super.equals(otherObject)) return false
@@ -36,7 +36,7 @@ class Delay : Atom() {
     }
 
     override fun canEqual(other: Any?): Boolean {
-        return other is Delay
+        return other is DelayAtom
     }
 
     override fun hashCode(): Int {
@@ -47,6 +47,6 @@ class Delay : Atom() {
     }
 
     companion object {
-        private val log = LogManager.getLogger(Delay::class.java)
+        private val log = LogManager.getLogger(DelayAtom::class.java)
     }
 }

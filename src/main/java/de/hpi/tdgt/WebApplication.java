@@ -1,11 +1,10 @@
 package de.hpi.tdgt;
 
 import de.hpi.tdgt.controllers.UploadController;
-import de.hpi.tdgt.test.story.atom.Data_Generation;
+import de.hpi.tdgt.test.story.atom.Data_GenerationAtom;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import net.sourceforge.argparse4j.ArgumentParsers;
-import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -21,10 +20,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 
 @Log4j2
 @SpringBootApplication
@@ -65,7 +61,7 @@ public class WebApplication {
         try {
             //Spring Boot might handle the other params --> ignore those in the list (the unrecognised ones)
             Namespace res = parser.parseKnownArgs(args, new LinkedList<>());
-            Data_Generation.outputDirectory = res.getString("PDGFDirectory") + File.separator + "output";
+            Data_GenerationAtom.outputDirectory = res.getString("PDGFDirectory") + File.separator + "output";
             UploadController.PDGF_DIR = res.getString("PDGFDirectory");
             UploadController.JAVA_7_DIR = res.getString("JAVA7");
             val load = res.getString("load");
