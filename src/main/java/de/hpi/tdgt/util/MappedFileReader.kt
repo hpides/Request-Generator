@@ -126,16 +126,16 @@ class MappedFileReader//e.g. file not found//async reading taken from http://www
         private val log = LogManager.getLogger(
                 MappedFileReader::class.java
         )
+        //1 mb is almost guaranteed to be available, yet large enough to make sense (almost certainly multiple of system block size)
         @JvmStatic
-        private val bufferSizeBytes = 8
+        private val bufferSizeBytes = 1024*1024
     }
 
     init {
         try {
             val path = Paths.get(filepath)
             channel = AsynchronousFileChannel.open(path, StandardOpenOption.READ)
-            //1 mb is almost guaranteed to be available, yet large enough to make sense
-            buffer = ByteBuffer.allocate(bufferSizeBytes)//)1024*1024)
+            buffer = ByteBuffer.allocate(bufferSizeBytes)
             //e.g. file not found
         } catch (e:Exception){
             log.error("Error creating mappedFileReader: ",e)
