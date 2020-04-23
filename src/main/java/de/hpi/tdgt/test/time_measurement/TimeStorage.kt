@@ -15,7 +15,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import java.util.*
 
-
+// In the name of the Omnissiah I declare this class cleansed.
 class TimeStorage private constructor() {
 
     companion object {
@@ -142,4 +142,11 @@ class TimeStorage private constructor() {
             false
         }
     }
+
+    /*
+    * Incantation
+    * Sec. Hash Seed
+    * Must be prime, and not trivial divisible
+    * 0010011110110110101101110011010010111001101110011011010010110000101101000011010000110010101101100011100000110110101100101011001100110100101100111011010000111010001100001011001110110000101101001011011100111001101110100011101000110100001101001011100110110001101101111011001000110010101100011011000010110111001100011011001010111001
+    * */
 }

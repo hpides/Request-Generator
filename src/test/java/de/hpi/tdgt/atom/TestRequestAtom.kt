@@ -4,19 +4,22 @@ import de.hpi.tdgt.HttpHandlers
 import de.hpi.tdgt.RequestHandlingFramework
 import de.hpi.tdgt.Utils
 import de.hpi.tdgt.deserialisation.Deserializer.deserialize
+import de.hpi.tdgt.stats.ErrorEntry
+import de.hpi.tdgt.stats.Statistic
 import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.Atom
 import de.hpi.tdgt.test.story.atom.RequestAtom
 import de.hpi.tdgt.test.story.atom.RequestAtom.BasicAuth
 import de.hpi.tdgt.test.story.atom.assertion.ContentType
 import de.hpi.tdgt.test.story.atom.assertion.ResponseCode
+import de.hpi.tdgt.test.time_measurement.TimeStorage
+import gnu.trove.map.TIntObjectMap
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
+import org.apache.tomcat.jni.Time
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.*
 import java.io.IOException
 import java.util.concurrent.ExecutionException
 import kotlin.collections.HashMap
@@ -26,6 +29,29 @@ class TestRequestAtom : RequestHandlingFramework() {
     private var postWithBodyAndAssertion: RequestAtom? = null
     private var getJsonObjectWithAssertion: RequestAtom? = null
     private var getWithAuth: RequestAtom? = null
+
+    private val statisticField = TimeStorage::class.java.getDeclaredField("stats")
+    private val errorsField = Statistic::class.java.getDeclaredField("errors")
+
+    fun getStatisticErrors(): TIntObjectMap<ErrorEntry> {
+        return errorsField.get((statisticField.get(TimeStorage.instance) as Statistic)) as TIntObjectMap<ErrorEntry>
+    }
+
+    @BeforeEach
+    fun turnOffTimeSending() = runBlocking()
+    {
+        val keepTimeSendingField = TimeStorage::class.java.getDeclaredField("keepTimeSending")
+        keepTimeSendingField.isAccessible = true
+        keepTimeSendingField.setBoolean(TimeStorage.instance, false)
+
+        val timeSendingCoroutineField = TimeStorage::class.java.getDeclaredField("timeSendingCoroutine")
+        timeSendingCoroutineField.isAccessible = true
+        (timeSendingCoroutineField.get(TimeStorage.instance) as Job).join()
+
+        errorsField.isAccessible = true
+        statisticField.isAccessible = true
+    }
+
     @BeforeEach
     @Throws(IOException::class)
     fun prepareTest() {
@@ -40,13 +66,6 @@ class TestRequestAtom : RequestHandlingFramework() {
         getWithAuth =
             deserialize(Utils().requestExampleWithAssertionsJSON).getStories()[0].getAtoms()[3] as RequestAtom
     }
-
-    /*
-    @AfterEach
-    fun clearAssertions() {
-        AssertionStorage.instance.reset()
-    }
-     */
 
     @Test
     fun cloneCreatesEquivalentObject() {
@@ -78,7 +97,7 @@ class TestRequestAtom : RequestHandlingFramework() {
         val clone = requestAtom!!.clone()
         Assertions.assertNotSame(clone, requestAtom)
     }
-/*
+
     @Test
     @Throws(InterruptedException::class, ExecutionException::class)
     fun ContentTypeAssertNotFailingIfCorrect() {
@@ -86,13 +105,10 @@ class TestRequestAtom : RequestHandlingFramework() {
         params["key"] = "something"
         params["value"] = "somethingElse"
         runBlocking{postWithBodyAndAssertion!!.run(params)}
-        MatcherAssert.assertThat(
-            AssertionStorage.instance.getFails("postWithBody returns JSON"),
-            Matchers.`is`(0)
-        )
+
+        MatcherAssert.assertThat(getStatisticErrors().size(), Matchers.`is`(1))
     }
 
- */
     @Test
     @Throws(InterruptedException::class, ExecutionException::class)
     fun canSendPOSTWithForm() {
@@ -112,7 +128,7 @@ class TestRequestAtom : RequestHandlingFramework() {
                 Matchers.`is`(true)
         )
     }
-/*
+
     @Test
     @Throws(InterruptedException::class, ExecutionException::class)
     fun ContentTypeAssertFailingIfFalse() {
@@ -124,38 +140,16 @@ class TestRequestAtom : RequestHandlingFramework() {
         //simulate failure
         assertion.contentType = "application/xml"
         runBlocking{postWithBodyAndAssertion!!.run(params)}
-        MatcherAssert.assertThat(
-            AssertionStorage.instance.getFails("postWithBody returns JSON (node 0)"),
-            Matchers.`is`(1)
-        )
+        MatcherAssert.assertThat(getStatisticErrors().size(), Matchers.`is`(2))
     }
 
-    @Test
-    @Throws(InterruptedException::class, ExecutionException::class)
-    fun ContentTypeAssertHasCorrectContentType() {
-        val params = HashMap<String, String>()
-        params["key"] = "something"
-        params["value"] = "somethingElse"
-        val assertion =
-            postWithBodyAndAssertion!!.assertions[0] as ContentType
-        //simulate failure
-        assertion.contentType = "application/xml"
-        runBlocking{postWithBodyAndAssertion!!.run(params)}
-        MatcherAssert.assertThat(
-            AssertionStorage.instance.getActual("postWithBody returns JSON (node 0)"),
-            Matchers.contains("application/json")
-        )
-    }
 
     @Test
     @Throws(InterruptedException::class, ExecutionException::class)
     fun ContentNotEmptyAssertNotFailingIfCorrect() {
         val params = HashMap<String, String>()
         runBlocking{getJsonObjectWithAssertion!!.run(params)}
-        MatcherAssert.assertThat(
-            AssertionStorage.instance.getFails("jsonObject returns something"),
-            Matchers.`is`(0)
-        )
+        MatcherAssert.assertThat(getStatisticErrors().size(), Matchers.`is`(0))
     }
 
     @Test
@@ -165,23 +159,7 @@ class TestRequestAtom : RequestHandlingFramework() {
         //simulate failure
         getJsonObjectWithAssertion!!.addr = "http://localhost:9000/empty"
         runBlocking{getJsonObjectWithAssertion!!.run(params)}
-        MatcherAssert.assertThat(
-            AssertionStorage.instance.getFails("jsonObject returns something (node 0)"),
-            Matchers.`is`(1)
-        )
-    }
-
-    @Test
-    @Throws(InterruptedException::class, ExecutionException::class)
-    fun ContentNotEmptyAssertHasCorrectContent() {
-        val params = HashMap<String, String>()
-        //simulate failure
-        getJsonObjectWithAssertion!!.addr = "http://localhost:9000/empty"
-        runBlocking{getJsonObjectWithAssertion!!.run(params)}
-        MatcherAssert.assertThat(
-            AssertionStorage.instance.getActual("jsonObject returns something (node 0)"),
-            Matchers.contains("")
-        )
+        MatcherAssert.assertThat(getStatisticErrors().size(), Matchers.`is`(1))
     }
 
     @Test
@@ -191,10 +169,7 @@ class TestRequestAtom : RequestHandlingFramework() {
         params["key"] = HttpHandlers.AuthHandler.username
         params["value"] = HttpHandlers.AuthHandler.password
         runBlocking{getWithAuth!!.run(params)}
-        MatcherAssert.assertThat(
-            AssertionStorage.instance.getFails("auth does not return 401"),
-            Matchers.`is`(0)
-        )
+        MatcherAssert.assertThat(getStatisticErrors().size(), Matchers.`is`(0))
     }
 
     @Test
@@ -204,52 +179,9 @@ class TestRequestAtom : RequestHandlingFramework() {
         params["key"] = "wrong"
         params["value"] = "wrong"
         runBlocking{getWithAuth!!.run(params)}
-        MatcherAssert.assertThat(
-            AssertionStorage.instance.getFails("auth does not return 401 (node 0)"),
-            Matchers.`is`(1)
-        )
+        MatcherAssert.assertThat(getStatisticErrors().size(), Matchers.`is`(1))
     }
 
-    @Test
-    @Throws(InterruptedException::class, ExecutionException::class)
-    fun ResponseAssertHasCorrectResponseCode() {
-        val params = HashMap<String, String>()
-        params["key"] = "wrong"
-        params["value"] = "wrong"
-        runBlocking{getWithAuth!!.run(params)}
-        MatcherAssert.assertThat(
-            AssertionStorage.instance.getActual("auth does not return 401 (node 0)"),
-            Matchers.contains("401")
-        )
-    }
-
-    @Test
-    @Throws(InterruptedException::class, ExecutionException::class)
-    fun ResponseAssertHasCorrectResponseCodeForDelete() {
-        val params = HashMap<String, String>()
-        params["key"] = "wrong"
-        params["value"] = "wrong"
-        getWithAuth!!.verb = "DELETE"
-        runBlocking{getWithAuth!!.run(params)}
-        MatcherAssert.assertThat(
-            AssertionStorage.instance.getActual("auth does not return 401 (node 0)"),
-            Matchers.contains("401")
-        )
-    }
-
-    @Test
-    @Throws(InterruptedException::class, ExecutionException::class)
-    fun resetOfAssertWorks() {
-        val params = HashMap<String, String>()
-        params["key"] = "wrong"
-        params["value"] = "wrong"
-        runBlocking{getWithAuth!!.run(params)}
-        AssertionStorage.instance.reset()
-        MatcherAssert.assertThat(
-            AssertionStorage.instance.getActual("auth does not return 401"),
-            Matchers.empty()
-        )
-    }*/
     @Test
     fun readsCookie(){
         val story = UserStory()
