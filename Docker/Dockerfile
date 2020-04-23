@@ -1,7 +1,7 @@
 FROM maven:3 as build
 WORKDIR /app
 COPY src ./src
-COPY *.xml .
+COPY *.xml ./
 
 RUN mkdir /root/.m2
 
