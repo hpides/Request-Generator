@@ -4,6 +4,31 @@ Component responsible for generation, sending and performance evaluation of requ
 
 The code offers a web server mode of operation (production, with frontend) and a single-command cli mode for testing.
 
+## Setup
+
+This project imports the stats project as an artifact via the GitLab maven repo. Currently, this does no work without authentication. To be able to build this project, you will need to create a personal access token with full "api" scope at [https://gitlab.hpi.de/profile/personal_access_tokens](https://gitlab.hpi.de/profile/personal_access_tokens) . After this, save this as ~/.m2/settings.xml:
+```xml
+<settings>
+  <servers>
+    <server>
+      <id>gitlab-maven</id>
+      <configuration>
+        <httpHeaders>
+          <property>
+            <name>Private-Token</name>
+              <value>YOUR TOKEN HERE</value>
+          </property>
+        </httpHeaders>
+      </configuration>
+    </server>
+  </servers>
+</settings>
+```
+Note that the Docker build script will expect a copy of this file in the same directory as pom.xml of this project, because the maven build also relies on it for authentication. The settings.xml will not be present in the final container.  
+Hint: If you added the settings.xml and build still fails, try
+```bash
+mvn clean -U package -DskipTests
+```
 ## How to execute (Command Line only)
 You can run a test like this:
 ```bash
