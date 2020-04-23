@@ -18,5 +18,6 @@ junit:
     - $(which mosquitto) -c /mosquitto/config/mosquitto.conf > mosquitto.log 2>&1 &
     # config assumes broker is running on same machine as System under Test, so we need this environment for the tests
     - echo "127.0.0.1 mosquitto" >> /etc/hosts
-    - echo "Token ${CI_JOB_TOKEN}"
+    # will be used to authenticate access on the maven artifact
+    - mkdir -p /root/.m2 && cp ci-settings.xml /root/.m2/settings.xml
     - mvn test
