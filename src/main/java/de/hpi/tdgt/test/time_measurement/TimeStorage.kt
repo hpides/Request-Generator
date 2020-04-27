@@ -2,7 +2,6 @@ package de.hpi.tdgt.test.time_measurement
 
 import de.hpi.tdgt.stats.Endpoint
 import de.hpi.tdgt.stats.Statistic
-import de.hpi.tdgt.stats.StatisticProtos
 import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
@@ -28,6 +27,7 @@ class TimeStorage private constructor() {
     private var stats: Statistic = Statistic(0)
     private val statisticMutex = Semaphore(1)
     private var timeSendingCoroutine: Job
+    private var sequenceNr: Int = 0;
 
     @Volatile
     private var keepTimeSending: Boolean = true;
@@ -53,6 +53,7 @@ class TimeStorage private constructor() {
             keepTimeSending = false
             timeSendingCoroutine.join()
             stats.Clear()
+            sequenceNr = 0;
         }
         keepTimeSending = true
         timeSendingCoroutine = GlobalScope.launch { timeSendingHelper() }
@@ -95,7 +96,7 @@ class TimeStorage private constructor() {
                 // only create new message, if last one was sent successfully
                 if (mqttMessage == null) {
                     val payload = statisticMutex.withPermit<ByteArray> {
-                        val payload = stats.Serialize().toByteArray()
+                        val payload = stats.Serialize(sequenceNr++).toByteArray()
                         stats.Clear()
                         payload
                     }
@@ -114,7 +115,7 @@ class TimeStorage private constructor() {
             if (!stats.IsEmpty()) {
                 //try one last time to send remaining data
                 val payload = statisticMutex.withPermit<ByteArray> {
-                    val payload = stats.Serialize().toByteArray()
+                    val payload = stats.Serialize(sequenceNr++).toByteArray()
                     stats.Clear()
                     payload
                 }

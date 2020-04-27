@@ -1,6 +1,6 @@
 {
   "repeat": "1",
-  "scaleFactor": "70",
+  "scaleFactor": "900",
   "activeInstancesPerSecond": "30",
   "maximumConcurrentRequests": "1000",
   "noSession": false,
