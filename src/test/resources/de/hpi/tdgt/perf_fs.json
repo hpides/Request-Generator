@@ -11,7 +11,7 @@
             {
           "name": "Suchschlüssel generieren",
           "id": 0,
-          "repeat": 2,
+          "repeat": 10,
           "successors": [
         
           ],
