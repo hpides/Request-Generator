@@ -1,0 +1,28 @@
+{
+   "repeat":1,
+   "scaleFactor":100000,
+   "activeInstancesPerSecond":100000,
+   "noSession":true,
+   "stories":[
+      {
+         "scalePercentage":1,
+         "name":"Statische Seite anfragen",
+         "atoms":[
+            {
+          "name": "Suchschlüssel generieren",
+          "id": 0,
+          "repeat": 2,
+          "successors": [
+        
+          ],
+          "type": "DATA_GENERATION",
+          "data": [
+            "key"
+          ],
+          "table": "Users"
+        }
+            
+         ]
+      }
+   ]
+}
