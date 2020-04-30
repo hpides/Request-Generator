@@ -18,6 +18,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import de.hpi.tdgt.util.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,7 +60,10 @@ public class WebApplication {
         parser.addArgument("--location")
                 .type(String.class)
                 .help("Location of this node relative to other node. Be careful when using localhost:* hosts. Must be a valid HTTP URL.");
-        val group = parser.addMutuallyExclusiveGroup("cli").description("Run one test and terminate afterwards (default: Run as webserver)");
+         parser.addArgument("--bufferSize")
+		.type(Integer.class)
+		.help("Buffer size per file to read in MiB. Defaults to 64.");
+	val group = parser.addMutuallyExclusiveGroup("cli").description("Run one test and terminate afterwards (default: Run as webserver)");
         group.addArgument("--load").type(String.class).dest("load").nargs("?").help("If set, one test is loaded from the filesystem.");
         group.addArgument("--restTest").type(String.class).setConst(true).setDefault(false).nargs("?").dest("restTest").help("If set, some static rquests are run.");
         try {
@@ -82,8 +86,10 @@ public class WebApplication {
                     System.exit(1);
                 }
             }
-
-
+	    // optional
+	    if(res.getInt("bufferSize") != null){
+	    		MappedFileReader.setBufferSize(res.getInt("bufferSize") * 1024 * 1024);
+	    }
             if (load != null) {
                 //If we do not start Spring Boot, many properties like logging get half-way initialized. So we start Spring boot and terminate it when the test is done.
                 ConfigurableApplicationContext ctx = new SpringApplicationBuilder(WebApplication.class)

@@ -29,3 +29,5 @@ logs/
 *.jar
 #redis dumps
 *.rdb
+#ignore mvn settings since user-specific
+settings.xml
