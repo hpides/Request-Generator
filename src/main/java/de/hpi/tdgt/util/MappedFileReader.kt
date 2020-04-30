@@ -125,7 +125,8 @@ class MappedFileReader//e.g. file not found//async reading taken from http://www
         }
 	buffer.clear()
     }
-
+    //make sure the resources are freed
+    override fun finalize() { close()}
     companion object {
         private val log = LogManager.getLogger(
                 MappedFileReader::class.java
