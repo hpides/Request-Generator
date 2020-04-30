@@ -104,6 +104,7 @@ class MappedFileReader//e.g. file not found//async reading taken from http://www
         //passed mapped file segement --> map next segment
         if(currentBufferOffset == bufferSize - 1){
             currentBufferOffset = 0
+            buffer.clear();
             readData()
         }
     }
