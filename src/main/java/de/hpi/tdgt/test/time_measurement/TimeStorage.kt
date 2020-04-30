@@ -6,6 +6,7 @@ import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import net.minidev.json.JSONObject
 import org.apache.logging.log4j.LogManager
 import org.eclipse.paho.client.mqttv3.MqttClient
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
@@ -34,6 +35,18 @@ class TimeStorage private constructor() {
 
     init {
         timeSendingCoroutine = GlobalScope.launch { timeSendingHelper() }
+    }
+
+    suspend fun addUser() {
+        statisticMutex.withPermit {
+            stats.AddUser();
+        }
+    }
+
+    suspend fun removeUser() {
+        statisticMutex.withPermit {
+            stats.RemoveUser();
+        }
     }
 
     suspend fun addSample(endpoint: Endpoint, latency: Long, contentLength: Int) {
@@ -96,7 +109,9 @@ class TimeStorage private constructor() {
                 // only create new message, if last one was sent successfully
                 if (mqttMessage == null) {
                     val payload = statisticMutex.withPermit<ByteArray> {
-                        val payload = stats.Serialize(sequenceNr++).toByteArray()
+                        val serial = stats.Serialize(sequenceNr++);
+                        val payload = serial.toByteArray()
+                        client.publish("debug", MqttMessage(serial.total.toString().toByteArray()))
                         stats.Clear()
                         payload
                     }

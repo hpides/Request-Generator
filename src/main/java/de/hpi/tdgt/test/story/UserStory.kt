@@ -7,6 +7,7 @@ import de.hpi.tdgt.test.Test.ActiveInstancesThrottler
 import de.hpi.tdgt.test.ThreadRecycler
 import de.hpi.tdgt.test.story.atom.Atom
 import de.hpi.tdgt.test.story.atom.WarmupEndAtom
+import de.hpi.tdgt.test.time_measurement.TimeStorage
 import de.hpi.tdgt.util.PropertiesReader
 import io.netty.util.HashedWheelTimer
 import kotlinx.coroutines.*
@@ -105,6 +106,7 @@ class UserStory : Cloneable {
             var clone: UserStory
             synchronized(this) { clone = clone() }
             log.info("Running story " + clone.name.toString() + " in thread " + Thread.currentThread().id)
+            TimeStorage.instance.addUser();
             try {
                 withContext(Dispatchers.IO) {
                     Event.waitFor(Test.testStartEvent)
@@ -113,6 +115,7 @@ class UserStory : Cloneable {
             } catch (e: ExecutionException) {
                 log.error(e)
             }
+            TimeStorage.instance.removeUser();
             log.info("Finished story " + clone.name.toString() + " in thread " + Thread.currentThread().id)
         } catch (e: InterruptedException) {
             log.error(e)
