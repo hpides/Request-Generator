@@ -1,7 +1,7 @@
 FROM maven:3 as build
 WORKDIR /app
 COPY src ./src
-COPY *.xml .
+COPY *.xml ./
 RUN mvn package -Dmaven.test.skip=true
 
 #newest LTS version to support Java 13 and Java 7
