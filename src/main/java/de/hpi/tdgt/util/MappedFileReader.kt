@@ -124,7 +124,9 @@ class MappedFileReader//e.g. file not found//async reading taken from http://www
         if(::channel.isInitialized) {
             channel.close()
         }
-	buffer.clear()
+        if(::buffer.isInitialized) {
+            buffer.clear()
+        }
     }
     //make sure the resources are freed
     protected fun finalize() { 
