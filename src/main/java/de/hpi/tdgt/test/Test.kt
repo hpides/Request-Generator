@@ -192,7 +192,7 @@ class Test {
             AssertionStorage.instance.flush()
             TimeStorage.instance.flush()
             //if there is only this node, the test is over; else, other nodes might still be running
-            val endMessage = (if(nodes == 1L){"testEnd"}else{"nodeEnd $nodeNumber "} +"$testId").toByteArray(StandardCharsets.UTF_8)
+            val endMessage = (if(nodes == 1L){"testEnd "}else{"nodeEnd $nodeNumber "} +"$testId").toByteArray(StandardCharsets.UTF_8)
             try {
                 client!!.publish(
                         MQTT_TOPIC,
