@@ -38,14 +38,16 @@ spec:
           image: localhost:5000/requestgenerator:${tag}
           resources:
             requests:
-              memory: "64Mi"
+              memory: "1Gi"
               cpu: "1"
             limits:
-              memory: "512Mi"
-              cpu: "2"
+              memory: "1Gi"
+              cpu: "1"
           env:
             - name: JVM_OPTS
-              value: "-XX:MaxRAM=512m -Xmx128m " #-XX:+UseSerialGC"
+              value: "" #-XX:+UseSerialGC"
+            - name: EXTRA_ARGUMENTS
+              value: "--location http://requestgenerator --bufferSize 1 --logging.level.root=error"
           volumeMounts:
             - mountPath: "/pdgf"
               name: reqgen-pv-storage

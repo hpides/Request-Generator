@@ -25,8 +25,8 @@ spec:
               memory: "64Mi"
               cpu: "128m"
             limits:
-              memory: "512Mi"
-              cpu: "2"
+              memory: "64Mi"
+              cpu: "128m"
           ports:
             - containerPort: 9001
           imagePullPolicy: IfNotPresent

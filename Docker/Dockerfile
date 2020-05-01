@@ -37,4 +37,4 @@ RUN java13 -version
 
 COPY --from=build /app/target/request-generator-1.0-SNAPSHOT.jar .
 
-CMD ["java13","-jar", "request-generator-1.0-SNAPSHOT.jar","/pdgf", "java7"]
+CMD ["sh", "-c", "java13 ${JVM_OPTS} -jar request-generator-1.0-SNAPSHOT.jar ${EXTRA_ARGUMENTS} /pdgf java7"]
