@@ -73,7 +73,7 @@ class MQTTTest : RequestHandlingFramework() {
         MatcherAssert.assertThat("Total requests matches", first.total.numRequests == 1)
         MatcherAssert.assertThat("Request endpoint matches", first.populationsList[0].ep.method == StatisticProtos.Endpoint.Method.POST &&
                 first.populationsList[0].ep.url.equals("http://localhost:9000/"))
-        MatcherAssert.assertThat("Request time matches", first.total.responseTimesList[0].key == 10L)
+        MatcherAssert.assertThat("Request time matches", first.total.getLatencyPerSecond(0).getLatencyCount(0).key == 10L)
         MatcherAssert.assertThat("No errors", first.errorsCount == 0)
         MatcherAssert.assertThat("Content length matches", first.total.totalContentLength == 1)
     }

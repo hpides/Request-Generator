@@ -1,0 +1,419 @@
+{
+  "repeat": "1",
+  "scaleFactor": "3000",
+  "activeInstancesPerSecond": "100",
+  "maximumConcurrentRequests": "2000",
+  "noSession": true,
+  "stories": [
+    {
+      "atoms": [
+        {
+          "id": 1,
+          "name": "Start",
+          "repeat": 1,
+          "successors": [
+            0
+          ],
+          "type": "START",
+          "x": 50,
+          "y": 151
+        },
+        {
+          "id": 0,
+          "name": "Nutzerdaten generieren",
+          "repeat": 1,
+          "successors": [
+            2
+          ],
+          "type": "DATA_GENERATION",
+          "x": 161,
+          "y": 250,
+          "data": [
+            "username",
+            "password"
+          ],
+          "dataToGenerate": "{\"value\":{\"username\":{\"__type\":\"EXISTING\",\"attributes\":{\"table\":\"Users\"},\"_keyhandler\":{}},\"password\":{\"__type\":\"EXISTING\",\"attributes\":{\"table\":\"Users\"},\"_keyhandler\":{}}}}",
+          "staticValues": {},
+          "table": "Users"
+        },
+        {
+          "id": 2,
+          "name": "User anlegen",
+          "repeat": 1,
+          "successors": [
+            3,
+            4
+          ],
+          "type": "REQUEST",
+          "x": 363,
+          "y": 334,
+          "addr": "http://localhost:9000/users/new",
+          "verb": "POST",
+          "requestJSONObject": "{\"username\":$username, \"password\":$password}",
+          "responseJSONObject": [
+            "username",
+            "password"
+          ],
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "User creation returns 200.",
+              "responseCode": 200
+            }
+          ],
+          "receiveCookies": {},
+          "sendCookies": {},
+          "tokenNames": {},
+          "xpaths": {},
+          "timeAggregation": true,
+          "sendHeaders": {},
+          "receiveHeaders": {}
+        },
+        {
+          "id": 4,
+          "name": "Posts lesen",
+          "repeat": 1,
+          "successors": [
+            5
+          ],
+          "type": "REQUEST",
+          "x": 516,
+          "y": 510,
+          "addr": "http://localhost:9000/posts/all",
+          "verb": "GET",
+          "basicAuth": {
+            "password": "password",
+            "user": "username"
+          },
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "Reading posts returns 200.",
+              "responseCode": 200
+            }
+          ],
+          "receiveCookies": {},
+          "sendCookies": {},
+          "tokenNames": {},
+          "xpaths": {},
+          "timeAggregation": true,
+          "sendHeaders": {},
+          "receiveHeaders": {}
+        },
+        {
+          "id": 5,
+          "name": "Delay",
+          "repeat": 1,
+          "successors": [
+            6
+          ],
+          "type": "DELAY",
+          "x": 244,
+          "y": 802,
+          "delay": "1000"
+        },
+        {
+          "id": 6,
+          "name": "Post löschen",
+          "repeat": 1,
+          "successors": [
+            7
+          ],
+          "type": "REQUEST",
+          "x": 295.94705294705295,
+          "y": 918.987012987013,
+          "addr": "http://localhost:9000/posts/delete",
+          "verb": "DELETE",
+          "requestParams": [
+            "id"
+          ],
+          "basicAuth": {
+            "password": "password",
+            "user": "username"
+          },
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "Deleting posts returns 200.",
+              "responseCode": 200
+            }
+          ],
+          "receiveCookies": {},
+          "sendCookies": {},
+          "tokenNames": {},
+          "xpaths": {},
+          "timeAggregation": true,
+          "sendHeaders": {},
+          "receiveHeaders": {}
+        },
+        {
+          "id": 7,
+          "name": "User löschen story 1",
+          "repeat": 1,
+          "successors": [],
+          "type": "REQUEST",
+          "x": 320.4656985478217,
+          "y": 1067.586379569354,
+          "addr": "http://localhost:9000/users/delete",
+          "verb": "DELETE",
+          "basicAuth": {
+            "password": "password",
+            "user": "username"
+          },
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "Deleting users returns 200.",
+              "responseCode": 200
+            }
+          ],
+          "receiveCookies": {},
+          "sendCookies": {},
+          "tokenNames": {},
+          "xpaths": {},
+          "timeAggregation": true,
+          "sendHeaders": {},
+          "receiveHeaders": {}
+        },
+        {
+          "id": 3,
+          "name": "Posts generieren",
+          "repeat": 1,
+          "successors": [
+            8
+          ],
+          "type": "DATA_GENERATION",
+          "x": 308,
+          "y": 516,
+          "data": [
+            "title",
+            "text"
+          ],
+          "dataToGenerate": "{\"value\":{\"title\":{\"__type\":\"EXISTING\",\"attributes\":{\"table\":\"Posts\"},\"_keyhandler\":{}},\"text\":{\"__type\":\"EXISTING\",\"attributes\":{\"table\":\"Posts\"},\"_keyhandler\":{}}}}",
+          "staticValues": {},
+          "table": "Posts"
+        },
+        {
+          "id": 8,
+          "name": "Post anlegen",
+          "repeat": 1,
+          "successors": [
+            5
+          ],
+          "type": "REQUEST",
+          "x": 283,
+          "y": 637,
+          "addr": "http://localhost:9000/posts/new",
+          "verb": "POST",
+          "responseJSONObject": [
+            "id"
+          ],
+          "requestParams": [
+            "title",
+            "text"
+          ],
+          "basicAuth": {
+            "password": "password",
+            "user": "username"
+          },
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "Post creation returns 200.",
+              "responseCode": 200
+            }
+          ],
+          "receiveCookies": {},
+          "sendCookies": {},
+          "tokenNames": {},
+          "xpaths": {},
+          "timeAggregation": true,
+          "sendHeaders": {},
+          "receiveHeaders": {}
+        }
+      ],
+      "name": "User und Post erstellen",
+      "scalePercentage": 0.7
+    },
+    {
+      "atoms": [
+        {
+          "id": 1,
+          "name": "Start",
+          "repeat": 1,
+          "successors": [
+            0
+          ],
+          "type": "START",
+          "x": 59,
+          "y": 84
+        },
+        {
+          "id": 0,
+          "name": "Nutzerdaten generieren",
+          "repeat": 1,
+          "successors": [
+            2
+          ],
+          "type": "DATA_GENERATION",
+          "x": 232,
+          "y": 203,
+          "data": [
+            "username",
+            "password"
+          ],
+          "dataToGenerate": "{\"value\":{\"username\":{\"__type\":\"EXISTING\",\"attributes\":{\"table\":\"Users\"},\"_keyhandler\":{}},\"password\":{\"__type\":\"EXISTING\",\"attributes\":{\"table\":\"Users\"},\"_keyhandler\":{}}}}",
+          "staticValues": {},
+          "table": "Users"
+        },
+        {
+          "id": 2,
+          "name": "User anlegen",
+          "repeat": 1,
+          "successors": [
+            3
+          ],
+          "type": "REQUEST",
+          "x": 359,
+          "y": 398,
+          "addr": "http://localhost:9000/users/new",
+          "verb": "POST",
+          "requestJSONObject": "{\"username\":$username, \"password\":$password}",
+          "responseJSONObject": [
+            "username",
+            "password"
+          ],
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "User creation in Story 2 returns 200.",
+              "responseCode": 200
+            }
+          ],
+          "receiveCookies": {},
+          "sendCookies": {},
+          "tokenNames": {},
+          "xpaths": {},
+          "timeAggregation": true,
+          "sendHeaders": {},
+          "receiveHeaders": {}
+        },
+        {
+          "id": 3,
+          "name": "Suchschlüssel generieren",
+          "repeat": 1,
+          "successors": [
+            4
+          ],
+          "type": "DATA_GENERATION",
+          "x": 259,
+          "y": 612,
+          "data": [
+            "Benutzer"
+          ],
+          "dataToGenerate": "{\"value\":{\"Benutzer\":{\"__type\":\"EXISTING\",\"attributes\":{\"table\":\"Search\"},\"_keyhandler\":{}}}}",
+          "staticValues": {
+            "": ""
+          },
+          "table": "Search"
+        },
+        {
+          "id": 4,
+          "name": "Nach Suchschlüssel suchen",
+          "repeat": 1,
+          "successors": [
+            5
+          ],
+          "type": "REQUEST",
+          "x": 303,
+          "y": 749,
+          "addr": "http://localhost:9000/posts/search",
+          "verb": "GET",
+          "requestParams": [
+            "Benutzer"
+          ],
+          "basicAuth": {
+            "password": "password",
+            "user": "username"
+          },
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "Search returns 200.",
+              "responseCode": 200
+            }
+          ],
+          "receiveCookies": {},
+          "sendCookies": {},
+          "tokenNames": {},
+          "xpaths": {},
+          "timeAggregation": true,
+          "sendHeaders": {},
+          "receiveHeaders": {}
+        },
+        {
+          "id": 5,
+          "name": "User löschen Story 2",
+          "repeat": 1,
+          "successors": [],
+          "type": "REQUEST",
+          "x": 416,
+          "y": 873,
+          "addr": "http://localhost:9000/users/delete",
+          "verb": "DELETE",
+          "basicAuth": {
+            "password": "password",
+            "user": "username"
+          },
+          "assertions": [
+            {
+              "type": "RESPONSE_CODE",
+              "name": "User deletion in Story 2 returns 200.",
+              "responseCode": 200
+            }
+          ],
+          "receiveCookies": {},
+          "sendCookies": {},
+          "tokenNames": {},
+          "xpaths": {},
+          "timeAggregation": true,
+          "sendHeaders": {},
+          "receiveHeaders": {}
+        }
+      ],
+      "name": "Nach Posts suchen",
+      "scalePercentage": 0.3
+    }
+  ],
+  "existingXMLs": {
+    "uploadedFiles": {
+      "data_config_example.xml": {
+        "existingTables": [
+          "Users",
+          "Posts",
+          "Search"
+        ],
+        "fileContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<!--  <!DOCTYPE schema SYSTEM \"structure/pdgfSchema.dtd\">-->\r\n\r\n<!--\r\n/*******************************************************************************\r\n * Copyright (c) 2013, bankmark and/or its affiliates. All rights reserved.\r\n * bankmark UG PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.\r\n *\r\n *\r\n ******************************************************************************/\r\n-->\r\n<schema name=\"demo\"  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\nxsi:noNamespaceSchemaLocation=\"structure/pdgfSchema.xsd\">\r\n\r\n\t<!-- All data is derived from this starting seed.\r\n\tIf this seed is the same, the generated data will the same on each computer/node/platform.\r\n\tChange this seed to generate a different data set.-->\r\n\t<seed>1234567890</seed>\r\n\r\n\t<rng name=\"PdgfDefaultRandom\"/>\r\n\r\n\t<!--Default Scale factor for all tables -->\r\n\t<property name=\"SF\" type=\"double\">10</property>\r\n\t<property name=\"Users\" type=\"double\">0.7 * ${SF}</property>\r\n\t<property name=\"Posts\" type=\"double\">0.7 * ${SF}</property>\r\n\t<property name=\"search\" type=\"double\">0.3 * ${SF}</property>\r\n\t<!-- ============================== -->\r\n\r\n\t<table name=\"Users\">\r\n\t\t<!-- if tables should scale with -SF command line argument. Specify your scaling formula here: -->\r\n\t\t<size>${Users}</size>\r\n\t\t<field name=\"username\" type=\"VARCHAR\" primary=\"true\" unique=\"true\">\r\n\t\t\t<gen_FormatString>\r\n\t\t\t\t<format>%s.%s</format>\r\n\t\t\t\t<gen_DictList id=\"FamilyNameGen\">\r\n\t\t\t\t\t<file>dicts/Family-Names.dict</file>\r\n\t\t\t\t\t<disableRng>true</disableRng>\r\n\t\t\t\t</gen_DictList>\r\n\t\t\t\t<gen_DictList id=\"FirstNameGen\">\r\n\t\t\t\t\t<file>dicts/Given-Names.dict</file>\r\n\t\t\t\t\t<disableRng>true</disableRng>\r\n\t\t\t\t</gen_DictList>\r\n        </gen_FormatString>\r\n\t\t</field>\r\n\t\t<field name=\"password\" type=\"VARCHAR\">\r\n\t\t\t\t<gen_RandomString>\r\n\t\t\t\t<max>16</max>\r\n\t        </gen_RandomString>\r\n\t\t</field>\r\n\t</table>\r\n\r\n\t<table name=\"Posts\">\r\n\t\t<size>${Posts}</size>\r\n\t\t<field name=\"title\" type=\"VARCHAR\">\r\n\t\t\t<!-- Generiert mit  java7 -cp pdgf.jar pdgf.util.text.MarkovChainBuilder -n 4 LICENSE.txt dicts/markovExample/Food.bin 2538.-->\r\n\t\t\t<gen_MarkovChainText>\r\n\t\t\t\t\t\t<min>2</min><max>50</max>\r\n\t\t\t\t\t\t<file>dicts/markovExample/Books_Literature_Fiction.bin</file>\r\n\t\t\t</gen_MarkovChainText>\r\n\t\t</field>\r\n\t\t<field name=\"text\" type=\"VARCHAR\">\r\n\t\t\t<!-- Generiert mit  java7 -cp pdgf.jar pdgf.util.text.MarkovChainBuilder -n 4 LICENSE.txt dicts/markovExample/Food.bin 2538.-->\r\n\t\t\t<gen_MarkovChainText>\r\n\t\t\t\t\t\t<min>10</min><max>2000</max>\r\n\t\t\t\t\t\t<file>dicts/markovExample/Electronics_Camera_Photo.bin</file>\r\n\t\t\t</gen_MarkovChainText>\r\n\t\t</field>\r\n\t</table>\r\n\r\n\t<table name=\"Search\">\r\n\t\t<size>${search}</size>\r\n\t\t<field name=\"Benutzer\" type=\"VARCHAR\">\r\n\t\t\t<gen_ReferenceValue choose=\"random\" from=\"historical\" id='SearchGenerator1'>\r\n\t\t\t\t<reference field=\"text\" table=\"Posts\"/>\r\n\t\t\t</gen_ReferenceValue>\r\n\t\t</field>\r\n\t</table>\r\n\r\n</schema>\r\n",
+        "tableMapping": {
+          "Users": [
+            "username",
+            "password"
+          ],
+          "Posts": [
+            "title",
+            "text"
+          ],
+          "Search": [
+            "Benutzer"
+          ]
+        }
+      }
+    },
+    "lastError": "",
+    "allTables": [
+      "Users",
+      "Posts",
+      "Search"
+    ]
+  }
+}
