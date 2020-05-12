@@ -28,7 +28,8 @@ import java.util.stream.Collectors
     JsonSubTypes.Type(value = Data_Generation::class, name = "DATA_GENERATION"),
     JsonSubTypes.Type(value = Delay::class, name = "DELAY"),
     JsonSubTypes.Type(value = Start::class, name = "START"),
-    JsonSubTypes.Type(value = WarmupEnd::class, name = "WARMUP_END")
+    JsonSubTypes.Type(value = WarmupEnd::class, name = "WARMUP_END"),
+    JsonSubTypes.Type(value = Assignment::class, name = "ASSIGNMENT")
 )
 abstract class Atom : Cloneable {
     var name: String? = null
