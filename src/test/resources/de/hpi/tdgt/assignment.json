@@ -1,0 +1,24 @@
+{
+  "repeat": 1,
+  "scaleFactor": 10,
+  "activeInstancesPerSecond": 10,
+  "stories": [
+    {
+      "scalePercentage": 0.7,
+      "name": "A Story",
+      "atoms": [
+        {
+          "name": "Assignment",
+          "id": 0,
+          "repeat": 1,
+          "successors": [
+          ],
+          "type": "ASSIGNMENT",
+          "assignments": {
+            "val1" : "val2"
+          }
+        }
+      ]
+    }
+  ]
+}

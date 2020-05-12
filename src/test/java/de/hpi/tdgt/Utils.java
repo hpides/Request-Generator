@@ -68,6 +68,13 @@ public class Utils {
     public InputStream getUsersCSV() {
         return getClass().getResourceAsStream("output/users.csv");
     }
+
+
+    public String getAssignmentExample() throws IOException {
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(getClass().getResourceAsStream("assignment.json"), writer);
+        return writer.toString();
+    }
     public InputStream getPostsCSV() {
         return getClass().getResourceAsStream("output/posts.csv");
     }
