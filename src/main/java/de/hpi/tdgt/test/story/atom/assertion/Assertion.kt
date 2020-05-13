@@ -55,5 +55,7 @@ abstract class Assertion {
     companion object {
         private val log =
             LogManager.getLogger(Assertion::class.java)
+        @JvmStatic
+        public var oneHasFailed : Boolean = false
     }
 }

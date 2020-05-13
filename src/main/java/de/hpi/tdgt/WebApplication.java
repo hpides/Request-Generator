@@ -2,6 +2,7 @@ package de.hpi.tdgt;
 
 import de.hpi.tdgt.controllers.UploadController;
 import de.hpi.tdgt.test.story.atom.Data_Generation;
+import de.hpi.tdgt.test.story.atom.assertion.Assertion;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import net.sourceforge.argparse4j.ArgumentParsers;
@@ -97,7 +98,7 @@ public class WebApplication {
                 CLI.loadTest(load);
                 int code = SpringApplication.exit(ctx, () -> {
                     // return the error code
-                    return 0;
+                    return Assertion.getOneHasFailed() ? 3 : 0;
                 });
                 System.exit(code);
             } else if(restTest){
