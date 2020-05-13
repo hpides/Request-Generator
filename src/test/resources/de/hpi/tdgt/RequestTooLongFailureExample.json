@@ -32,7 +32,7 @@
           ],
           "type": "REQUEST",
           "verb": "POST",
-          "addr": "http://localhost:9000/postWithBody",
+          "addr": "http://notThere",
           "threshold " : 0,
           "requestJSONObject": "{\"key\":$key, \"value\":$value}",
           "responseJSONObject": [

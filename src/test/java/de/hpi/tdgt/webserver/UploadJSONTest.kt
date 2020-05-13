@@ -149,7 +149,7 @@ class UploadJSONTest : RequestHandlingFramework() {
     @Test
     @Throws(Exception::class)
     @ExpectSystemExitWithStatus(3)
-    fun exitsWithOneFromCLIModeIfAssertionViolated() {
+    fun exitsWithThreeFromCLIModeIfAssertionViolated() {
         //the test contains a request to a non-existant host, so an implicit assertion should fail
         val args = arrayOf(
             "--load",
@@ -165,11 +165,27 @@ class UploadJSONTest : RequestHandlingFramework() {
     @Test
     @Throws(Exception::class)
     @ExpectSystemExitWithStatus(2)
-    fun exitsWithOneFromCLIModeIfRequestTakesTooLong() {
+    fun exitsWithTwoFromCLIModeIfRequestTakesTooLong() {
         //the test contains a request to a non-existant host, so an implicit assertion should fail
         val args = arrayOf(
             "--load",
             "./src/test/resources/de/hpi/tdgt/RequestTooLongExample.json",
+            "./src/test/resources/de/hpi/tdgt",
+            "./src/test/resources/de/hpi/tdgt"
+        )
+        WebApplication.main(args)
+        //test is run async
+        waitForTestEnd()
+    }
+
+    @Test
+    @Throws(Exception::class)
+    @ExpectSystemExitWithStatus(5)
+    fun exitsWithFiveFromCLIModeIfRequestTakesTooLongAndAssertionsAreViolated() {
+        //the test contains a request to a non-existant host, so an implicit assertion should fail
+        val args = arrayOf(
+            "--load",
+            "./src/test/resources/de/hpi/tdgt/RequestTooLongFailureExample.json",
             "./src/test/resources/de/hpi/tdgt",
             "./src/test/resources/de/hpi/tdgt"
         )

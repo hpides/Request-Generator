@@ -2,7 +2,6 @@ package de.hpi.tdgt.test.story.atom
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.core.JsonParseException
-import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import de.hpi.tdgt.requesthandling.RestClient
@@ -15,7 +14,6 @@ import org.htmlcleaner.CleanerProperties
 import org.htmlcleaner.DomSerializer
 import org.htmlcleaner.HtmlCleaner
 import java.io.IOException
-import java.net.MalformedURLException
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -27,10 +25,6 @@ import kotlin.collections.HashMap
 
 
 class Request : Atom() {
-    /**
-     * If request is longer than this (in ms), CLI mode will count this as failure
-     */
-    var failureThreshold: String? = "-1"
 
     var verb: String? = null
     var addr: String? = null
@@ -235,7 +229,6 @@ class Request : Atom() {
         ret.timeAggregation = timeAggregation
         ret.receiveHeaders = receiveHeaders
         ret.sendHeaders = sendHeaders
-        ret.failureThreshold = failureThreshold
         cloning = false;
         ret.cloning = false
         return ret
@@ -269,9 +262,10 @@ class Request : Atom() {
                     log.info("I can not handle Arrays.")
                     log.info(result)
                 }
-                if((failureThreshold?:"-1").toLong() > -1 && result.durationMillis() > (failureThreshold?:"-1").toLong()){
-                    log.error("Request $name took ${result.durationMillis()} ms which exceeds threshold of $failureThreshold ms.")
-                    reportFailureToUser("Request $name exceeded threshold of $failureThreshold ms.", " ${result.durationMillis()} ms")
+                val threshold = (getParent()?.parent?.requestDurationThreshold)?:-1
+                if( threshold > -1L && result.durationMillis() > threshold){
+                    log.error("Request $name took ${result.durationMillis()} ms which exceeds threshold of $threshold ms.")
+                    reportFailureToUser("Request $name exceeded threshold of $threshold ms.", " ${result.durationMillis()} ms", false)
                     oneExceededThreshold = true
                 }
             } catch (e: JsonParseException){
