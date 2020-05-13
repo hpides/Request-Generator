@@ -310,6 +310,8 @@ object HttpHandlers {
         @Throws(IOException::class)
         override fun handle(he: HttpExchange) {
             super.handle(he)
+            //a test relies on this taking 1 ms or longer
+            Thread.sleep(2)
             // parse request
             var headers = he.requestHeaders
             val contentType = headers.getFirst(HttpConstants.HEADER_CONTENT_TYPE)

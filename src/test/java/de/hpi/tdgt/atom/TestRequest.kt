@@ -438,6 +438,13 @@ class TestRequest : RequestHandlingFramework() {
     }
 
     @Test
+    fun canCloneFailureThreshold(){
+        val test = deserialize(Utils().getRequestExampleWithTokens())
+        (test.getStories()[0].getAtoms()[2] as Request).something = "1"
+        MatcherAssert.assertThat((test.getStories()[0].getAtoms()[2].clone() as Request).something, Matchers.equalTo("1"))
+    }
+
+    @Test
     fun canCloneTimeAggregationFalse(){
         val test = deserialize(Utils().requestExampleWithRequestReplacement)
         val request = test.getStories()[0].getAtoms()[1] as Request

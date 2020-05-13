@@ -2,6 +2,7 @@ package de.hpi.tdgt;
 
 import de.hpi.tdgt.controllers.UploadController;
 import de.hpi.tdgt.test.story.atom.Data_Generation;
+import de.hpi.tdgt.test.story.atom.Request;
 import de.hpi.tdgt.test.story.atom.assertion.Assertion;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
@@ -98,7 +99,7 @@ public class WebApplication {
                 CLI.loadTest(load);
                 int code = SpringApplication.exit(ctx, () -> {
                     // return the error code
-                    return Assertion.getOneHasFailed() ? 3 : 0;
+                    return (Assertion.getOneHasFailed() ? 3 : 0) + (Request.getOneExceededThreshold() ? 2:0);
                 });
                 System.exit(code);
             } else if(restTest){

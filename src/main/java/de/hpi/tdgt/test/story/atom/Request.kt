@@ -27,6 +27,11 @@ import kotlin.collections.HashMap
 
 
 class Request : Atom() {
+    /**
+     * If request is longer than this (in ms), CLI mode will count this as failure
+     */
+    var failureThreshold: String? = "-1"
+
     var verb: String? = null
     var addr: String? = null
         get() {
@@ -102,6 +107,7 @@ class Request : Atom() {
      * Contains names of headers for which the value shall be extracted under the given names from the response to the left and which shall be saved under that name on the right in the token.
      */
     var receiveHeaders:  Map<String, String> = HashMap()
+
 
     private fun getRecordName():String?{
         if(timeAggregation){
@@ -229,6 +235,7 @@ class Request : Atom() {
         ret.timeAggregation = timeAggregation
         ret.receiveHeaders = receiveHeaders
         ret.sendHeaders = sendHeaders
+        ret.failureThreshold = failureThreshold
         cloning = false;
         ret.cloning = false
         return ret
@@ -261,6 +268,11 @@ class Request : Atom() {
                 } else {
                     log.info("I can not handle Arrays.")
                     log.info(result)
+                }
+                if((failureThreshold?:"-1").toLong() > -1 && result.durationMillis() > (failureThreshold?:"-1").toLong()){
+                    log.error("Request $name took ${result.durationMillis()} ms which exceeds threshold of $failureThreshold ms.")
+                    reportFailureToUser("Request $name exceeded threshold of $failureThreshold ms.", " ${result.durationMillis()} ms")
+                    oneExceededThreshold = true
                 }
             } catch (e: JsonParseException){
                 reportFailureToUser("Request $name can parse response JSON",e.message)
@@ -448,5 +460,7 @@ class Request : Atom() {
             builder.append("\",\"\")")
             return builder.toString()
         }
+        @JvmStatic
+        public var oneExceededThreshold: Boolean = false
     }
 }

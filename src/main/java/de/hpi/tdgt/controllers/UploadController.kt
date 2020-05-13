@@ -5,6 +5,7 @@ import de.hpi.tdgt.concurrency.Event
 import de.hpi.tdgt.deserialisation.Deserializer
 import de.hpi.tdgt.requesthandling.RestClient
 import de.hpi.tdgt.test.Test
+import de.hpi.tdgt.test.story.atom.Request
 import de.hpi.tdgt.test.story.atom.assertion.Assertion
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.test.time_measurement.TimeStorage
@@ -171,6 +172,8 @@ class UploadController {
             Event.reset()
             //no assertions run yet
             Assertion.oneHasFailed = false
+            Request.oneExceededThreshold = false
+            //could not have happened yet
             val threads: MutableCollection<Future<*>> = testToRun.warmup()
             testToRun.start(threads)
         }

@@ -164,6 +164,22 @@ class UploadJSONTest : RequestHandlingFramework() {
 
     @Test
     @Throws(Exception::class)
+    @ExpectSystemExitWithStatus(2)
+    fun exitsWithOneFromCLIModeIfRequestTakesTooLong() {
+        //the test contains a request to a non-existant host, so an implicit assertion should fail
+        val args = arrayOf(
+            "--load",
+            "./src/test/resources/de/hpi/tdgt/RequestTooLongExample.json",
+            "./src/test/resources/de/hpi/tdgt",
+            "./src/test/resources/de/hpi/tdgt"
+        )
+        WebApplication.main(args)
+        //test is run async
+        waitForTestEnd()
+    }
+
+    @Test
+    @Throws(Exception::class)
     @ExpectSystemExitWithStatus(0)
     fun passesUnknownParamsToSpringBoot() {
         //Since everything is fine, the application should exit with 0
