@@ -440,8 +440,8 @@ class TestRequest : RequestHandlingFramework() {
     @Test
     fun canCloneFailureThreshold(){
         val test = deserialize(Utils().getRequestExampleWithTokens())
-        (test.getStories()[0].getAtoms()[2] as Request).something = "1"
-        MatcherAssert.assertThat((test.getStories()[0].getAtoms()[2].clone() as Request).something, Matchers.equalTo("1"))
+        (test.getStories()[0].getAtoms()[2] as Request).failureThreshold = "1"
+        MatcherAssert.assertThat((test.getStories()[0].getAtoms()[2].clone() as Request).failureThreshold, Matchers.equalTo("1"))
     }
 
     @Test
