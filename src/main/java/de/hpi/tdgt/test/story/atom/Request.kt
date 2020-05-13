@@ -2,7 +2,6 @@ package de.hpi.tdgt.test.story.atom
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.core.JsonParseException
-import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import de.hpi.tdgt.requesthandling.RestClient
@@ -15,7 +14,6 @@ import org.htmlcleaner.CleanerProperties
 import org.htmlcleaner.DomSerializer
 import org.htmlcleaner.HtmlCleaner
 import java.io.IOException
-import java.net.MalformedURLException
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -27,6 +25,7 @@ import kotlin.collections.HashMap
 
 
 class Request : Atom() {
+
     var verb: String? = null
     var addr: String? = null
         get() {
@@ -102,6 +101,7 @@ class Request : Atom() {
      * Contains names of headers for which the value shall be extracted under the given names from the response to the left and which shall be saved under that name on the right in the token.
      */
     var receiveHeaders:  Map<String, String> = HashMap()
+
 
     private fun getRecordName():String?{
         if(timeAggregation){
@@ -261,6 +261,12 @@ class Request : Atom() {
                 } else {
                     log.info("I can not handle Arrays.")
                     log.info(result)
+                }
+                val threshold = (getParent()?.parent?.requestDurationThreshold)?:-1
+                if( threshold > -1L && result.durationMillis() > threshold){
+                    log.error("Request $name took ${result.durationMillis()} ms which exceeds threshold of $threshold ms.")
+                    reportFailureToUser("Request $name exceeded threshold of $threshold ms.", " ${result.durationMillis()} ms", false)
+                    oneExceededThreshold = true
                 }
             } catch (e: JsonParseException){
                 reportFailureToUser("Request $name can parse response JSON",e.message)
@@ -448,5 +454,7 @@ class Request : Atom() {
             builder.append("\",\"\")")
             return builder.toString()
         }
+        @JvmStatic
+        public var oneExceededThreshold: Boolean = false
     }
 }

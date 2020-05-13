@@ -84,12 +84,20 @@ class AssertionStorage private constructor() {
      */
     var isStoreEntriesAsynch = true
 
+    /**
+     * countAsFailedAssertion: if true, oneHasFailed will be set. Else it won't.
+     */
     fun addFailure(
         assertionName: String,
         actual: String,
-        testid: Long
+        testid: Long,
+        countAsFailedAssertion: Boolean =true
     ) { //we can assume there is just ne test running at any given time, so this is sufficient
         this.testid = testid
+        //this is the one method that is called in all error cases
+        if(countAsFailedAssertion) {
+            Assertion.oneHasFailed = true
+        }
         if (isStoreEntriesAsynch) { //needs quite some synchronization time and might run some time, so run it async if possible
             ThreadRecycler.instance.executorService.submit { doAddFailure("$assertionName (node $nodeNumber)", actual) }
         } else {

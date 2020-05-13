@@ -42,6 +42,13 @@ class Test {
     var nodeNumber = 0L
     var nodes = 1L
     /**
+     * If request is longer than this (in ms), CLI mode will count this as failure
+     */
+    var requestDurationThreshold: Long = -1
+    set(value) {
+        field = value
+    }
+    /**
      * Contains the original test config as JSON. This saves time because when broadcasting it, the test does not have to be serialized again.
      */
     var configJSON: String? = null
