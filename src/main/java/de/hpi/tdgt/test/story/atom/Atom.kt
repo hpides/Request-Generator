@@ -55,12 +55,12 @@ abstract class Atom : Cloneable {
 
     abstract suspend fun perform()
 
-    protected fun reportFailureToUser(assertionName: String, message: String?) {
+    protected fun reportFailureToUser(assertionName: String, message: String?, countAsFailedAssertion: Boolean =true) {
         var testId: Long = 0
         if (getParent() != null && getParent()!!.parent != null) {
             testId = getParent()!!.parent!!.testId
         }
-        AssertionStorage.instance.addFailure(assertionName, message!!, testId)
+        AssertionStorage.instance.addFailure(assertionName, message!!, testId, countAsFailedAssertion)
     }
 
     @Throws(InterruptedException::class, ExecutionException::class)
