@@ -9,11 +9,13 @@ You can run a test like this:
 ```bash
 java -jar request-generator-1.0-SNAPSHOT-jar-with-dependencies.jar --load ./src/test/resources/de/hpi/tdgt/test_config_example.json ./src/test/resources/de/hpi/tdgt/ java7
 ```
-First argument is the test file to run, second the directory where the data for the test are, third is the path of the Java interpreter as e.g. execve expects it.
+First argument (--load) is the test file to run, second the directory where the data for the test are, third is the path of the Java interpreter as e.g. execve expects it.
+Users can specify a threshold for the response time of all sent requests that if exceeded lets Request Generator exit with return code 3 instead of 0 in the test configuration (attribute *requestDurationThreshold*). If an assertion in the test fails, Request Generator will exit the command line mode with return code 2. If both assertions fail and the threshold is exceeded, it will exit with return code 5.
+
 ## How to execute (Web Server)
 Start the webserver with one argument that states where PDGF should put test data and one with the java 7 interpreter path as above, e.g.:
 ```bash
-java -jar request-generator-1.0-SNAPSHOT-jar-with-dependencies.jar ./src/test/resources/de/hpi/tdgt/ java7
+java -jar request-generator-1.0-SNAPSHOT-jar-with-dependencies.jar --location http://localhost:8080 ./src/test/resources/de/hpi/tdgt/ java7
 ```
 You can execute tests using curl, e.g.:
 ```bash
