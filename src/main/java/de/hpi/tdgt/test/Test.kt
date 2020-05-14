@@ -48,6 +48,11 @@ class Test {
     set(value) {
         field = value
     }
+
+    /**
+     * Arbitrary name for users to identify test
+     */
+    var name : String? = null
     /**
      * Contains the original test config as JSON. This saves time because when broadcasting it, the test does not have to be serialized again.
      */
