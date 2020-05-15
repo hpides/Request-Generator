@@ -80,7 +80,7 @@ class DeserializeAtomTest {
     fun sixthAtomOfFirstStoryWaitsOneSecond() {
         val sixthAtomOfFirstStory =
             seventhAtomOfFirstStory as Delay?
-        Assertions.assertEquals(1000, sixthAtomOfFirstStory!!.delayMs)
+        Assertions.assertEquals("1000", sixthAtomOfFirstStory!!.delayMs)
     }
 
     @Test

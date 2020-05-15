@@ -3,17 +3,23 @@ package de.hpi.tdgt.test.story.atom
 import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.delay
 import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 
 class Delay : Atom() {
-    var delayMs = 0
+    var delayMs:String? = "0"
     override suspend fun perform() {
+        val evaluatedDelay = replaceWithKnownParams(delayMs?:"0",false)
+        val actualDelay = evaluatedDelay?.toLongOrNull()
         try {
-            if (delayMs > 0) {
+            if (actualDelay != null && actualDelay > 0) {
                 if(PropertiesReader.AsyncIO()) {
-                    delay(delayMs.toLong())
+                    delay(actualDelay)
                 }else {
-                    Thread.sleep(delayMs.toLong())
+                    Thread.sleep(actualDelay)
                 }
+            }
+            else if(actualDelay == null){
+                reportFailureToUser("Delay $name could not delay: Expanded expression is not a Long!",evaluatedDelay)
             }
         } catch (e: InterruptedException) {
             log.error(e)
@@ -42,9 +48,12 @@ class Delay : Atom() {
     override fun hashCode(): Int {
         val PRIME = 59
         var result = super.hashCode()
-        result = result * PRIME + delayMs
+        result = result * PRIME + delayMs.hashCode()
         return result
     }
+
+    override val log: Logger
+        get() = Delay.log
 
     companion object {
         private val log = LogManager.getLogger(Delay::class.java)

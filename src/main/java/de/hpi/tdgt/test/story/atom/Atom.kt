@@ -10,9 +10,11 @@ import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.*
 import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.ExecutionException
+import java.util.regex.Pattern
 import java.util.stream.Collectors
 
 
@@ -52,6 +54,11 @@ abstract class Atom : Cloneable {
     //e.g. for request, so it can account time to a story
     @JsonIgnore
     private var parent: UserStory? = null
+
+    /**
+     * During cloning, replacement will not work. This Flag disables it so the user does not get confised with warning messages.
+     */
+    protected var cloning = false;
 
     abstract suspend fun perform()
 
@@ -229,8 +236,69 @@ abstract class Atom : Cloneable {
         return parent
     }
 
-    companion object {
-        private val log =
-            LogManager.getLogger(Atom::class.java)
+    public fun replaceWithKnownParams(toReplace: String, enquoteInsertedValue: Boolean, sanitizeXPATH: Boolean = false, sanitizeJSONPATH: Boolean = false): String? {
+        var current = toReplace
+        for ((key, value) in knownParams) {
+            var useValue=value
+            if(sanitizeXPATH){
+                useValue = Request.sanitizeXPATH(value)
+            }
+            //sanitizeXPATH takes care of quotes
+            if(enquoteInsertedValue && !sanitizeXPATH && !sanitizeJSONPATH) {
+                // quotes in JSON need to be replaced
+                useValue = useValue.replace("\"","\\\"")
+                current = current.replace("$$key", '\"' + useValue + '\"')
+            }
+            else if(sanitizeJSONPATH){
+                //inside a JSONPATH regex, forward slashes need to be escaped since they denominate regexes. Else they should not be replaced because it might alter the meaning.
+                var isInRegex = false
+                val keyStart = current.indexOf(key)
+                if(keyStart > 0){
+                    var index = 0;
+                    while(index < keyStart){
+                        if(current[index] == '/') isInRegex = !isInRegex
+                        index++
+                    }
+                }
+                if(isInRegex) {
+                    useValue = useValue.replace("/","\\/")
+                }
+                //symbols that always need replacement
+                useValue = useValue.replace("(","\\(").replace(")","\\)").replace("'","\\'").replace("\"","\\\"")
+
+                current = current.replace("$$key", useValue)
+            }
+            else{
+                current = current.replace("$$key", useValue)
+            }
+        }
+        //should show a warning
+        //need to consider surrounding characters in both direction, else it does not match...
+        //method might be called during cloning (usage in setters). In this case, we do not want it to report failed assertions
+        if (Pattern.matches(".*"+"\\"+"\$"+"[a-zA-Z0-9]+.*", current) && !cloning) {
+            val p = Pattern.compile("\\$[a-zA-Z0-9]*")
+            val m = p.matcher(current)
+            val allUncompiled = HashSet<String>()
+            while (m.find()) {
+                allUncompiled.add(m.group())
+            }
+            val builder = StringBuilder()
+            var first = true
+            for (unmatched in allUncompiled) {
+                if (!first) {
+                    builder.append(',')
+                }
+                first = false
+                //we want to show the "pure" variable names
+                builder.append(' ').append(unmatched.replace("\$",""))
+            }
+            log.warn("Request $name: Could not replace variable(s) $builder")
+            reportFailureToUser("Request $name: Could not replace variable(s) $builder", current)
+        }
+        return current
     }
+
+    protected abstract val log : Logger
+
+
 }

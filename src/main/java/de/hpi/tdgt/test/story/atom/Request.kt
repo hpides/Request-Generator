@@ -10,6 +10,7 @@ import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.assertion.Assertion
 import de.hpi.tdgt.test.story.atom.assertion.RequestIsSent
 import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 import org.htmlcleaner.CleanerProperties
 import org.htmlcleaner.DomSerializer
 import org.htmlcleaner.HtmlCleaner
@@ -17,7 +18,6 @@ import java.io.IOException
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.util.*
-import java.util.regex.Pattern
 import javax.xml.xpath.XPath
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
@@ -203,11 +203,6 @@ class Request : Atom() {
         extractResponseParams(rc.exchangeWithEndpoint(request))
     }
 
-    /**
-     * During cloning, replacement will not work. This Flag disables it so the user does not get confised with warning messages.
-     */
-    private var cloning = false;
-
     public override fun performClone(): Atom {
         cloning = true;
         val ret = Request()
@@ -310,68 +305,6 @@ class Request : Atom() {
         }
     }
 
-    public fun replaceWithKnownParams(toReplace: String, enquoteInsertedValue:Boolean,sanitizeXPATH:Boolean = false, sanitizeJSONPATH: Boolean = false): String? {
-        var current = toReplace
-        for ((key, value) in knownParams) {
-            var useValue=value
-            if(sanitizeXPATH){
-                useValue = sanitizeXPATH(value)
-            }
-            //sanitizeXPATH takes care of quotes
-            if(enquoteInsertedValue && !sanitizeXPATH && !sanitizeJSONPATH) {
-                // quotes in JSON need to be replaced
-                useValue = useValue.replace("\"","\\\"")
-                current = current.replace("$$key", '\"' + useValue + '\"')
-            }
-            else if(sanitizeJSONPATH){
-                //inside a JSONPATH regex, forward slashes need to be escaped since they denominate regexes. Else they should not be replaced because it might alter the meaning.
-                var isInRegex = false
-                val keyStart = current.indexOf(key)
-                if(keyStart > 0){
-                    var index = 0;
-                    while(index < keyStart){
-                        if(current[index] == '/') isInRegex = !isInRegex
-                        index++
-                    }
-                }
-                if(isInRegex) {
-                    useValue = useValue.replace("/","\\/")
-                }
-                //symbols that always need replacement
-                useValue = useValue.replace("(","\\(").replace(")","\\)").replace("'","\\'").replace("\"","\\\"")
-
-                current = current.replace("$$key", useValue)
-            }
-            else{
-                current = current.replace("$$key", useValue)
-            }
-        }
-        //should show a warning
-        //need to consider surrounding characters in both direction, else it does not match...
-        //method might be called during cloning (usage in setters). In this case, we do not want it to report failed assertions
-        if (Pattern.matches(".*"+"\\"+"\$"+"[a-zA-Z0-9]+.*", current) && !cloning) {
-            val p = Pattern.compile("\\$[a-zA-Z0-9]*")
-            val m = p.matcher(current)
-            val allUncompiled = HashSet<String>()
-            while (m.find()) {
-                allUncompiled.add(m.group())
-            }
-            val builder = StringBuilder()
-            var first = true
-            for (unmatched in allUncompiled) {
-                if (!first) {
-                    builder.append(',')
-                }
-                first = false
-                //we want to show the "pure" variable names
-                builder.append(' ').append(unmatched.replace("\$",""))
-            }
-            log.warn("Request $name: Could not replace variable(s) $builder")
-            reportFailureToUser("Request $name: Could not replace variable(s) $builder", current)
-        }
-        return current
-    }
-
     override fun equals(other: Any?): Boolean {
         if (other === this) return true
         if (other !is Request) return false
@@ -423,6 +356,9 @@ class Request : Atom() {
         return result
     }
 
+    override val log: Logger
+        get() =  Request.log
+
     class BasicAuth {
         var user: String? = null
         var password: String? = null
@@ -437,8 +373,6 @@ class Request : Atom() {
     }
 
     companion object {
-        private val log =
-                LogManager.getLogger(Request::class.java)
         @JsonIgnore
         private val rc = RestClient()
         @JsonIgnore
@@ -462,6 +396,7 @@ class Request : Atom() {
         }
         @JvmStatic
         public var oneExceededThreshold: Boolean = false
+        val log = LogManager.getLogger(Request::class.java)
     }
 }
 

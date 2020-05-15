@@ -10,6 +10,7 @@ import de.hpi.tdgt.deserialisation.Deserializer.deserialize
 import de.hpi.tdgt.test.Test
 import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.Data_Generation
+import de.hpi.tdgt.test.story.atom.Delay
 import de.hpi.tdgt.test.story.atom.Request
 import de.hpi.tdgt.test.story.atom.assertion.*
 import de.hpi.tdgt.test.time_measurement.MqttTimeMessage
@@ -944,6 +945,35 @@ class MQTTTest : RequestHandlingFramework() {
         }
         MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("XPATH failed: \"Bjärk!\" (node 0)")))
         MatcherAssert.assertThat(message.actuals.get("XPATH failed: \"Bjärk!\" (node 0)")!!.value, Matchers.hasItem(Matchers.containsString("Exception")))
+    }
+
+    @org.junit.jupiter.api.Test
+    public fun delayAtomFailsAssertionIfNoLong(){
+        val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
+        val delayAtom = Delay()
+        delayAtom.name = "Delay"
+        delayAtom.repeat = 1
+        delayAtom.predecessorCount = 0
+        delayAtom.delayMs = "1\$delay0"
+        val startTime = System.currentTimeMillis()
+        val params = HashMap<String, String>()
+        params["delay"] = "NaN"
+        //else we will not wait at all
+        runBlocking {
+            delayAtom.run(params)
+
+        }
+        sleep(3000)
+        val actuals = readAssertion(messages)
+        var message: MqttAssertionMessage? = null
+        for (assertion in actuals) {
+            if (assertion.actuals.isNotEmpty()) {
+                message = assertion
+            }
+        }
+        val assertionName = "Delay ${delayAtom.name} could not delay: Expanded expression is not a Long! (node 0)"
+        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo(assertionName)))
+        MatcherAssert.assertThat(message.actuals[assertionName]!!.value, Matchers.hasItem("1NaN0"))
     }
 
     @org.junit.jupiter.api.Test

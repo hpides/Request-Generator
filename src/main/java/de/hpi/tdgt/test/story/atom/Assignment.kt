@@ -3,6 +3,7 @@ package de.hpi.tdgt.test.story.atom
 import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.delay
 import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 
 class Assignment : Atom() {
     /**
@@ -40,6 +41,9 @@ class Assignment : Atom() {
         result = result * PRIME + assignments.hashCode()
         return result
     }
+
+    override val log: Logger
+        get() = Assignment.log
 
     companion object {
         private val log = LogManager.getLogger(Assignment::class.java)
