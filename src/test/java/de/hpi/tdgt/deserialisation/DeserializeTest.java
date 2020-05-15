@@ -80,4 +80,10 @@ public class DeserializeTest {
         MatcherAssert.assertThat(newScale, Matchers.greaterThan(0));
     }
 
+    @Test
+    public void hasCorrectName() throws IOException{
+        val test = Deserializer.deserialize(getExampleJSON());
+        MatcherAssert.assertThat(test.getName(), Matchers.equalTo("An example test"));
+    }
+
 }

@@ -2,6 +2,7 @@
   "repeat": 1,
   "scaleFactor": 70,
   "activeInstancesPerSecond": 30,
+  "name": "An example test",
   "stories": [
     {
       "scalePercentage": 0.7,
