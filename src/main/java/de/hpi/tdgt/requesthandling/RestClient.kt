@@ -501,19 +501,11 @@ class RestClient {
         res.contentType = response.contentType
         res.headers = response.headers
         res.returnCode = response.statusCode
-        for(cookie in request.receiveCookies){
-            var foundCookie = false;
-            for(responseCookie in response.cookies){
-                //accept first cookie, second one is probably a mistake
-                if(cookie == responseCookie.name() && !foundCookie){
-                    res.receivedCookies.put(cookie, responseCookie.value())
-                    foundCookie = true;
-                }
-                if(cookie == responseCookie.name() && foundCookie){
-                    log.warn("Duplicate cookie key $cookie")
-                }
-            }
+
+        for(responseCookie in response.cookies){
+            res.receivedCookies[responseCookie.name()] = responseCookie.value()
         }
+
         storage.registerTime(
             request.method,
             request.recordName?:"",

@@ -273,6 +273,29 @@ class TestRequest : RequestHandlingFramework() {
     }
 
     @Test
+    fun readsCookieByRegex(){
+        val story = UserStory()
+        story.name = "story"
+        val test = de.hpi.tdgt.test.Test()
+        story.parent = test
+        requestAtom!!.verb = "GET"
+        requestAtom!!.addr = "http://localhost:9000/cookie"
+        val cookies = HashMap<String, String>()
+        cookies.put("J\\w+D","id");
+        requestAtom!!.receiveCookies = cookies
+        requestAtom!!.setSuccessors(IntArray(0))
+        requestAtom!!.predecessorCount = 0
+        requestAtom!!.repeat = 1
+        requestAtom!!.setParent(story)
+        runBlocking {requestAtom!!.run(HashMap())}
+        MatcherAssert.assertThat(
+            requestAtom!!.knownParams,
+            Matchers.hasEntry(Matchers.equalTo("id"), Matchers.equalTo("1234567890"))
+        )
+
+    }
+
+    @Test
     fun readsMultipleCookies(){
         val story = UserStory()
         story.name = "story"
@@ -305,6 +328,31 @@ class TestRequest : RequestHandlingFramework() {
         requestAtom!!.addr = "http://localhost:9000/cookie"
         val cookies = HashMap<String, String>()
         cookies.put("cookie","JSESSIONID");
+        requestAtom!!.sendCookies = cookies
+        requestAtom!!.setSuccessors(IntArray(0))
+        requestAtom!!.predecessorCount = 0
+        requestAtom!!.repeat = 1
+        requestAtom!!.setParent(story)
+        val params = HashMap<String,String>()
+        params.put("cookie","1234")
+        runBlocking {requestAtom!!.run(params)}
+        MatcherAssert.assertThat(
+            cookiehandler.lastCookie,
+            Matchers.containsString("1234")
+        )
+
+    }
+
+    @Test
+    fun setsCookiesByRegex(){
+        val story = UserStory()
+        story.name = "story"
+        val test = de.hpi.tdgt.test.Test()
+        story.parent = test
+        requestAtom!!.verb = "GET"
+        requestAtom!!.addr = "http://localhost:9000/cookie"
+        val cookies = HashMap<String, String>()
+        cookies.put("c\\w+e","JSESSIONID");
         requestAtom!!.sendCookies = cookies
         requestAtom!!.setSuccessors(IntArray(0))
         requestAtom!!.predecessorCount = 0

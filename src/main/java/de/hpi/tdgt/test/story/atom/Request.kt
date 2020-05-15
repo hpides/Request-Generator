@@ -153,12 +153,12 @@ class Request : Atom() {
     private fun prepareCookies():Map<String, String>{
         val ret = HashMap<String, String>()
         for(cookie in this.sendCookies.entries){
-            val value = this.knownParams.get(cookie.key);
+            val value = this.knownParams.getFirstByRegex(cookie.key);
             if(value == null){
-                log.warn("Cookie "+cookie.key+" not known!")
+                reportFailureToUser("Cookie ${cookie.key} not known in request $name","")
                 continue
             }
-            ret.put(cookie.value, value)
+            ret[cookie.value] = value
         }
         return ret
     }
@@ -279,11 +279,17 @@ class Request : Atom() {
         if(result != null && result.isHtml){
             extractCSRFTokens(String(result.response))
         }
-
-        //given cookie map is indirection between cookie name and name to put it into because of namespacing
-        for(cookie in receiveCookies.keys){
-            if (result != null && result.receivedCookies.get(cookie) != null) {
-                knownParams[receiveCookies[cookie]!!] = result.receivedCookies[cookie]!!
+        if(result != null) {
+            //given cookie map is indirection between cookie name and name to put it into because of namespacing
+            for (cookie in receiveCookies.keys) {
+                val receivedCookie = result.receivedCookies.getFirstByRegex(cookie)
+                if(receivedCookie == null){
+                    reportFailureToUser("Expression $cookie not found in response in request $name","")
+                    continue
+                }
+                if (receiveCookies[cookie] != null) {
+                    knownParams[receiveCookies[cookie]!!] = receivedCookie
+                }
             }
         }
 
@@ -457,4 +463,14 @@ class Request : Atom() {
         @JvmStatic
         public var oneExceededThreshold: Boolean = false
     }
+}
+
+private fun <String, V> Map<String, V>.getFirstByRegex(cookie: String): V? {
+    val regex = Regex(cookie.toString())
+    for(entry in this.entries){
+        if(regex matches entry.key.toString()){
+            return entry.value
+        }
+    }
+    return null
 }
