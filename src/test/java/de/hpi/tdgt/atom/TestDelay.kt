@@ -15,11 +15,13 @@ class TestDelay {
     @BeforeEach
     fun prepareTest() {
         delayAtom = Delay()
+        delayAtom!!.repeat = 1
+        delayAtom!!.predecessorCount = 0
     }
 
     @Test
     fun delay100ms(){
-        delayAtom!!.delayMs = 100
+        delayAtom!!.delayMs = "100"
         val startTime = System.currentTimeMillis()
         runBlocking {
             delayAtom!!.perform()
@@ -30,11 +32,26 @@ class TestDelay {
 
     @Test
     fun delay1000ms() {
-        delayAtom!!.delayMs = 1000
+        delayAtom!!.delayMs = "1000"
         val startTime = System.currentTimeMillis()
         //else we will not wait at all
         runBlocking {
             delayAtom!!.perform()
+        }
+        val endTime = System.currentTimeMillis()
+        Assertions.assertTrue(endTime - startTime > 990)
+    }
+
+    @Test
+    fun delayInterpretsString() {
+        delayAtom!!.delayMs = "1\$delay0"
+        val startTime = System.currentTimeMillis()
+        val params = HashMap<String, String>()
+        params["delay"] = "00"
+        //else we will not wait at all
+        runBlocking {
+            delayAtom!!.run(params)
+
         }
         val endTime = System.currentTimeMillis()
         Assertions.assertTrue(endTime - startTime > 990)

@@ -7,6 +7,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withContext
 import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 
 /**
  * This atom signals the end of the warmup phase.
@@ -22,6 +23,9 @@ class WarmupEnd : Atom() {
     override fun performClone(): Atom {
         return WarmupEnd()
     }
+
+    override val log: Logger
+        get() = WarmupEnd.log
 
 
     companion object {

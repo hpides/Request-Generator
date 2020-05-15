@@ -3,6 +3,7 @@ package de.hpi.tdgt.test.story.atom
 import com.fasterxml.jackson.annotation.JsonIgnore
 import de.hpi.tdgt.util.MappedFileReader
 import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 import java.io.File
 import java.util.*
 import kotlin.collections.HashMap
@@ -169,6 +170,9 @@ class Data_Generation : Atom() {
         result = result * PRIME + readLines
         return result
     }
+
+    override val log: Logger
+        get() = Data_Generation.log
 
     companion object {
         private val log = LogManager.getLogger(
