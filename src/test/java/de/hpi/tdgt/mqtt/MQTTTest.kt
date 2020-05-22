@@ -17,8 +17,6 @@ import de.hpi.tdgt.test.time_measurement.MqttTimeMessage
 import de.hpi.tdgt.test.time_measurement.TimeStorage
 import de.hpi.tdgt.util.Pair
 import de.hpi.tdgt.util.PropertiesReader
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.LogManager
 import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
@@ -64,7 +62,7 @@ class MQTTTest : RequestHandlingFramework() {
 
     @org.junit.jupiter.api.Test
     @Throws(MqttException::class, InterruptedException::class, IOException::class)
-    fun TimeStorageStreamsTimesUsingMQTT() = runBlocking {
+    fun TimeStorageStreamsTimesUsingMQTT() = run {
         val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
         TimeStorage.instance.registerTime("POST", "http://localhost:9000/", 10, "story", 0)
         sleep(3000)
@@ -82,7 +80,7 @@ class MQTTTest : RequestHandlingFramework() {
 
     @org.junit.jupiter.api.Test
     @Throws(MqttException::class, InterruptedException::class, IOException::class)
-    fun TimeStorageStreamsAllTimesUsingMQTT() = runBlocking  {
+    fun TimeStorageStreamsAllTimesUsingMQTT() = run  {
         val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
         val storyName = "story"
         TimeStorage.instance.registerTime("POST", "http://localhost:9000/", 10, storyName, 0)
@@ -109,7 +107,7 @@ class MQTTTest : RequestHandlingFramework() {
 
     @org.junit.jupiter.api.Test
     @Throws(MqttException::class, InterruptedException::class, IOException::class)
-    fun TimeStorageStreamsAllTimesOfAllStoriesUsingMQTT()  = runBlocking { //this test is based on the assumption that both entries are added at roughly the same time, so we want predictable timing behavior
+    fun TimeStorageStreamsAllTimesOfAllStoriesUsingMQTT()  = run { //this test is based on the assumption that both entries are added at roughly the same time, so we want predictable timing behavior
         val messages: Set<String> = prepareClient(TimeStorage.MQTT_TOPIC)
         val storyName1 = "story1"
         val storyName2 = "story2"
@@ -178,7 +176,7 @@ class MQTTTest : RequestHandlingFramework() {
         getWithAuth.setSuccessorLinks(arrayOf())
         val name = mockStoryName
         getWithAuth.setParent(mockParent)
-        runBlocking{getWithAuth!!.run(params)}
+        run{getWithAuth!!.run(params)}
         sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
@@ -271,7 +269,7 @@ class MQTTTest : RequestHandlingFramework() {
         getWithAuth.setSuccessorLinks(arrayOf())
         val name = mockStoryName
         getWithAuth.setParent(mockParent)
-        runBlocking{getWithAuth!!.run(params)}
+        run{getWithAuth!!.run(params)}
         sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
@@ -306,7 +304,7 @@ class MQTTTest : RequestHandlingFramework() {
         getWithAuth.setSuccessorLinks(arrayOf())
         val name = mockStoryName
         getWithAuth.setParent(mockParent)
-        runBlocking{getWithAuth!!.run(params)}
+        run{getWithAuth!!.run(params)}
         sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
@@ -337,7 +335,7 @@ class MQTTTest : RequestHandlingFramework() {
         getWithAuth.setSuccessorLinks(arrayOf())
         val name = mockStoryName
         getWithAuth.setParent(mockParent)
-        runBlocking{getWithAuth!!.run(params)}
+        run{getWithAuth!!.run(params)}
         sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
@@ -365,7 +363,7 @@ class MQTTTest : RequestHandlingFramework() {
         val getWithAuth =
             deserialize(Utils().requestExampleWithAssertionsJSON)
         getWithAuth.nodeNumber = 10
-        runBlocking{getWithAuth.start()}
+        run{getWithAuth.start()}
         sleep(3000)
         val typeRef: TypeReference<MqttTimeMessage?> =
             object : TypeReference<MqttTimeMessage?>() {}
@@ -442,7 +440,7 @@ class MQTTTest : RequestHandlingFramework() {
             deserialize(Utils().requestExampleWithAssertionsJSON).getStories()[0].getAtoms()[3] as Request
         //make sure we do not run successors
         getWithAuth.setSuccessorLinks(arrayOf())
-        runBlocking{getWithAuth!!.run(params)}
+        run{getWithAuth!!.run(params)}
         sleep(3000)
         val allActuals =
             getAllActuals(message)
@@ -480,7 +478,7 @@ class MQTTTest : RequestHandlingFramework() {
         getWithAuth.addr = "http://AHostThatJustCanNotExist"
         //make sure we do not run successors
         getWithAuth.setSuccessorLinks(arrayOf())
-        runBlocking{getWithAuth!!.run(params)}
+        run{getWithAuth!!.run(params)}
         sleep(3000)
         val allActuals =
             getAllActuals(message)
@@ -530,7 +528,7 @@ class MQTTTest : RequestHandlingFramework() {
             postWithBodyAndAssertion.assertions[0] as ContentType
         //simulate failure
         assertion.contentType = "application/xml"
-        runBlocking{postWithBodyAndAssertion.run(params)}
+        run{postWithBodyAndAssertion.run(params)}
         sleep(3000)
         val allActuals =
             getAllActuals(messages)
@@ -581,7 +579,7 @@ class MQTTTest : RequestHandlingFramework() {
             postWithBodyAndAssertion.assertions[0] as ContentType
         //simulate failure
         assertion.contentType = "application/xml"
-        runBlocking{postWithBodyAndAssertion.run(params)}
+        run{postWithBodyAndAssertion.run(params)}
         sleep(3000)
         var allActuals =
             getAllActuals(messages)
@@ -592,7 +590,7 @@ class MQTTTest : RequestHandlingFramework() {
         //remove existing values
         messages.clear()
         assertion.contentType = "application/json"
-        runBlocking{postWithBodyAndAssertion.run(params)}
+        run{postWithBodyAndAssertion.run(params)}
         sleep(3000)
         //other failure should be removed now
         allActuals = getAllActuals(messages)
@@ -623,7 +621,7 @@ class MQTTTest : RequestHandlingFramework() {
             postWithBodyAndAssertion.assertions[0] as ContentType
         //simulate failure
         assertion.contentType = "application/xml"
-        runBlocking{postWithBodyAndAssertion.run(params)}
+        run{postWithBodyAndAssertion.run(params)}
         sleep(3000)
         var allActuals =
             getAllActuals(messages)
@@ -633,7 +631,7 @@ class MQTTTest : RequestHandlingFramework() {
         )
         //remove existing values
         messages.clear()
-        runBlocking{postWithBodyAndAssertion.run(params)}
+        run{postWithBodyAndAssertion.run(params)}
         sleep(3000)
         //other failure should be removed now
         allActuals = getAllActuals(messages)
@@ -665,7 +663,7 @@ class MQTTTest : RequestHandlingFramework() {
         //do not run successors
         getJsonObjectWithAssertion.setSuccessorLinks(arrayOf())
         getJsonObjectWithAssertion.addr = "http://localhost:9000/empty"
-        runBlocking{getJsonObjectWithAssertion.run(params)}
+        run{getJsonObjectWithAssertion.run(params)}
         sleep(3000)
         val allActuals =
             getAllActuals(messages)
@@ -702,7 +700,7 @@ class MQTTTest : RequestHandlingFramework() {
         //do not run successors
         getJsonObjectWithAssertion.setSuccessorLinks(arrayOf())
         getJsonObjectWithAssertion.addr = "http://localhost:9000/empty"
-        runBlocking{getJsonObjectWithAssertion.run(params)}
+        run{getJsonObjectWithAssertion.run(params)}
         sleep(3000)
         val actuals = readAssertion(messages)
         MatcherAssert.assertThat(actuals[0].testId, Matchers.greaterThan(0L))
@@ -716,7 +714,7 @@ class MQTTTest : RequestHandlingFramework() {
         IOException::class
     )
     fun ATestStartMessageIsSent() {
-        runBlocking {
+        run {
             val message: Set<String> = prepareClient(Test.MQTT_TOPIC)
             //test that does not do anything is sufficient, no need to waste resources here
             val test =
@@ -742,7 +740,7 @@ class MQTTTest : RequestHandlingFramework() {
         generation.table = "NotThere"
         generation.data = arrayOf("NotThere")
         generation.name = "generation"
-        runBlocking{generation.perform()}
+        run{generation.perform()}
         val messageStart = "testStart"
         sleep(2000)
         val actuals = readAssertion(messages)
@@ -774,7 +772,7 @@ class MQTTTest : RequestHandlingFramework() {
         generation.name = "generation"
         //file is only 37 long
         generation.repeat = 40
-        runBlocking{generation.run(HashMap())}
+        run{generation.run(HashMap())}
         val messageStart = "testStart"
         sleep(3000)
         val actuals = readAssertion(messages)
@@ -818,7 +816,7 @@ class MQTTTest : RequestHandlingFramework() {
             arrayOf("username", "password", "somethingThatMightJustBeEmpty", "somethingNotExisting")
         generation.name = "generation"
         generation.repeat = 1
-        runBlocking{generation.run(HashMap())}
+        run{generation.run(HashMap())}
         sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
@@ -853,7 +851,7 @@ class MQTTTest : RequestHandlingFramework() {
         IOException::class
     )
     fun ATestStartMessageWithIdAndConfigIsSent() {
-        runBlocking {
+        run {
             val message: Set<String> = prepareClient(Test.MQTT_TOPIC)
             //test that does not do anything is sufficient, no need to waste resources here
             val test =
@@ -948,19 +946,19 @@ class MQTTTest : RequestHandlingFramework() {
     }
 
     @org.junit.jupiter.api.Test
-    public fun delayAtomFailsAssertionIfNoLong(){
+    public fun sleepAtomFailsAssertionIfNoLong(){
         val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
-        val delayAtom = Delay()
-        delayAtom.name = "Delay"
-        delayAtom.repeat = 1
-        delayAtom.predecessorCount = 0
-        delayAtom.delayMs = "1\$delay0"
+        val sleepAtom = Delay()
+        sleepAtom.name = "sleep"
+        sleepAtom.repeat = 1
+        sleepAtom.predecessorCount = 0
+        sleepAtom.delayMs = "1\$sleep0"
         val startTime = System.currentTimeMillis()
         val params = HashMap<String, String>()
-        params["delay"] = "NaN"
+        params["sleep"] = "NaN"
         //else we will not wait at all
-        runBlocking {
-            delayAtom.run(params)
+        run {
+            sleepAtom.run(params)
 
         }
         sleep(3000)
@@ -971,7 +969,7 @@ class MQTTTest : RequestHandlingFramework() {
                 message = assertion
             }
         }
-        val assertionName = "Delay ${delayAtom.name} could not delay: Expanded expression is not a Long! (node 0)"
+        val assertionName = "Delay ${sleepAtom.name} could not delay: Expanded expression is not a Long! (node 0)"
         MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo(assertionName)))
         MatcherAssert.assertThat(message.actuals[assertionName]!!.value, Matchers.hasItem("1NaN0"))
     }
@@ -986,7 +984,7 @@ class MQTTTest : RequestHandlingFramework() {
         params.put("part1","/")
         requestAtom.predecessorCount = 0
         requestAtom.repeat = 1
-        runBlocking { requestAtom.run(params) }
+        run { requestAtom.run(params) }
         sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
@@ -1032,7 +1030,7 @@ class MQTTTest : RequestHandlingFramework() {
         //test that does not do anything is sufficient, no need to waste resources here
         val test =
             deserialize(Utils().noopJson)
-        runBlocking {
+        run {
             test.start(test.warmup())
             val messageEnd = "testEnd"
             val hasTestEnd = hasMessageStartingWith(messages, messageEnd)
@@ -1054,16 +1052,16 @@ class MQTTTest : RequestHandlingFramework() {
             deserialize(Utils().noopJson)
         test.nodes = 10
         test.nodeNumber = 0
-        runBlocking {
+        run {
             test.start(test.warmup())
             val messageEnd = "nodeEnd 0 ${test.testId}"
-            delay(1000)
+            sleep(1000)
             val hasNOdeENd = hasMessageStartingWith(messages, messageEnd)
             MatcherAssert.assertThat("control topic should have received a \"nodeEnd\"!", hasNOdeENd)
             for(i in 1..9){
                 publisher.publish(Test.MQTT_TOPIC,"nodeEnd $i ${test.testId}".toByteArray(),2,false)
             }
-            delay(3000)
+            sleep(3000)
             val hasTestEnd = hasMessageStartingWith(messages, "testEnd")
             MatcherAssert.assertThat("control topic should have received a \"testEnd\"!", hasTestEnd)
         }
@@ -1087,7 +1085,7 @@ class MQTTTest : RequestHandlingFramework() {
         xpathAssertion.xPath = xpath
         xpathAssertion.name = "Has some text"
         requestAtom.assertions = requestAtom.assertions + arrayOf(xpathAssertion)
-        runBlocking {requestAtom.run(HashMap())}
+        run {requestAtom.run(HashMap())}
         sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
@@ -1118,7 +1116,7 @@ class MQTTTest : RequestHandlingFramework() {
         xpathAssertion.name = "Has some text"
         xpathAssertion.returnPage = true
         requestAtom.assertions = requestAtom.assertions + arrayOf(xpathAssertion)
-        runBlocking {requestAtom.run(HashMap())}
+        run {requestAtom.run(HashMap())}
         sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
@@ -1149,7 +1147,7 @@ class MQTTTest : RequestHandlingFramework() {
         xpathAssertion.xPath = xpath
         xpathAssertion.name = "Has some text"
         requestAtom.assertions = requestAtom.assertions + arrayOf(xpathAssertion)
-        runBlocking {requestAtom.run(HashMap())}
+        run {requestAtom.run(HashMap())}
         sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
@@ -1178,7 +1176,7 @@ class MQTTTest : RequestHandlingFramework() {
         val xpathAssertion= XPATHAssertion()
         xpathAssertion.xPath = "//h2[text() = 'Register New User']"
         requestAtom.assertions = requestAtom.assertions + arrayOf(xpathAssertion)
-        runBlocking {requestAtom.run(HashMap())}
+        run {requestAtom.run(HashMap())}
         sleep(2000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
@@ -1208,7 +1206,7 @@ class MQTTTest : RequestHandlingFramework() {
         requestAtom.assertions = requestAtom.assertions + arrayOf(xpathAssertion)
         var params = HashMap<String, String>()
         params.put("val","I've not done any javascript at all and I' trying to sum up values from the select class. can get both of them displayed, but not summed up. Could anyone explain why I'm getting the \"[object HTMLParagraphElement]\" as the answer? Thank you")
-        runBlocking {requestAtom.run(params)}
+        run {requestAtom.run(params)}
         sleep(2000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
@@ -1238,7 +1236,7 @@ class MQTTTest : RequestHandlingFramework() {
         JSONPATHAssertion.JSONPATH = JSONPATH
         JSONPATHAssertion.name = "Has param and value"
         requestAtom.assertions = requestAtom.assertions + arrayOf(JSONPATHAssertion)
-        runBlocking {requestAtom.run(HashMap())}
+        run {requestAtom.run(HashMap())}
         sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
@@ -1270,7 +1268,7 @@ class MQTTTest : RequestHandlingFramework() {
         JSONPATHAssertion.name = "Has param and value"
         JSONPATHAssertion.returnResponse = true
         requestAtom.assertions = requestAtom.assertions + arrayOf(JSONPATHAssertion)
-        runBlocking {requestAtom.run(HashMap())}
+        run {requestAtom.run(HashMap())}
         sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
@@ -1301,7 +1299,7 @@ class MQTTTest : RequestHandlingFramework() {
         JSONPATHAssertion.JSONPATH = JSONPATH
         JSONPATHAssertion.name = "Has some text"
         requestAtom.assertions = requestAtom.assertions + arrayOf(JSONPATHAssertion)
-        runBlocking {requestAtom.run(HashMap())}
+        run {requestAtom.run(HashMap())}
         sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
@@ -1335,7 +1333,7 @@ class MQTTTest : RequestHandlingFramework() {
         var params = HashMap<String, String>()
         params.put("value","abc'\"//'()")
         params.put("pName","param")
-        runBlocking {requestAtom.run(params)}
+        run {requestAtom.run(params)}
         sleep(2000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
@@ -1364,7 +1362,7 @@ class MQTTTest : RequestHandlingFramework() {
         val headers = HashMap<String, String>()
         headers["abc"] = ";;;;"
         requestAtom.sendHeaders = headers
-        runBlocking {requestAtom.run(HashMap())}
+        run {requestAtom.run(HashMap())}
         sleep(3000)
         val actuals = readAssertion(messages)
         var message: MqttAssertionMessage? = null
@@ -1384,12 +1382,12 @@ class MQTTTest : RequestHandlingFramework() {
         IOException::class
     )
     fun NodesRespondWithTheirIdentification() {
-        runBlocking {
+        run {
             val message: Set<String> = prepareClient(Test.MQTT_TOPIC)
             UploadController.LOCATION = "someHost"
             publisher.publish(Test.MQTT_TOPIC, MqttMessage(UploadController.IDENTIFICATION_REQUEST_MESSAGE.toByteArray()))
             //test that does not do anything is sufficient, no need to waste resources here
-            delay(3000)
+            sleep(3000)
             val hasIDentification = hasMessageStartingWith(message, UploadController.IDENTIFICATION_RESPONSE_MESSAGE)
             MatcherAssert.assertThat("control topic should have received an \"identification\"!", hasIDentification)
         }
@@ -1403,12 +1401,12 @@ class MQTTTest : RequestHandlingFramework() {
         IOException::class
     )
     fun NodesDoNotRespondWithTheirIdentificationIfNoneKnown() {
-        runBlocking {
+        run {
             val message: Set<String> = prepareClient(Test.MQTT_TOPIC)
             UploadController.LOCATION = null
             publisher.publish(Test.MQTT_TOPIC, MqttMessage(UploadController.IDENTIFICATION_REQUEST_MESSAGE.toByteArray()))
             //test that does not do anything is sufficient, no need to waste resources here
-            delay(3000)
+            sleep(3000)
             val hasIDentification = hasMessageStartingWith(message, UploadController.IDENTIFICATION_RESPONSE_MESSAGE)
             MatcherAssert.assertThat("control topic should not have received an \"identification\"!", !hasIDentification)
         }

@@ -1,13 +1,9 @@
 package de.hpi.tdgt.test.story.atom
 
 import de.hpi.tdgt.concurrency.Event
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.withContext
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
+import java.util.concurrent.Semaphore
 
 /**
  * This atom signals the end of the warmup phase.
@@ -15,7 +11,7 @@ import org.apache.logging.log4j.Logger
  */
 class WarmupEnd : Atom() {
     @Throws(InterruptedException::class)
-    override suspend fun perform() {
+    override  fun perform() {
         addWaiter()
         Event.waitFor(eventName)
     }
@@ -39,7 +35,7 @@ class WarmupEnd : Atom() {
 
         private val mutex = Semaphore(1)
 
-        private suspend fun addWaiter() {
+        private  fun addWaiter() {
             //need coroutine-aware synchronization method here
             mutex.acquire()
             log.info("Added a waiter to the existing $waiting waiters!")
@@ -50,7 +46,7 @@ class WarmupEnd : Atom() {
         /**
          * Let all waiting warmup ends continue.
          */
-        suspend fun startTest() {
+         fun startTest() {
             log.info("START TEST!")
             Event.signal(eventName)
             waiting = 0

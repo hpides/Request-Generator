@@ -9,11 +9,6 @@ import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.Request
 import de.hpi.tdgt.util.Pair
 import jdk.jshell.spi.ExecutionControl
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.runBlocking
 import lombok.SneakyThrows
 import org.apache.logging.log4j.LogManager
 import org.hamcrest.MatcherAssert
@@ -34,7 +29,7 @@ import java.util.concurrent.Future
 class TestRequestHandling : RequestHandlingFramework() {
     @Test
     @Throws(IOException::class)
-    fun testSimpleRequest() = runBlocking {
+    fun testSimpleRequest() = run {
         val rc = RestClient()
         val result = rc.getFromEndpoint(
             UserStory(),
@@ -49,7 +44,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testInvalidCharacter() = runBlocking {
+    fun testInvalidCharacter() = run {
         val rc = RestClient()
         val params = HashMap<String, String>()
         params["key"] = "It is what it is...and does what it offers"
@@ -67,7 +62,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testContentType() = runBlocking {
+    fun testContentType() = run {
         val rc = RestClient()
         val result = rc.getFromEndpoint(
             UserStory(),
@@ -81,7 +76,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testContentDecoding() = runBlocking {
+    fun testContentDecoding() = run {
         val rc = RestClient()
         val result = rc.getFromEndpoint(
             UserStory(),
@@ -98,7 +93,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testGETParams() = runBlocking {
+    fun testGETParams() = run {
         val rc = RestClient()
         val params = HashMap<String, String>()
         params["param"] = "value"
@@ -115,7 +110,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testGETBodyParams() = runBlocking {
+    fun testGETBodyParams() = run {
         val rc = RestClient()
         val body = "{\"param\":\"value\"}"
         val result =
@@ -128,7 +123,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testDELETEParams() = runBlocking {
+    fun testDELETEParams() = run {
         val rc = RestClient()
         val params = HashMap<String, String>()
         params["param"] = "value"
@@ -145,7 +140,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testJSON() = runBlocking {
+    fun testJSON() = run {
         val rc = RestClient()
         val params = HashMap<String, String>()
         params["param"] = "value"
@@ -160,7 +155,7 @@ class TestRequestHandling : RequestHandlingFramework() {
     //Regression test
     @Test
     @Throws(IOException::class, InterruptedException::class, ExecutionException::class)
-    fun testJSONWithInteger() = runBlocking {
+    fun testJSONWithInteger() = run {
         val rq = Request()
         rq.addr = "http://localhost:9000/jsonObject"
         rq.requestParams = arrayOf("param")
@@ -178,7 +173,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testJSONArray() = runBlocking {
+    fun testJSONArray() = run {
         val rc = RestClient()
         val params = HashMap<String, String>()
         params["param"] = "value"
@@ -192,7 +187,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testMeasuresTime() = runBlocking {
+    fun testMeasuresTime() = run {
         val rc = RestClient()
         val params = HashMap<String, String>()
         params["param"] = "value"
@@ -215,7 +210,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testPOSTFormParams() = runBlocking {
+    fun testPOSTFormParams() = run {
         val rc = RestClient()
         val params = HashMap<String, String>()
         params["param"] = "value"
@@ -232,7 +227,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testPUTFormParams() = runBlocking {
+    fun testPUTFormParams() = run {
         val rc = RestClient()
         val params = HashMap<String, String>()
         params["param"] = "value"
@@ -249,7 +244,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testPOSTBodyParams() = runBlocking {
+    fun testPOSTBodyParams() = run {
         val rc = RestClient()
         val body = "{\"param\":\"value\"}"
         val result =
@@ -262,7 +257,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testPUTBodyParams() = runBlocking {
+    fun testPUTBodyParams() = run {
         val rc = RestClient()
         val body = "{\"param\":\"value\"}"
         val result =
@@ -275,7 +270,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testGETWithAuth() = runBlocking {
+    fun testGETWithAuth() = run {
         val rc = RestClient()
         val result = rc.getFromEndpointWithAuth(
             UserStory(),
@@ -292,7 +287,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testGETBodyWithAuth() = runBlocking {
+    fun testGETBodyWithAuth() = run {
         val rc = RestClient()
         val result = rc.getBodyFromEndpointWithAuth(
             UserStory(),
@@ -308,7 +303,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testDELETEWithAuth() = runBlocking {
+    fun testDELETEWithAuth() = run {
         val rc = RestClient()
         val result = rc.deleteFromEndpointWithAuth(
             UserStory(),
@@ -323,10 +318,9 @@ class TestRequestHandling : RequestHandlingFramework() {
         MatcherAssert.assertThat(result!!.returnCode, Matchers.equalTo(200))
     }
 
-    @ExperimentalCoroutinesApi
     @Test
     @Throws(IOException::class)
-    fun testPOSTBodyWithAuth() = runBlocking {
+    fun testPOSTBodyWithAuth() = run {
         val rc = RestClient()
         val result = rc.postBodyToEndpointWithAuth(
             UserStory(),
@@ -343,7 +337,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testPOSTFormWithAuth() = runBlocking {
+    fun testPOSTFormWithAuth() = run {
         val rc = RestClient()
         val result = rc.postFormToEndpointWithAuth(
             UserStory(),
@@ -360,7 +354,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testPUTBodyWithAuth() = runBlocking {
+    fun testPUTBodyWithAuth() = run {
         val rc = RestClient()
         val result = rc.putBodyToEndpointWithAuth(
             UserStory(),
@@ -377,7 +371,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class)
-    fun testPUTFormWithAuth() = runBlocking {
+    fun testPUTFormWithAuth() = run {
         val rc = RestClient()
         val result = rc.putFormToEndpointWithAuth(
             UserStory(),
@@ -394,7 +388,7 @@ class TestRequestHandling : RequestHandlingFramework() {
 
     @Test
     @Throws(IOException::class, InterruptedException::class, ExecutionException::class)
-    fun testFirstUserStory() = runBlocking {
+    fun testFirstUserStory() = run {
         val test =
             deserialize(Utils().requestExampleJSON)
         //do not run second story for this time around; messes with results
@@ -465,7 +459,7 @@ class TestRequestHandling : RequestHandlingFramework() {
     }
     @Test
     @Throws(IOException::class, InterruptedException::class, ExecutionException::class)
-    fun testFirstUserStoryWithConnectionPooling() = runBlocking {
+    fun testFirstUserStoryWithConnectionPooling() = run {
         val test =
             deserialize(Utils().requestExampleJSON)
         test.noSession = true
@@ -624,7 +618,7 @@ class TestRequestHandling : RequestHandlingFramework() {
         @SneakyThrows
         override fun run() {
             val rc = RestClient()
-            runBlocking {
+            run {
                 rc.postFormToEndpointWithAuth(
                     UserStory(),
                     "Endpoint test",0,
@@ -645,14 +639,14 @@ class TestRequestHandling : RequestHandlingFramework() {
         ExecutionException::class,
         ExecutionControl.NotImplementedException::class
     )
-    fun testNoMoreRequestsInParallelThanSetAreFired() = runBlocking {
+    fun testNoMoreRequestsInParallelThanSetAreFired() = run {
         try {
             val parallelRequests = 10
             de.hpi.tdgt.test.Test.ConcurrentRequestsThrottler.instance.setMaxParallelRequests(parallelRequests)
             sleep(1000)
-            val futures = Vector<CompletableFuture<*>>()
+            val futures = Vector<Thread>()
             for (i in 0 until parallelRequests * 10) {
-                futures.add(GlobalScope.async { sendRequest.run() }.asCompletableFuture())
+                futures.add(Thread.startVirtualThread { sendRequest.run() })
             }
             for (future in futures) {
                 future.join()

@@ -10,7 +10,6 @@ import de.hpi.tdgt.test.story.atom.assertion.Assertion
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.test.time_measurement.TimeStorage
 import de.hpi.tdgt.util.PropertiesReader
-import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.LogManager
 import org.eclipse.paho.client.mqttv3.MqttClient
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
@@ -168,7 +167,6 @@ class UploadController {
     var currentThread: Thread? = null
     private fun runTest(testToRun: Test, id: Long) {
         testToRun.testId = id
-        runBlocking {
             Event.reset()
             //no assertions run yet
             Assertion.oneHasFailed = false
@@ -176,7 +174,6 @@ class UploadController {
             //could not have happened yet
             val threads: MutableCollection<Future<*>> = testToRun.warmup()
             testToRun.start(threads)
-        }
         val endtime = System.currentTimeMillis()
         log.error("---Test finished in " + (endtime - testToRun.testStart) + " ms.---")
         log.error("---Times---")

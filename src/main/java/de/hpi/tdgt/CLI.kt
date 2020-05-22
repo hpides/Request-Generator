@@ -6,7 +6,6 @@ import de.hpi.tdgt.deserialisation.Deserializer.deserialize
 import de.hpi.tdgt.requesthandling.RestClient
 import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.Data_Generation
-import kotlinx.coroutines.runBlocking
 import org.apache.commons.io.IOUtils
 import org.apache.logging.log4j.LogManager
 import java.io.File
@@ -25,7 +24,6 @@ object CLI {
 
     @JvmStatic
     fun restTest() {
-        runBlocking {
             val rc = RestClient()
             val params = HashMap<String, String>()
             params["username"] = USERNAME
@@ -114,7 +112,6 @@ object CLI {
                 PASSWORD
             )
             log.info("Delete user: " + result.toString() + " and code: " + result!!.returnCode + " in: " + result.durationMillis() + " ms.")
-        }
     }
 
     @JvmStatic
@@ -126,12 +123,10 @@ object CLI {
             val deserializedTest = deserialize(json)
             log.info("Successfully deserialized input json including " + deserializedTest.getStories().size + " stories.")
             log.info("Running test...")
-            runBlocking {
                 //in case warmup is added
                 val controller = UploadController()
                 controller.uploadTestConfig(json, System.currentTimeMillis())
                 controller.currentThread?.join()
-            }
         } catch (e: IOException) {
             log.error(e)
         } catch (e: ExecutionException) {

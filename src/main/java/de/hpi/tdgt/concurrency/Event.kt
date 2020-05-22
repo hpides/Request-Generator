@@ -1,7 +1,12 @@
 package de.hpi.tdgt.concurrency
 
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.yield
+import java.lang.Thread.sleep
+import java.lang.Thread.yield
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import java.util.concurrent.locks.StampedLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
+
 
 /*
 somewhat mimics the https://docs.microsoft.com/en-us/windows/win32/sync/event-objects synchronisation primitive.
@@ -12,59 +17,40 @@ object Event {
     /**
      * Return when event of this name has been signaled.
      */
-    suspend fun waitFor(name: String) {
+     fun waitFor(name: String) {
         while(true) {
-            try {
-                yield()
-                lock.acquire()
-                if (signaledEvents.contains(name)) {
-                    return
+                sleep(0,1000)
+                lock.read {
+                    if (signaledEvents.contains(name)) {
+                        return
+                    }
                 }
-            } finally {
-                lock.release()
-            }
         }
     }
 
     /**
      * Release all waiters for the specified signal.
      */
-    suspend fun signal(name: String) {
-        for(i in 1..tickets){
-            lock.acquire()
-        }
-        signaledEvents.add(name)
-        for(i in 1..tickets){
-            lock.release()
-        }
+     fun signal(name: String) {
+
+        lock.write { signaledEvents.add(name) }
+
+
     }
 
     /**
      * Release all waiters for the specified signal.
      */
-    suspend fun unsignal(name: String) {
-        for(i in 1..tickets){
-            lock.acquire()
-        }
-        signaledEvents.remove(name)
-        for(i in 1..tickets){
-            lock.release()
-        }
+     fun unsignal(name: String) {
+        lock.write { signaledEvents.remove(name) }
+
     }
 
     private val signaledEvents = HashSet<String>()
 
-    private const val tickets = 1000
-    //use 1000 tickets to mimic reader-writer-locks (readers take one ticket, writers all 1000). Unfortunately, there is no non-blocking implementation of this...
-    private val lock = Semaphore(tickets,0)
+    private val lock = ReentrantReadWriteLock()
 
-    suspend fun reset(){
-        for(i in 1..tickets){
-            lock.acquire()
-        }
-        signaledEvents.clear()
-        for(i in 1..tickets){
-            lock.release()
-        }
+     fun reset(){
+        lock.write { signaledEvents.clear() }
     }
 }

@@ -1,6 +1,5 @@
 package de.hpi.tdgt.concurrency
 
-import kotlinx.coroutines.*
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -9,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class EventTest {
     @BeforeEach
-    fun reset() = runBlocking{
+    fun reset() = run{
         Event.reset()
     }
 
@@ -17,7 +16,7 @@ class EventTest {
 
     @Test
     public fun coroutinesDoNotTerminateUntilEventIsSignaled() {
-        GlobalScope.launch {
+        Thread.startVirtualThread {
             Event.waitFor("testEvent")
             ran = true
         }
@@ -27,11 +26,11 @@ class EventTest {
 
     @Test
     public fun coroutinesTerminateAfterEventIsSignaled() {
-        GlobalScope.launch {
+        Thread.startVirtualThread {
             Event.waitFor("testEvent")
             ran = true
         }
-        GlobalScope.launch {Event.signal("testEvent")}
+        Thread.startVirtualThread {Event.signal("testEvent")}
         sleep(1000)
         assertThat("Coroutine should have run",ran);
     }
@@ -40,12 +39,12 @@ class EventTest {
     public fun coroutinesTerminateAfterEventIsSignaledForManyCoroutines() {
         val ran = AtomicInteger(0)
         for(i in 1..1000) {
-            GlobalScope.launch {
+            Thread.startVirtualThread {
                 Event.waitFor("testEvent")
                 ran.incrementAndGet()
             }
         }
-        GlobalScope.launch {Event.signal("testEvent")}
+        Thread.startVirtualThread {Event.signal("testEvent")}
         sleep(1000)
         assertThat("All 1000 Coroutines should have run",ran.get() == 1000);
     }

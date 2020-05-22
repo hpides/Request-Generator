@@ -5,7 +5,6 @@ import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.time_measurement.TimeStorage
 import de.hpi.tdgt.util.PropertiesReader
 import io.netty.handler.codec.http.cookie.DefaultCookie
-import kotlinx.coroutines.future.await
 import org.apache.logging.log4j.LogManager
 import org.asynchttpclient.*
 import java.io.IOException
@@ -19,7 +18,7 @@ import java.util.stream.Collectors
 
 class RestClient {
     @Throws(IOException::class)
-    suspend fun getFromEndpoint(
+     fun getFromEndpoint(
         story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
@@ -42,7 +41,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun getBodyFromEndpoint(
+     fun getBodyFromEndpoint(
         story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
@@ -64,7 +63,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun postFormToEndpoint(
+     fun postFormToEndpoint(
         story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
@@ -86,7 +85,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun postBodyToEndpoint(story: UserStory?, recordName:String?, testId: Long, url: URL?, receiveCookies: Array<String>,
+     fun postBodyToEndpoint(story: UserStory?, recordName:String?, testId: Long, url: URL?, receiveCookies: Array<String>,
         sendCookies: Map<String, String>, body: String?): RestResult? {
         val request = Request()
         request.url = url
@@ -102,7 +101,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun putFormToEndpoint(
+     fun putFormToEndpoint(
         story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
@@ -124,7 +123,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun putBodyToEndpoint(story: UserStory?, recordName:String?, testId: Long, url: URL?, receiveCookies: Array<String>,
+     fun putBodyToEndpoint(story: UserStory?, recordName:String?, testId: Long, url: URL?, receiveCookies: Array<String>,
         sendCookies: Map<String, String>, body: String?): RestResult? {
         val request = Request()
         request.url = url
@@ -140,7 +139,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun getFromEndpointWithAuth(
+     fun getFromEndpointWithAuth(
         story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
@@ -165,7 +164,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun getBodyFromEndpointWithAuth(
+     fun getBodyFromEndpointWithAuth(
         story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
@@ -191,7 +190,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun postFormToEndpointWithAuth(
+     fun postFormToEndpointWithAuth(
         story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
@@ -217,7 +216,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun postBodyToEndpointWithAuth(
+     fun postBodyToEndpointWithAuth(
         story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
@@ -243,7 +242,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun putFormToEndpointWithAuth(
+     fun putFormToEndpointWithAuth(
         story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
@@ -269,7 +268,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun putBodyToEndpointWithAuth(
+     fun putBodyToEndpointWithAuth(
         story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
@@ -295,7 +294,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun deleteFromEndpoint(
+     fun deleteFromEndpoint(
         story: UserStory?, recordName:String?,
         testId: Long,
         url: URL?,
@@ -316,7 +315,7 @@ class RestClient {
     }
 
     @Throws(IOException::class)
-    suspend fun deleteFromEndpointWithAuth(
+     fun deleteFromEndpointWithAuth(
             story: UserStory?, recordName:String?,
             testId: Long,
             url: URL?,
@@ -341,7 +340,7 @@ class RestClient {
     }
      //above methods are for user's convenience, this method does the actual request
     @Throws(IOException::class)
-    suspend fun exchangeWithEndpoint(request: Request): RestResult? {
+     fun exchangeWithEndpoint(request: Request): RestResult? {
          //in case global connection sharing is enabled, clients of stories might be null
          val client = (request.story?.client)?:UserStory.staticClient
 
@@ -418,7 +417,7 @@ class RestClient {
             if(!PropertiesReader.AsyncIO()) {
                 response = future.get()
             }else{
-                response = future.toCompletableFuture().await()
+                response = future.toCompletableFuture().get()
             }
         } catch (e: Exception) {
             log.error("Could not connect to $url", e)
@@ -488,7 +487,7 @@ class RestClient {
      * @throws IOException if an I/O exception occurs
      */
     @Throws(IOException::class)
-    private suspend fun readResponse(
+    private  fun readResponse(
             response: Response,
             res: RestResult,
             request: Request

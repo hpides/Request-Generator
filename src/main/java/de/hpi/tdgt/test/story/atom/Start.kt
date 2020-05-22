@@ -7,7 +7,7 @@ import org.apache.logging.log4j.Logger
 @EqualsAndHashCode(callSuper = false)
 class Start : Atom() {
     @Throws(InterruptedException::class)
-    override suspend fun perform() {
+    override  fun perform() {
         //Noop, just supposed to start the following atoms
     }
 

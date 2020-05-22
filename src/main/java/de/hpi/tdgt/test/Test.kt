@@ -19,14 +19,11 @@ import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.Future
 import java.util.stream.Collectors
-import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.future.await
-import kotlinx.coroutines.sync.Semaphore
 import java.lang.Exception
 import java.lang.Long.max
 import java.lang.Thread.sleep
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.collections.HashMap
 import kotlin.math.ceil
@@ -110,7 +107,7 @@ class Test {
      * *ALWAYS* run start after running warmup before you run warmup again, even in tests, to get rid of waiting threads.
      * @return threads in which the stories run to join later
      */
-    suspend fun warmup(): MutableCollection<Future<*>> { //preserve stories for test repetition
+     fun warmup(): MutableCollection<Future<*>> { //preserve stories for test repetition
         stories_clone = cloneStories(stories)
         setActiveInstancesForStories(stories)
         Event.unsignal(WarmupEnd.eventName)
@@ -169,7 +166,6 @@ class Test {
         } catch (e: MqttException) {
             log.error("Could not send control start message: ", e)
         }
-        runBlocking {
             for (i in 0 until repeat) {
                 log.info("Starting test run $i of $repeat")
                 //start all warmup tasks
@@ -184,7 +180,7 @@ class Test {
                 threads.addAll(threadsFromWarmupReceived)
                 for (thread in threads) { //join thread
                     if(PropertiesReader.AsyncIO() && thread is CompletableFuture){
-                        thread.await()
+                        thread.get()
                     }
                     else{
                         if (!thread.isCancelled) thread.get()
@@ -225,7 +221,6 @@ class Test {
             } catch (e: MqttException) {
                 log.warn("Could not disconnect client: ", e)
             }
-        }
     }
 
     private fun prepareMqttClient() {
@@ -257,7 +252,7 @@ class Test {
     var testStart:Long = 0
 
     @Throws(InterruptedException::class)
-    private suspend fun runTest(stories: Array<UserStory>): MutableCollection<Future<*>> {
+    private  fun runTest(stories: Array<UserStory>): MutableCollection<Future<*>> {
         //old testStart should be gone by now
         Event.unsignal(testStartEvent)
         //since only used in some scenarios, it is less shotgun surgery to set it here than to include it in all possible paths through RestClient.
@@ -266,9 +261,9 @@ class Test {
         //mapping all files eagerly might improve performance, also this is needed to set an offset in the data
         Arrays.stream(stories).forEach{ story -> Arrays.stream(story.getAtoms()).forEach { atom -> if(atom is Data_Generation){
             atom.offsetPercentage = nodeNumber.toDouble() / nodes
-            runBlocking {
-                atom.initScanner()
-            }
+
+            atom.initScanner()
+
         } }}
         try {
             ConcurrentRequestsThrottler.instance.setMaxParallelRequests(maximumConcurrentRequests)
@@ -283,14 +278,27 @@ class Test {
                 stories[i].isStarted = true
                 var future: Future<*>?
                 if(!PropertiesReader.AsyncIO()) {
-                    future = ThreadRecycler.instance.executorService.submit {
-                        runBlocking {
+                    val completableFuture = CompletableFuture<String>()
+                    Thread(Runnable {
+                            log.info("Started!!")
                             stories[i].run()
-                        }
-                    }
+
+                        completableFuture.complete("")
+
+                    }).start()
+                    future = completableFuture
+
                 }else{
                     //withContext(Dispatchers.IO) {
-                        future = GlobalScope.async { stories[i].run() }.asCompletableFuture()
+                    val completableFuture = CompletableFuture<String>()
+                    Thread.startVirtualThread {
+                        log.info("Started virtual Thread!!!")
+                        stories[i].run()
+
+                        completableFuture.complete("")
+
+                    }
+                    future = completableFuture
                     //}
                 }
                 futures.add(future)
@@ -338,7 +346,7 @@ class Test {
             }
         }
 
-        suspend fun allowRequest() {
+         fun allowRequest() {
             synchronized(this) { waiters++ }
             if (maxParallelRequests != null) {
                 maxParallelRequests!!.acquire()

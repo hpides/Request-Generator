@@ -164,7 +164,7 @@ class Request : Atom() {
     }
 
     @Throws(InterruptedException::class)
-    override suspend fun perform() {
+    override  fun perform() {
         log.info("Sending request " + addr + " in Thread " + Thread.currentThread().id + "with attributes: " + knownParams)
         if (implicitNotFailedAssertion == null) {
             implicitNotFailedAssertion = RequestIsSent()
@@ -238,7 +238,7 @@ class Request : Atom() {
     }
 
     @Throws(IOException::class, JsonParseException::class, JsonMappingException::class)
-    private suspend fun extractResponseParams(result: RestResult?) {
+    private  fun extractResponseParams(result: RestResult?) {
         if (result != null && result.isJSON) {
             try {
                 if (result.toJson()!!.isObject) {

@@ -1,21 +1,21 @@
 package de.hpi.tdgt.test.story.atom
 
 import de.hpi.tdgt.util.PropertiesReader
-import kotlinx.coroutines.delay
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
+import java.lang.Thread.sleep
 
 class Delay : Atom() {
     var delayMs:String? = "0"
-    override suspend fun perform() {
+    override  fun perform() {
         val evaluatedDelay = replaceWithKnownParams(delayMs?:"0",false)
         val actualDelay = evaluatedDelay?.toLongOrNull()
         try {
             if (actualDelay != null && actualDelay > 0) {
                 if(PropertiesReader.AsyncIO()) {
-                    delay(actualDelay)
+                    sleep(actualDelay)
                 }else {
-                    Thread.sleep(actualDelay)
+                    sleep(actualDelay)
                 }
             }
             else if(actualDelay == null){

@@ -1,7 +1,5 @@
 package de.hpi.tdgt.test.story.atom
 
-import de.hpi.tdgt.util.PropertiesReader
-import kotlinx.coroutines.delay
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 
@@ -10,7 +8,7 @@ class Assignment : Atom() {
      * Left entry is source, right is target. Copy source-entry in token to target-entry in token
      */
     var assignments:Map<String,String> = HashMap()
-    override suspend fun perform() {
+    override  fun perform() {
         assignments.forEach{entry ->
             knownParams[entry.value] = knownParams.getOrDefault(entry.key,"")
         }

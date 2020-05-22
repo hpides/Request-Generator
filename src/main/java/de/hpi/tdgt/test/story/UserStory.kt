@@ -8,16 +8,16 @@ import de.hpi.tdgt.test.story.atom.Atom
 import de.hpi.tdgt.test.story.atom.WarmupEnd
 import de.hpi.tdgt.util.PropertiesReader
 import io.netty.util.HashedWheelTimer
-import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Semaphore
 import org.apache.logging.log4j.LogManager
 import org.asynchttpclient.AsyncHttpClient
 import org.asynchttpclient.DefaultAsyncHttpClientConfig
 import org.asynchttpclient.Dsl
 import org.asynchttpclient.netty.channel.DefaultChannelPool
 import java.lang.Runnable
+import java.lang.Thread.sleep
 import java.util.*
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.Semaphore
 
 
 class UserStory : Cloneable {
@@ -86,15 +86,15 @@ class UserStory : Cloneable {
         watchdog?.start()
     }
 
-    suspend fun run() = coroutineScope<Unit>() {
+     fun run() {
         val storyRunnable = Runnable {
-            runBlocking {
-                runAtoms()
-            }
+            runAtoms()
         }
         try {
             if(!PropertiesReader.AsyncIO()) {
-                ThreadRecycler.instance.executorService.submit(storyRunnable).get()
+                val thread = Thread(storyRunnable)
+                thread.start()
+                thread.join()
             }
             else{
                 runAtoms()
@@ -106,7 +106,7 @@ class UserStory : Cloneable {
         }
     }
 
-    private suspend fun CoroutineScope.runAtoms() {
+    private  fun runAtoms() {
         try { //get one of the tickets
             if (instancesThrottler!=null) {
                 try {
@@ -123,10 +123,8 @@ class UserStory : Cloneable {
             synchronized(this) { clone = clone() }
             log.info("Running story " + clone.name.toString() + " in thread " + Thread.currentThread().id)
             try {
-                withContext(Dispatchers.IO) {
                     Event.waitFor(Test.testStartEvent)
                     clone.getAtoms()[0].run(HashMap())
-                }
             } catch (e: ExecutionException) {
                 log.error(e)
             }
@@ -215,7 +213,7 @@ class UserStory : Cloneable {
         private val requestLimiter: Semaphore = Semaphore(instancesPerSecond)
 
         @Throws(InterruptedException::class)
-        suspend fun allowInstanceToRun() {
+         fun allowInstanceToRun() {
             log.trace("Waiting for requestLimiter...")
             requestLimiter.acquire()
             log.trace("Waiting for mutex (allowRequest)...")
@@ -226,12 +224,12 @@ class UserStory : Cloneable {
         }
         override fun run() {
             try {
-                runBlocking {performAction()}
+                performAction()
             } catch(e:InterruptedException){
                 return
             }
         }
-        private suspend fun performAction() {
+        private  fun performAction() {
             while (!Thread.interrupted()) {
                 val instancesLastSecond = instancesPerSecond
                 log.trace("Waiting for mutex (run)...")
@@ -242,7 +240,7 @@ class UserStory : Cloneable {
                     instancesPerSecond = 0
                     mutex.release()
                     log.trace("Released mutex (run)")
-                    delay(1000)
+                    sleep(1000)
                 } catch (e: InterruptedException) {
                     return
                 }

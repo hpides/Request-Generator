@@ -3,19 +3,17 @@ package de.hpi.tdgt.test.time_measurement
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import de.hpi.tdgt.util.PropertiesReader
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import org.apache.logging.log4j.LogManager
 import org.eclipse.paho.client.mqttv3.MqttClient
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttException
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
+import java.lang.Thread.sleep
 import java.nio.charset.StandardCharsets
 import java.text.NumberFormat
 import java.util.*
+import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
 
 class TimeStorage protected constructor() {
@@ -35,7 +33,7 @@ class TimeStorage protected constructor() {
     private val entryMutex = Semaphore(1)
 
     //might be called while client is disconnected by other thread
-    private suspend fun sendTimesViaMqtt() = sendMutex.withPermit{ //prevent error
+    private  fun sendTimesViaMqtt() = sendMutex.withPermit{ //prevent error
         var message = ByteArray(0)
         try { //needs to be synchronized so we do not miss entries
             entryMutex.withPermit {
@@ -64,7 +62,7 @@ class TimeStorage protected constructor() {
     /**
      * Send all times that might still be stored via mqtt
      */
-    suspend fun flush() {
+     fun flush() {
         sendTimesViaMqtt()
     }
 
@@ -116,7 +114,7 @@ class TimeStorage protected constructor() {
     }
 
     private val mapper = ObjectMapper()
-    suspend fun registerTime(verb: String?, addr: String, latency: Long, story: String?, testid: Long) {
+     fun registerTime(verb: String?, addr: String, latency: Long, story: String?, testid: Long) {
         testID = testid
         if (reporter == null) { //multiple threads might do this simultaneously
             sendMutex.withPermit {
@@ -221,7 +219,7 @@ class TimeStorage protected constructor() {
     init { //to clean files
         mqttReporter = Runnable {
             try {
-                runBlocking { performTimeSending() }
+                performTimeSending()
             } catch (e: InterruptedException){
                 //willingly ignored
             }
@@ -231,10 +229,10 @@ class TimeStorage protected constructor() {
         reporter!!.start()
     }
 
-    private suspend fun performTimeSending() {
+    private  fun performTimeSending() {
         while (running.get()) { //first second starts after start / first entry
             try {
-                delay(1000)
+                sleep(1000)
             } catch (e: InterruptedException) { //Clean up
                 break
             }
@@ -249,7 +247,7 @@ class TimeStorage protected constructor() {
                 } catch (e: MqttException) {
                     log.error("Error creating mqttclient in TimeStorage: ", e)
                     try {
-                        delay(1000)
+                        sleep(1000)
                         continue
                     } catch (ex: InterruptedException) {
                         return
@@ -270,7 +268,7 @@ class TimeStorage protected constructor() {
                     continue
                 }
                 try {
-                    delay(100)
+                    sleep(100)
                 } catch (e: InterruptedException) {
                     return
                 }
@@ -291,5 +289,14 @@ class TimeStorage protected constructor() {
         } catch (e: MqttException) {
             e.printStackTrace()
         }
+    }
+}
+
+private fun Semaphore.withPermit(function: () -> Unit): Any {
+    try{
+        this.acquire()
+        return function()
+    } finally {
+        this.release()
     }
 }

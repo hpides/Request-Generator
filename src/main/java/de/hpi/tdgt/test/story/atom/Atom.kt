@@ -8,7 +8,6 @@ import de.hpi.tdgt.test.ThreadRecycler
 import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.util.PropertiesReader
-import kotlinx.coroutines.*
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import java.lang.Runnable
@@ -60,7 +59,7 @@ abstract class Atom : Cloneable {
      */
     protected var cloning = false;
 
-    abstract suspend fun perform()
+    abstract  fun perform()
 
     protected fun reportFailureToUser(assertionName: String, message: String?, countAsFailedAssertion: Boolean =true) {
         var testId: Long = 0
@@ -71,7 +70,7 @@ abstract class Atom : Cloneable {
     }
 
     @Throws(InterruptedException::class, ExecutionException::class)
-    suspend fun run(dataMap: Map<String, String>?) {
+     fun run(dataMap: Map<String, String>?) {
         log.info("Running Atom " + name + " in Thread " + Thread.currentThread().id)
         predecessorsReady += 1
         knownParams.putAll(dataMap!!)
@@ -117,15 +116,13 @@ abstract class Atom : Cloneable {
     }
 
     @Throws(InterruptedException::class, ExecutionException::class)
-    private suspend fun runSuccessors() {
+    private  fun runSuccessors() {
         if(!PropertiesReader.AsyncIO()) {
-            val threads = Arrays.stream(this.successorLinks).map({ successorLink: Atom ->
+            val threads = Arrays.stream(this.successorLinks).map { successorLink: Atom ->
                 Runnable {
-                    runBlocking {
-                        runSuccessor(successorLink)
-                    }
+                    runSuccessor(successorLink)
                 }
-            }).collect(Collectors.toUnmodifiableList());
+            }.collect(Collectors.toUnmodifiableList());
             val futures = threads.stream().map({ runnable -> ThreadRecycler.instance.executorService.submit(runnable) }).collect(Collectors.toList());
             for (thread in futures) {
                 if (!thread.isCancelled()) {
@@ -133,10 +130,10 @@ abstract class Atom : Cloneable {
                 }
             };
         }else{
-            val jobs = Vector<Deferred<Unit>>()
+            val jobs = Vector<Thread>()
             //withContext(Dispatchers.IO) {
                 for (successorLink in successorLinks) {
-                    jobs.add(GlobalScope.async { runSuccessor(successorLink) })
+                    jobs.add(Thread.startVirtualThread { runSuccessor(successorLink) })
                 }
             //}
             for(job in jobs){
@@ -145,7 +142,7 @@ abstract class Atom : Cloneable {
         }
     }
 
-    private suspend fun runSuccessor(successorLink: Atom) {
+    private  fun runSuccessor(successorLink: Atom) {
         try {
             val clonedMap: HashMap<String, String> =
                     HashMap(this@Atom.knownParams)

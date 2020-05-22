@@ -1,7 +1,5 @@
 package de.hpi.tdgt.util
 
-import kotlinx.coroutines.future.await
-import kotlinx.coroutines.sync.Semaphore
 import org.apache.logging.log4j.LogManager
 import java.io.Closeable
 import java.nio.ByteBuffer
@@ -11,6 +9,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Semaphore
 
 
 class MappedFileReader//e.g. file not found//async reading taken from http://www.java2s.com/Tutorials/Java/Java_io/1050__Java_nio_Asynchronous.htm
@@ -23,7 +22,7 @@ class MappedFileReader//e.g. file not found//async reading taken from http://www
 
     var exception: Exception? = null
     private var readData = false
-    private suspend fun readData() {
+    private  fun readData() {
         try {
             //conversion taken from https://stackoverflow.com/a/28454743, handler from http://tutorials.jenkov.com/java-nio/asynchronousfilechannel.html
             val completableFuture = CompletableFuture<ByteBuffer>()
@@ -41,7 +40,7 @@ class MappedFileReader//e.g. file not found//async reading taken from http://www
                     completableFuture.completeExceptionally(exc)
                 }
             })
-            completableFuture.await()
+            completableFuture.get()
 
             readData = true
         } catch (e:Exception){
@@ -50,7 +49,7 @@ class MappedFileReader//e.g. file not found//async reading taken from http://www
     }
     private val mutex = Semaphore(1)
     private var currentBufferOffset = 0
-    suspend fun nextLine(): String? {
+     fun nextLine(): String? {
 
         if(closed){
             return null
@@ -99,7 +98,7 @@ class MappedFileReader//e.g. file not found//async reading taken from http://www
         return line.toString()
     }
 
-    private suspend fun advanceBuffer() {
+    private  fun advanceBuffer() {
         currentBufferOffset++
         //passed mapped file segement --> map next segment
         if(currentBufferOffset == bufferSize - 1){

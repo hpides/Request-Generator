@@ -22,7 +22,7 @@ class Data_Generation : Atom() {
     @JsonIgnore
     private var sc: MappedFileReader? = null
 
-    override suspend fun perform() {
+    override  fun perform() {
         val generatedData = readBuffer()
         knownParams.putAll(staticValues)
         knownParams.putAll(generatedData)
@@ -39,7 +39,7 @@ class Data_Generation : Atom() {
     @JsonIgnore
     var readLines = 0
 
-    suspend fun readBuffer(): Map<String, String> {
+     fun readBuffer(): Map<String, String> {
         initScanner()
         //sc has a value now
         val buffer = HashMap<String, String>()
@@ -101,7 +101,7 @@ class Data_Generation : Atom() {
     }
 
 
-    suspend fun initScanner() { //only one Thread is allowed to add a scanner at the same time; only need to synchronise scanner creation and retrieval
+     fun initScanner() { //only one Thread is allowed to add a scanner at the same time; only need to synchronise scanner creation and retrieval
 //stream might be null, if no file found
         if (sc == null) {
             synchronized(association) {

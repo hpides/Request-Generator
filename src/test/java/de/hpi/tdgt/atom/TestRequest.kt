@@ -12,7 +12,6 @@ import de.hpi.tdgt.test.story.atom.Request.BasicAuth
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.test.story.atom.assertion.ContentType
 import de.hpi.tdgt.test.story.atom.assertion.ResponseCode
-import kotlinx.coroutines.runBlocking
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.AfterEach
@@ -86,7 +85,7 @@ class TestRequest : RequestHandlingFramework() {
         val params = HashMap<String, String>()
         params["key"] = "something"
         params["value"] = "somethingElse"
-        runBlocking{postWithBodyAndAssertion!!.run(params)}
+        postWithBodyAndAssertion!!.run(params)
         MatcherAssert.assertThat(
             AssertionStorage.instance.getFails("postWithBody returns JSON"),
             Matchers.`is`(0)
@@ -104,7 +103,7 @@ class TestRequest : RequestHandlingFramework() {
         rc.requestParams= arrayOf("param")
         rc.predecessorCount = -1
         rc.repeat = 1
-        runBlocking { rc.run(params) }
+        rc.run(params)
 
         MatcherAssert.assertThat("PostBodyHandler should have accepted this post!",
                 postHandler.lastPostWasOkay,
@@ -122,7 +121,7 @@ class TestRequest : RequestHandlingFramework() {
             postWithBodyAndAssertion!!.assertions[0] as ContentType
         //simulate failure
         assertion.contentType = "application/xml"
-        runBlocking{postWithBodyAndAssertion!!.run(params)}
+        postWithBodyAndAssertion!!.run(params)
         MatcherAssert.assertThat(
             AssertionStorage.instance.getFails("postWithBody returns JSON (node 0)"),
             Matchers.`is`(1)
@@ -139,7 +138,7 @@ class TestRequest : RequestHandlingFramework() {
             postWithBodyAndAssertion!!.assertions[0] as ContentType
         //simulate failure
         assertion.contentType = "application/xml"
-        runBlocking{postWithBodyAndAssertion!!.run(params)}
+        postWithBodyAndAssertion!!.run(params)
         MatcherAssert.assertThat(
             AssertionStorage.instance.getActual("postWithBody returns JSON (node 0)"),
             Matchers.contains("application/json")
@@ -150,7 +149,7 @@ class TestRequest : RequestHandlingFramework() {
     @Throws(InterruptedException::class, ExecutionException::class)
     fun ContentNotEmptyAssertNotFailingIfCorrect() {
         val params = HashMap<String, String>()
-        runBlocking{getJsonObjectWithAssertion!!.run(params)}
+        getJsonObjectWithAssertion!!.run(params)
         MatcherAssert.assertThat(
             AssertionStorage.instance.getFails("jsonObject returns something"),
             Matchers.`is`(0)
@@ -163,7 +162,7 @@ class TestRequest : RequestHandlingFramework() {
         val params = HashMap<String, String>()
         //simulate failure
         getJsonObjectWithAssertion!!.addr = "http://localhost:9000/empty"
-        runBlocking{getJsonObjectWithAssertion!!.run(params)}
+        getJsonObjectWithAssertion!!.run(params)
         MatcherAssert.assertThat(
             AssertionStorage.instance.getFails("jsonObject returns something (node 0)"),
             Matchers.`is`(1)
@@ -176,7 +175,7 @@ class TestRequest : RequestHandlingFramework() {
         val params = HashMap<String, String>()
         //simulate failure
         getJsonObjectWithAssertion!!.addr = "http://localhost:9000/empty"
-        runBlocking{getJsonObjectWithAssertion!!.run(params)}
+        getJsonObjectWithAssertion!!.run(params)
         MatcherAssert.assertThat(
             AssertionStorage.instance.getActual("jsonObject returns something (node 0)"),
             Matchers.contains("")
@@ -189,7 +188,7 @@ class TestRequest : RequestHandlingFramework() {
         val params = HashMap<String, String>()
         params["key"] = HttpHandlers.AuthHandler.username
         params["value"] = HttpHandlers.AuthHandler.password
-        runBlocking{getWithAuth!!.run(params)}
+        getWithAuth!!.run(params)
         MatcherAssert.assertThat(
             AssertionStorage.instance.getFails("auth does not return 401"),
             Matchers.`is`(0)
@@ -202,7 +201,7 @@ class TestRequest : RequestHandlingFramework() {
         val params = HashMap<String, String>()
         params["key"] = "wrong"
         params["value"] = "wrong"
-        runBlocking{getWithAuth!!.run(params)}
+        getWithAuth!!.run(params)
         MatcherAssert.assertThat(
             AssertionStorage.instance.getFails("auth does not return 401 (node 0)"),
             Matchers.`is`(1)
@@ -215,7 +214,7 @@ class TestRequest : RequestHandlingFramework() {
         val params = HashMap<String, String>()
         params["key"] = "wrong"
         params["value"] = "wrong"
-        runBlocking{getWithAuth!!.run(params)}
+        getWithAuth!!.run(params)
         MatcherAssert.assertThat(
             AssertionStorage.instance.getActual("auth does not return 401 (node 0)"),
             Matchers.contains("401")
@@ -229,7 +228,7 @@ class TestRequest : RequestHandlingFramework() {
         params["key"] = "wrong"
         params["value"] = "wrong"
         getWithAuth!!.verb = "DELETE"
-        runBlocking{getWithAuth!!.run(params)}
+        getWithAuth!!.run(params)
         MatcherAssert.assertThat(
             AssertionStorage.instance.getActual("auth does not return 401 (node 0)"),
             Matchers.contains("401")
@@ -242,7 +241,7 @@ class TestRequest : RequestHandlingFramework() {
         val params = HashMap<String, String>()
         params["key"] = "wrong"
         params["value"] = "wrong"
-        runBlocking{getWithAuth!!.run(params)}
+        getWithAuth!!.run(params)
         AssertionStorage.instance.reset()
         MatcherAssert.assertThat(
             AssertionStorage.instance.getActual("auth does not return 401"),
@@ -264,7 +263,7 @@ class TestRequest : RequestHandlingFramework() {
         requestAtom!!.predecessorCount = 0
         requestAtom!!.repeat = 1
         requestAtom!!.setParent(story)
-        runBlocking {requestAtom!!.run(HashMap())}
+        requestAtom!!.run(HashMap())
         MatcherAssert.assertThat(
             requestAtom!!.knownParams,
             Matchers.hasEntry(Matchers.equalTo("id"), Matchers.equalTo("1234567890"))
@@ -287,7 +286,7 @@ class TestRequest : RequestHandlingFramework() {
         requestAtom!!.predecessorCount = 0
         requestAtom!!.repeat = 1
         requestAtom!!.setParent(story)
-        runBlocking {requestAtom!!.run(HashMap())}
+        requestAtom!!.run(HashMap())
         MatcherAssert.assertThat(
             requestAtom!!.knownParams,
             Matchers.hasEntry(Matchers.equalTo("id"), Matchers.equalTo("1234567890"))
@@ -311,7 +310,7 @@ class TestRequest : RequestHandlingFramework() {
         requestAtom!!.predecessorCount = 0
         requestAtom!!.repeat = 1
         requestAtom!!.setParent(story)
-        runBlocking {requestAtom!!.run(HashMap())}
+        requestAtom!!.run(HashMap())
         MatcherAssert.assertThat(
             requestAtom!!.knownParams,
             Matchers.hasEntry(Matchers.equalTo("something"), Matchers.equalTo("abc"))
@@ -335,7 +334,7 @@ class TestRequest : RequestHandlingFramework() {
         requestAtom!!.setParent(story)
         val params = HashMap<String,String>()
         params.put("cookie","1234")
-        runBlocking {requestAtom!!.run(params)}
+        requestAtom!!.run(params)
         MatcherAssert.assertThat(
             cookiehandler.lastCookie,
             Matchers.containsString("1234")
@@ -360,7 +359,7 @@ class TestRequest : RequestHandlingFramework() {
         requestAtom!!.setParent(story)
         val params = HashMap<String,String>()
         params.put("cookie","1234")
-        runBlocking {requestAtom!!.run(params)}
+        requestAtom!!.run(params)
         MatcherAssert.assertThat(
             cookiehandler.lastCookie,
             Matchers.containsString("1234")
@@ -387,7 +386,7 @@ class TestRequest : RequestHandlingFramework() {
         val params = HashMap<String,String>()
         params.put("cookie","1234")
         params.put("cookie2","5678")
-        runBlocking {requestAtom!!.run(params)}
+        requestAtom!!.run(params)
         MatcherAssert.assertThat(
             cookiehandler.lastCookie,
             Matchers.containsString("1234")
@@ -426,7 +425,7 @@ class TestRequest : RequestHandlingFramework() {
         requestAtom!!.predecessorCount = 0
         requestAtom!!.repeat = 1
         requestAtom!!.setParent(story)
-        runBlocking {requestAtom!!.run(HashMap())}
+        requestAtom!!.run(HashMap())
         MatcherAssert.assertThat(requestAtom!!.knownParams,  Matchers.hasEntry(Matchers.equalTo("token"), Matchers.equalTo("90730144-6e10-4f94-8f6a-8de3353f40f5")))
     }
 
@@ -455,7 +454,7 @@ class TestRequest : RequestHandlingFramework() {
         requestAtom!!.predecessorCount = 0
         requestAtom!!.repeat = 1
         requestAtom!!.setParent(story)
-        runBlocking {requestAtom!!.run(HashMap())}
+        requestAtom!!.run(HashMap())
         MatcherAssert.assertThat(requestAtom!!.knownParams,  Matchers.hasEntry(Matchers.equalTo("user"), Matchers.equalTo("username@jackrutorial.com")))
     }
     @Test
@@ -475,7 +474,7 @@ class TestRequest : RequestHandlingFramework() {
         requestAtom!!.setParent(story)
         var params = HashMap<String, String>()
         params.put("val","I've not done any javascript at all and I' trying to sum up values from the select class. can get both of them displayed, but not summed up. Could anyone explain why I'm getting the \"[object HTMLParagraphElement]\" as the answer? Thank you")
-        runBlocking {requestAtom!!.run(params)}
+        requestAtom!!.run(params)
         MatcherAssert.assertThat(requestAtom!!.knownParams,  Matchers.hasEntry(Matchers.equalTo("abc"), Matchers.equalTo("/posts/30/delete")))
     }
 
@@ -526,7 +525,7 @@ class TestRequest : RequestHandlingFramework() {
         params["value"] = "wrong"
         params["endpoint"] = "/auth"
         getWithAuth!!.addr = "http://localhost:9000\$endpoint"
-        runBlocking{getWithAuth!!.run(params)}
+        getWithAuth!!.run(params)
         MatcherAssert.assertThat(authHandler.totalRequests, Matchers.greaterThan(0))
     }
 
@@ -539,7 +538,7 @@ class TestRequest : RequestHandlingFramework() {
         params["endpoint1"] = "/"
         params["endpoint2"] = "auth"
         getWithAuth!!.addr = "http://localhost:9000\$endpoint1\$endpoint2"
-        runBlocking{getWithAuth!!.run(params)}
+        getWithAuth!!.run(params)
         MatcherAssert.assertThat(authHandler.totalRequests, Matchers.greaterThan(0))
     }
 
@@ -552,7 +551,7 @@ class TestRequest : RequestHandlingFramework() {
         val headers = HashMap<String,String>()
         headers["Header_\$header1_sent"] = "header1"
         getWithAuth!!.sendHeaders = headers
-        runBlocking{getWithAuth!!.run(params)}
+        getWithAuth!!.run(params)
         MatcherAssert.assertThat(headerHandler.lastHeaders!!.getFirst("header1"), Matchers.equalTo("Header_value1_sent"))
     }
 
@@ -564,7 +563,7 @@ class TestRequest : RequestHandlingFramework() {
         val receiveHeaders = HashMap<String, String>()
         receiveHeaders.put("custom","custom")
         getWithAuth!!.receiveHeaders = receiveHeaders
-        runBlocking{getWithAuth!!.run(params)}
+        getWithAuth!!.run(params)
         MatcherAssert.assertThat(getWithAuth!!.knownParams, Matchers.hasEntry("custom","CustomValue"))
     }
 
@@ -579,7 +578,7 @@ class TestRequest : RequestHandlingFramework() {
         val headers = HashMap<String,String>()
         headers["header1"] = "Header_\$header1_sent"
         getWithAuth!!.sendHeaders = headers
-        runBlocking{getWithAuth!!.run(params)}
+        getWithAuth!!.run(params)
         MatcherAssert.assertThat((getWithAuth!!.clone() as Request).receiveHeaders, Matchers.equalTo(receiveHeaders as Map<String, String>))
         MatcherAssert.assertThat((getWithAuth!!.clone() as Request).sendHeaders, Matchers.hasEntry("header1","Header_\$header1_sent"))
     }

@@ -4,8 +4,6 @@ import de.hpi.tdgt.Utils
 import de.hpi.tdgt.deserialisation.Deserializer
 import de.hpi.tdgt.test.story.atom.Assignment
 import de.hpi.tdgt.test.story.atom.Delay
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
 import org.hamcrest.MatcherAssert
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
@@ -34,9 +32,7 @@ class TestAssignment {
         val params = HashMap<String, String>()
         params["val1"] = "abc"
         //else we will not wait at all
-        runBlocking {
             assignmentAtom!!.run(params)
-        }
         assertThat(assignmentAtom?.knownParams, Matchers.hasEntry("val2","abc"));
     }
     @Test
@@ -47,20 +43,18 @@ class TestAssignment {
 
         val params = HashMap<String, String>()
         //else we will not wait at all
-        runBlocking {
             assignmentAtom!!.run(params)
-        }
         assertThat(assignmentAtom?.knownParams, Matchers.hasEntry("val2",""));
     }
 
     @Test
-    fun cloneCreatesEquivalentObject() = runBlockingTest {
+    fun cloneCreatesEquivalentObject() = run {
         val clone = assignmentAtom!!.clone()
         assertThat("Clone should equal the cloned object!", clone == assignmentAtom)
     }
 
     @Test
-    fun cloneCreatesOtherObject() = runBlockingTest {
+    fun cloneCreatesOtherObject() = run {
         val clone = assignmentAtom!!.clone()
         Assertions.assertNotSame(clone, assignmentAtom)
     }

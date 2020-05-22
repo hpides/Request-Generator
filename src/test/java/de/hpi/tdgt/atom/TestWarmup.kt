@@ -5,7 +5,6 @@ import de.hpi.tdgt.RequestHandlingFramework
 import de.hpi.tdgt.Utils
 import de.hpi.tdgt.deserialisation.Deserializer.deserialize
 import de.hpi.tdgt.test.Test
-import kotlinx.coroutines.runBlocking
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.BeforeEach
@@ -25,7 +24,7 @@ class TestWarmup : RequestHandlingFramework() {
     @org.junit.jupiter.api.Test
     @Throws(InterruptedException::class, ExecutionException::class)
     fun testWarmupCallsPreparationActivities() {
-        runBlocking {
+        run {
             val threads = warmupTest!!.warmup()
             MatcherAssert.assertThat(postBodyHandler.requests_total, Matchers.`is`(7))
             warmupTest!!.start(threads)
@@ -35,7 +34,7 @@ class TestWarmup : RequestHandlingFramework() {
     @org.junit.jupiter.api.Test
     @Throws(InterruptedException::class, ExecutionException::class)
     fun testWarmupCallsNoOtherActivities() {
-        runBlocking {
+        run {
             val threads = warmupTest!!.warmup()
             for (handler in handlers) {
                 if (handler !is PostBodyHandler) {
@@ -49,7 +48,7 @@ class TestWarmup : RequestHandlingFramework() {
     @org.junit.jupiter.api.Test
     @Throws(InterruptedException::class, ExecutionException::class)
     fun testStoriesAreCompletedAfterWarmup() {
-        runBlocking {
+        run {
             val threads = warmupTest!!.warmup()
             warmupTest!!.start(threads)
         }
@@ -61,7 +60,7 @@ class TestWarmup : RequestHandlingFramework() {
     @Throws(InterruptedException::class, ExecutionException::class)
     fun testStoriesAreCompletedAfterWarmupWithRepeat() {
         warmupTest!!.repeat = 3
-        runBlocking {
+        run {
             val threads = warmupTest!!.warmup()
             warmupTest!!.start(threads)
         }

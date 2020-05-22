@@ -6,10 +6,6 @@ import de.hpi.tdgt.Utils
 import de.hpi.tdgt.WebApplication
 import de.hpi.tdgt.controllers.UploadController
 import de.hpi.tdgt.util.PropertiesReader
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.LogManager
 import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
@@ -174,8 +170,6 @@ class UploadJSONTest : RequestHandlingFramework() {
             "./src/test/resources/de/hpi/tdgt"
         )
         WebApplication.main(args)
-        //test is run async
-        waitForTestEnd()
     }
 
     @Test
@@ -306,9 +300,9 @@ class UploadJSONTest : RequestHandlingFramework() {
         IOException::class
     )
     fun masterNodeCollectsWorkerNodes() {
-        runBlocking {
+        run {
             UploadController.LOCATION = null
-            val job = GlobalScope.launch { controller!!.uploadTestConfigForDistributed("{}",0) }
+            val job = Thread.startVirtualThread { controller!!.uploadTestConfigForDistributed("{}",0) }
             val urls = HashSet<String>()
             for(i in 1..20){
                 publisher.publish(de.hpi.tdgt.test.Test.MQTT_TOPIC, MqttMessage((UploadController.IDENTIFICATION_RESPONSE_MESSAGE + " " +i).toByteArray()))

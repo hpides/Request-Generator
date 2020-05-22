@@ -1,8 +1,6 @@
 package de.hpi.tdgt.atom
 
 import de.hpi.tdgt.test.story.atom.Delay
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.Assertions
@@ -23,9 +21,8 @@ class TestDelay {
     fun delay100ms(){
         delayAtom!!.delayMs = "100"
         val startTime = System.currentTimeMillis()
-        runBlocking {
             delayAtom!!.perform()
-        }
+        
         val endTime = System.currentTimeMillis()
         Assertions.assertTrue(endTime - startTime > 90)
     }
@@ -35,9 +32,8 @@ class TestDelay {
         delayAtom!!.delayMs = "1000"
         val startTime = System.currentTimeMillis()
         //else we will not wait at all
-        runBlocking {
             delayAtom!!.perform()
-        }
+        
         val endTime = System.currentTimeMillis()
         Assertions.assertTrue(endTime - startTime > 990)
     }
@@ -49,22 +45,20 @@ class TestDelay {
         val params = HashMap<String, String>()
         params["delay"] = "00"
         //else we will not wait at all
-        runBlocking {
             delayAtom!!.run(params)
 
-        }
         val endTime = System.currentTimeMillis()
         Assertions.assertTrue(endTime - startTime > 990)
     }
 
     @Test
-    fun cloneCreatesEquivalentObject() = runBlockingTest {
+    fun cloneCreatesEquivalentObject() = run {
         val clone = delayAtom!!.clone()
         MatcherAssert.assertThat("Clone should equal the cloned object!",clone.equals(delayAtom))
     }
 
     @Test
-    fun cloneCreatesOtherObject() = runBlockingTest {
+    fun cloneCreatesOtherObject() = run {
         val clone = delayAtom!!.clone()
         Assertions.assertNotSame(clone, delayAtom)
     }
