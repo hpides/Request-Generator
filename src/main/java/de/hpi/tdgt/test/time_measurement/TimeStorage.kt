@@ -13,8 +13,10 @@ import java.lang.Thread.sleep
 import java.nio.charset.StandardCharsets
 import java.text.NumberFormat
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.StampedLock
 
 class TimeStorage protected constructor() {
     //can't be re-connected, create a new instance everytime the thread is run
@@ -30,22 +32,25 @@ class TimeStorage protected constructor() {
     private var sendOnlyNonEmpty = false
 
     private val sendMutex = Semaphore(1)
-    private val entryMutex = Semaphore(1)
+    private val entryMutex = StampedLock()
 
     //might be called while client is disconnected by other thread
     private  fun sendTimesViaMqtt() = sendMutex.withPermit{ //prevent error
         var message = ByteArray(0)
+        val stamp = entryMutex.writeLock()
         try { //needs to be synchronized so we do not miss entries
-            entryMutex.withPermit {
                 val entry = toMQTTSummaryMap(registeredTimesLastSecond)
                 // tests only want actual times
                 if (!sendOnlyNonEmpty || entry.times.isNotEmpty()) {
                     message = mapper.writeValueAsString(entry).toByteArray(StandardCharsets.UTF_8)
                 }
                 registeredTimesLastSecond.clear()
-            }
+
         } catch (e: JsonProcessingException) {
             log.error(e)
+        }
+        finally {
+            entryMutex.unlockWrite(stamp)
         }
         val mqttMessage = MqttMessage(message)
         //we want to receive every packet EXACTLY once
@@ -72,13 +77,13 @@ class TimeStorage protected constructor() {
      * Innermost String is story the request belonged to.
      * TODO remove and replace by real-time aggregation
      */
-    private val registeredTimes: MutableMap<String, MutableMap<String, MutableMap<String, MutableList<Long>>>> = HashMap()
+    private val registeredTimes: MutableMap<String, MutableMap<String, MutableMap<String, MutableList<Long>>>> = ConcurrentHashMap()
     /**
      * Outermost String is the request.
      * Second string from outside is the method.
      * Innermost String is story the request belonged to.
      */
-    private val registeredTimesLastSecond: MutableMap<String, MutableMap<String, MutableMap<String, MutableList<Long>>>> = HashMap()
+    private val registeredTimesLastSecond: MutableMap<String, MutableMap<String, MutableMap<String, MutableList<Long>>>> = ConcurrentHashMap()
 
     private fun toMQTTSummaryMap(currentValues: MutableMap<String, MutableMap<String, MutableMap<String, MutableList<Long>>>> = HashMap()): MqttTimeMessage {
         log.trace("Is empty: " + currentValues.isEmpty())
@@ -131,13 +136,16 @@ class TimeStorage protected constructor() {
         }
         //triggers exception
         if (story != null) {
-            entryMutex.withPermit {
-                registeredTimes.computeIfAbsent(addr) { HashMap() }
-                registeredTimes[addr]!!.computeIfAbsent(verb!!) { HashMap() }
+            val stamp = entryMutex.readLock()
+            try {
+                registeredTimes.computeIfAbsent(addr) { ConcurrentHashMap() }
+                registeredTimes[addr]!!.computeIfAbsent(verb!!) { ConcurrentHashMap() }
                 registeredTimes[addr]!![verb]!!.computeIfAbsent(story) { Vector() }.add(latency)
-                registeredTimesLastSecond.computeIfAbsent(addr) { HashMap() }
-                registeredTimesLastSecond[addr]!!.computeIfAbsent(verb) { HashMap() }
+                registeredTimesLastSecond.computeIfAbsent(addr) { ConcurrentHashMap() }
+                registeredTimesLastSecond[addr]!!.computeIfAbsent(verb) { ConcurrentHashMap() }
                 registeredTimesLastSecond[addr]!![verb]!!.computeIfAbsent(story) { Vector() }.add(latency)
+            } finally {
+                entryMutex.unlockRead(stamp)
             }
         }
     }

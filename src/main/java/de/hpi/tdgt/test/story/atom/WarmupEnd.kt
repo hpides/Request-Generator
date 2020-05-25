@@ -4,6 +4,7 @@ import de.hpi.tdgt.concurrency.Event
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import java.util.concurrent.Semaphore
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * This atom signals the end of the warmup phase.
@@ -29,18 +30,12 @@ class WarmupEnd : Atom() {
         private val log =
             LogManager.getLogger(WarmupEnd::class.java)
 
-        var waiting = 0
-            private set
-
-
-        private val mutex = Semaphore(1)
+        val waiting = AtomicInteger(0)
 
         private  fun addWaiter() {
             //need coroutine-aware synchronization method here
-            mutex.acquire()
             log.info("Added a waiter to the existing $waiting waiters!")
-            waiting++
-            mutex.release()
+            waiting.incrementAndGet()
         }
 
         /**
@@ -49,7 +44,7 @@ class WarmupEnd : Atom() {
          fun startTest() {
             log.info("START TEST!")
             Event.signal(eventName)
-            waiting = 0
+            waiting.set(0)
         }
 
     }

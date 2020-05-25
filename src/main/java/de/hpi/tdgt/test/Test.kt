@@ -123,7 +123,7 @@ class Test {
                 .sum()
         //wait for all warmup ends to be stuck
         val future = Thread {
-            while (waitersToExpect > WarmupEnd.waiting) {
+            while (waitersToExpect > WarmupEnd.waiting.get()) {
                 log.info("Waiting for warmup to complete: " + WarmupEnd.waiting + " of " + waitersToExpect + " complete!")
                 sleep(1000)
             }

@@ -205,7 +205,7 @@ class UserStory : Cloneable {
      */
     public class ActiveInstancesThrottler constructor(instancesPerSecond: Int) : Runnable {
         //only used for measurement, does not have to be synchronized
-        var instancesPerSecond = 0
+        private var instancesPerSecond = 0
         /**
          * Stops threads from increasing requests per second while re-creating tickets
          */
