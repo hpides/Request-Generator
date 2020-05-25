@@ -26,8 +26,6 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.collections.HashMap
-import kotlin.math.ceil
-import kotlin.math.floor
 
 //allow frontend to store additional information
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -96,12 +94,6 @@ class Test {
         return ret
     }
 
-    private fun setActiveInstancesForStories(stories:Array<UserStory>){
-        stories.iterator().forEach {
-            it.limitActiveInstancesPerSecondTo(floor(it.scalePercentage * activeInstancesPerSecond).toInt())
-        }
-    }
-
     /**
      * Run all stories that have WarmupEnd until reaching WarmupEnd. Other stories are not run.
      * *ALWAYS* run start after running warmup before you run warmup again, even in tests, to get rid of waiting threads.
@@ -109,7 +101,10 @@ class Test {
      */
      fun warmup(): MutableCollection<Future<*>> { //preserve stories for test repetition
         stories_clone = cloneStories(stories)
-        setActiveInstancesForStories(stories)
+        ActiveInstancesThrottler.setInstance(activeInstancesPerSecond)
+        val watchdog = Thread(ActiveInstancesThrottler.instance)
+        watchdog.priority = Thread.MAX_PRIORITY
+        watchdog.start()
         Event.unsignal(WarmupEnd.eventName)
         //will run stories with warmup only, so they can run until WarmupEnd is reached
         val threads =
@@ -131,9 +126,7 @@ class Test {
         future.start()
         future.join()
         log.info("Warmup complete")
-        stories.iterator().forEach {
-            it.watchdog?.interrupt()
-        }
+        watchdog.interrupt()
         return threads
     }
 
@@ -170,7 +163,11 @@ class Test {
                 log.info("Starting test run $i of $repeat")
                 //start all warmup tasks
                 WarmupEnd.startTest()
-                setActiveInstancesForStories(stories)
+                //this thread makes sure that requests per second get limited
+                ActiveInstancesThrottler.setInstance(activeInstancesPerSecond)
+                val watchdog = Thread(ActiveInstancesThrottler.instance)
+                watchdog.priority = Thread.MAX_PRIORITY
+                watchdog.start()
                 val threads = runTest(
                         Arrays.stream(stories).filter(
                                 { story: UserStory -> !story.isStarted }
@@ -186,9 +183,9 @@ class Test {
                         if (!thread.isCancelled) thread.get()
                     }
                 }
-                stories.iterator().forEach {
-                    it.watchdog?.interrupt()
-                }
+                watchdog.interrupt()
+                //remove global state
+                ActiveInstancesThrottler.reset()
                 Data_Generation.reset()
                 //this resets all state atoms might have
                 stories = cloneStories(stories_clone)
@@ -315,7 +312,74 @@ class Test {
         return stories
     }
 
+    /**
+     * This is a runnable for a high-priority thread that makes sure that no more user stories than requested run.
+     */
+    class ActiveInstancesThrottler private constructor(instancesPerSecond: Int) : Runnable {
+        //only used for measurement, does not have to be synchronized
+        var instancesPerSecond = 0
+        /**
+         * Stops threads from increasing requests per second while re-creating tickets
+         */
+        private val mutex = Semaphore(1)
+        private val requestLimiter: Semaphore = Semaphore(instancesPerSecond)
 
+        @Throws(InterruptedException::class)
+        fun allowInstanceToRun() {
+            log.trace("Waiting for requestLimiter...")
+            requestLimiter.acquire()
+            log.trace("Waiting for mutex (allowRequest)...")
+            mutex.acquire()
+            instancesPerSecond++
+            mutex.release()
+            log.trace("Released mutex (allowRequest)")
+        }
+        override fun run() {
+            try {
+                performAction()
+            } catch(e:InterruptedException){
+                return
+            }
+        }
+        private fun performAction() {
+            while (!Thread.interrupted()) {
+                val instancesLastSecond = instancesPerSecond
+                log.trace("Waiting for mutex (run)...")
+                log.info("$instancesLastSecond active instances in the last second.")
+                try {
+                    mutex.acquire()
+                    requestLimiter.release(instancesPerSecond)
+                    instancesPerSecond = 0
+                    mutex.release()
+                    log.trace("Released mutex (run)")
+                    sleep(1000)
+                } catch (e: InterruptedException) {
+                    return
+                }
+            }
+            log.trace("Requests per second watchdog was interrupted!")
+        }
+
+        companion object {
+            private val log = LogManager.getLogger(
+                ActiveInstancesThrottler::class.java
+            )
+
+            fun setInstance(instancesPerSecond: Int) {
+                instance = ActiveInstancesThrottler(instancesPerSecond)
+            }
+
+            @JvmStatic
+            var instance: ActiveInstancesThrottler? = null
+                private set
+
+            fun reset() {
+                instance = null
+            }
+
+        }
+
+    }
 
     /**
      * This makes sure not more requests than configured run in parallel
@@ -438,4 +502,8 @@ class Test {
     }
 }
 
-
+private fun Semaphore.release(instancesPerSecond: Int) {
+    for(i in 0 until instancesPerSecond){
+        release()
+    }
+}
