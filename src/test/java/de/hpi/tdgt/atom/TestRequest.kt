@@ -3,6 +3,7 @@ package de.hpi.tdgt.atom
 import de.hpi.tdgt.HttpHandlers
 import de.hpi.tdgt.RequestHandlingFramework
 import de.hpi.tdgt.Utils
+import de.hpi.tdgt.controllers.UploadController
 import de.hpi.tdgt.deserialisation.Deserializer.deserialize
 import de.hpi.tdgt.requesthandling.RestClient
 import de.hpi.tdgt.test.story.UserStory
@@ -29,6 +30,7 @@ class TestRequest : RequestHandlingFramework() {
     private var postWithBodyAndAssertion: Request? = null
     private var getJsonObjectWithAssertion: Request? = null
     private var getWithAuth: Request? = null
+    private val mockLocation = "somewhere"
     @BeforeEach
     @Throws(IOException::class)
     fun prepareTest() {
@@ -42,6 +44,7 @@ class TestRequest : RequestHandlingFramework() {
             deserialize(Utils().requestExampleWithAssertionsJSON).getStories()[0].getAtoms()[2] as Request
         getWithAuth =
             deserialize(Utils().requestExampleWithAssertionsJSON).getStories()[0].getAtoms()[3] as Request
+    UploadController.LOCATION = mockLocation
     }
 
     @AfterEach
@@ -124,7 +127,7 @@ class TestRequest : RequestHandlingFramework() {
         assertion.contentType = "application/xml"
         runBlocking{postWithBodyAndAssertion!!.run(params)}
         MatcherAssert.assertThat(
-            AssertionStorage.instance.getFails("postWithBody returns JSON (node 0)"),
+            AssertionStorage.instance.getFails("postWithBody returns JSON (node "+ UploadController.LOCATION+")"),
             Matchers.`is`(1)
         )
     }
@@ -141,7 +144,7 @@ class TestRequest : RequestHandlingFramework() {
         assertion.contentType = "application/xml"
         runBlocking{postWithBodyAndAssertion!!.run(params)}
         MatcherAssert.assertThat(
-            AssertionStorage.instance.getActual("postWithBody returns JSON (node 0)"),
+            AssertionStorage.instance.getActual("postWithBody returns JSON (node "+UploadController.LOCATION+")"),
             Matchers.contains("application/json")
         )
     }
@@ -165,7 +168,7 @@ class TestRequest : RequestHandlingFramework() {
         getJsonObjectWithAssertion!!.addr = "http://localhost:9000/empty"
         runBlocking{getJsonObjectWithAssertion!!.run(params)}
         MatcherAssert.assertThat(
-            AssertionStorage.instance.getFails("jsonObject returns something (node 0)"),
+            AssertionStorage.instance.getFails("jsonObject returns something (node "+UploadController.LOCATION+")"),
             Matchers.`is`(1)
         )
     }
@@ -178,7 +181,7 @@ class TestRequest : RequestHandlingFramework() {
         getJsonObjectWithAssertion!!.addr = "http://localhost:9000/empty"
         runBlocking{getJsonObjectWithAssertion!!.run(params)}
         MatcherAssert.assertThat(
-            AssertionStorage.instance.getActual("jsonObject returns something (node 0)"),
+            AssertionStorage.instance.getActual("jsonObject returns something (node "+UploadController.LOCATION+")"),
             Matchers.contains("")
         )
     }
@@ -204,7 +207,7 @@ class TestRequest : RequestHandlingFramework() {
         params["value"] = "wrong"
         runBlocking{getWithAuth!!.run(params)}
         MatcherAssert.assertThat(
-            AssertionStorage.instance.getFails("auth does not return 401 (node 0)"),
+            AssertionStorage.instance.getFails("auth does not return 401 (node "+UploadController.LOCATION+")"),
             Matchers.`is`(1)
         )
     }
@@ -217,7 +220,7 @@ class TestRequest : RequestHandlingFramework() {
         params["value"] = "wrong"
         runBlocking{getWithAuth!!.run(params)}
         MatcherAssert.assertThat(
-            AssertionStorage.instance.getActual("auth does not return 401 (node 0)"),
+            AssertionStorage.instance.getActual("auth does not return 401 (node "+UploadController.LOCATION+")"),
             Matchers.contains("401")
         )
     }
@@ -231,7 +234,7 @@ class TestRequest : RequestHandlingFramework() {
         getWithAuth!!.verb = "DELETE"
         runBlocking{getWithAuth!!.run(params)}
         MatcherAssert.assertThat(
-            AssertionStorage.instance.getActual("auth does not return 401 (node 0)"),
+            AssertionStorage.instance.getActual("auth does not return 401 (node "+UploadController.LOCATION+")"),
             Matchers.contains("401")
         )
     }

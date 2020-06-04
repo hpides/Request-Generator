@@ -2,6 +2,7 @@ package de.hpi.tdgt.test.time_measurement
 
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
+import de.hpi.tdgt.controllers.UploadController
 import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -25,7 +26,10 @@ class TimeStorage protected constructor() {
     private val mqttReporter: Runnable
     private val running = AtomicBoolean(true)
     private var testID: Long = 0
-    var nodeNumber : Long = 0
+    val node : String
+        get() {
+            return UploadController.LOCATION ?: "unknown node"
+        }
     /**
      * Flag for tests. If true, only messages that contain times are sent.
      */
@@ -110,7 +114,7 @@ class TimeStorage protected constructor() {
         val entry = MqttTimeMessage()
         entry.testId = testID
         entry.creationTime = System.currentTimeMillis()
-        entry.nodeNumber = nodeNumber
+        entry.node = node
         entry.times = ret
         return entry
     }
