@@ -52,6 +52,7 @@ class MQTTTest : RequestHandlingFramework() {
     private lateinit var publisher: IMqttClient
     private val mockParent = UserStory()
     private val mockStoryName = "StoryName"
+    private val mockLocation = "somewhere"
     @BeforeEach
     fun beforeEach() { //this test MUST handle asynch behaviour
         AssertionStorage.instance.isStoreEntriesAsynch = true
@@ -60,6 +61,7 @@ class MQTTTest : RequestHandlingFramework() {
         val mockTest = Test()
         mockParent.parent = mockTest
         mockParent.name = mockStoryName
+        UploadController.LOCATION = mockLocation
     }
 
     @org.junit.jupiter.api.Test
@@ -375,7 +377,7 @@ class MQTTTest : RequestHandlingFramework() {
         }
         val times = response[0]
         //key names are typed instead of using the constants to notice if we change it so we can adapt the frontend
-        MatcherAssert.assertThat(times.nodeNumber, Matchers.equalTo(10L))
+        MatcherAssert.assertThat(times.node, Matchers.equalTo(UploadController.LOCATION))
     }
 
     @Throws(MqttException::class)
@@ -449,7 +451,7 @@ class MQTTTest : RequestHandlingFramework() {
         MatcherAssert.assertThat(
             allActuals,
             Matchers.hasItem<Map<String, Pair<Int, Set<String>>?>>(
-                Matchers.hasKey("auth does not return 401 (node 0)")
+                Matchers.hasKey("auth does not return 401 (node "+UploadController.LOCATION+")")
             )
         )
         val actuals = HashSet<String>()
@@ -457,7 +459,7 @@ class MQTTTest : RequestHandlingFramework() {
         MatcherAssert.assertThat(
             allActuals[allActuals.size - 1],
             Matchers.hasEntry<String, Pair<Int, out Set<String>>?>(
-                "auth does not return 401 (node 0)",
+                "auth does not return 401 (node "+UploadController.LOCATION+")",
                 Pair(1, actuals)
             )
         )
@@ -488,7 +490,7 @@ class MQTTTest : RequestHandlingFramework() {
         MatcherAssert.assertThat(
             allActuals,
             Matchers.hasItem<Map<String, Pair<Int, Set<String>>?>>(
-                Matchers.hasKey(failedAssertioNName+" (node 0)")
+                Matchers.hasKey(failedAssertioNName+" (node "+UploadController.LOCATION+")")
             )
         )
         val actuals = HashSet<String>()
@@ -496,16 +498,16 @@ class MQTTTest : RequestHandlingFramework() {
         MatcherAssert.assertThat(
             allActuals[allActuals.size - 1],
             Matchers.hasKey(
-                failedAssertioNName+" (node 0)"
+                failedAssertioNName+" (node "+UploadController.LOCATION+")"
             )
         )
         MatcherAssert.assertThat(
-            allActuals[allActuals.size - 1].get(failedAssertioNName+" (node 0)")!!.key,
+            allActuals[allActuals.size - 1].get(failedAssertioNName+" (node "+UploadController.LOCATION+")")!!.key,
             Matchers.`is`(1)
         )
         //exception message might be localized by the OS, so we can only assert for the first part
         MatcherAssert.assertThat(
-            allActuals[allActuals.size - 1].get(failedAssertioNName+" (node 0)")!!.value!!.toTypedArray()[0],
+            allActuals[allActuals.size - 1].get(failedAssertioNName+" (node "+UploadController.LOCATION+")")!!.value!!.toTypedArray()[0],
             Matchers.containsString("UnknownHostException")
         )
     }
@@ -536,14 +538,14 @@ class MQTTTest : RequestHandlingFramework() {
             getAllActuals(messages)
         MatcherAssert.assertThat(
             allActuals[allActuals.size - 1],
-            Matchers.hasKey("postWithBody returns JSON (node 0)")
+            Matchers.hasKey("postWithBody returns JSON (node "+UploadController.LOCATION+")")
         )
         val actuals = HashSet<String>()
         actuals.add("application/json")
         MatcherAssert.assertThat(
             allActuals[allActuals.size - 1],
             Matchers.hasEntry<String, Pair<Int, out Set<String>>?>(
-                "postWithBody returns JSON (node 0)",
+                "postWithBody returns JSON (node "+UploadController.LOCATION+")",
                 Pair(1, actuals)
             )
         )
@@ -587,7 +589,7 @@ class MQTTTest : RequestHandlingFramework() {
             getAllActuals(messages)
         MatcherAssert.assertThat(
             allActuals[allActuals.size - 1],
-            Matchers.hasKey("postWithBody returns JSON (node 0)")
+            Matchers.hasKey("postWithBody returns JSON (node "+UploadController.LOCATION+")")
         )
         //remove existing values
         messages.clear()
@@ -629,7 +631,7 @@ class MQTTTest : RequestHandlingFramework() {
             getAllActuals(messages)
         MatcherAssert.assertThat(
             allActuals[allActuals.size - 1],
-            Matchers.hasKey("postWithBody returns JSON (node 0)")
+            Matchers.hasKey("postWithBody returns JSON (node "+UploadController.LOCATION+")")
         )
         //remove existing values
         messages.clear()
@@ -641,7 +643,7 @@ class MQTTTest : RequestHandlingFramework() {
         MatcherAssert.assertThat(
             allActuals[allActuals.size - 1],
             Matchers.hasEntry<String, Pair<Int, out Set<String>>?>(
-                "postWithBody returns JSON (node 0)",
+                "postWithBody returns JSON (node "+UploadController.LOCATION+")",
                 Pair(
                     1,
                     HashSet(listOf("application/json"))
@@ -672,7 +674,7 @@ class MQTTTest : RequestHandlingFramework() {
         MatcherAssert.assertThat(
             allActuals,
             Matchers.hasItem<Map<String, Pair<Int, Set<String>>?>>(
-                Matchers.hasKey("jsonObject returns something (node 0)")
+                Matchers.hasKey("jsonObject returns something (node "+UploadController.LOCATION+")")
             )
         )
         val actuals = HashSet<String>()
@@ -681,7 +683,7 @@ class MQTTTest : RequestHandlingFramework() {
         MatcherAssert.assertThat(
             allActuals[allActuals.size - 1],
             Matchers.hasEntry<String, Pair<Int, out Set<String>>?>(
-                "jsonObject returns something (node 0)",
+                "jsonObject returns something (node "+UploadController.LOCATION+")",
                 Pair(1, actuals)
             )
         )
@@ -748,10 +750,10 @@ class MQTTTest : RequestHandlingFramework() {
         val actuals = readAssertion(messages)
         MatcherAssert.assertThat(
             actuals[0].actuals,
-            Matchers.hasKey("Data Generation \"generation\" has no data remaining (node 0)")
+            Matchers.hasKey("Data Generation \"generation\" has no data remaining (node "+UploadController.LOCATION+")")
         )
         val reason: Set<String?> =
-            actuals[0].actuals["Data Generation \"generation\" has no data remaining (node 0)"]!!.value?:HashSet()
+            actuals[0].actuals["Data Generation \"generation\" has no data remaining (node "+UploadController.LOCATION+")"]!!.value?:HashSet()
         MatcherAssert.assertThat(
             reason,
             Matchers.hasItem(Matchers.containsStringIgnoringCase("NotThere.csv"))
@@ -791,10 +793,10 @@ class MQTTTest : RequestHandlingFramework() {
         )
         MatcherAssert.assertThat(
             message!!.actuals,
-            Matchers.hasKey("Data Generation \"generation\" has no data remaining (node 0)")
+            Matchers.hasKey("Data Generation \"generation\" has no data remaining (node "+UploadController.LOCATION+")")
         )
         val reason: Set<String?> =
-            message.actuals["Data Generation \"generation\" has no data remaining (node 0)"]!!.value?:HashSet()
+            message.actuals["Data Generation \"generation\" has no data remaining (node "+UploadController.LOCATION+")"]!!.value?:HashSet()
         MatcherAssert.assertThat(
             reason,
             Matchers.hasItem(Matchers.containsStringIgnoringCase("read 37 lines from file"))
@@ -834,10 +836,10 @@ class MQTTTest : RequestHandlingFramework() {
         )
         MatcherAssert.assertThat(
             message!!.actuals,
-            Matchers.hasKey("Data Generation \"generation\" has too few columns (node 0)")
+            Matchers.hasKey("Data Generation \"generation\" has too few columns (node "+UploadController.LOCATION+")")
         )
         val reason: Set<String?> =
-            message.actuals["Data Generation \"generation\" has too few columns (node 0)"]!!.value?:HashSet()
+            message.actuals["Data Generation \"generation\" has too few columns (node "+UploadController.LOCATION+")"]!!.value?:HashSet()
         MatcherAssert.assertThat(
             reason,
             Matchers.hasItem(Matchers.containsStringIgnoringCase("4 columns requested but only 2 found in file"))
@@ -943,8 +945,8 @@ class MQTTTest : RequestHandlingFramework() {
                 message = assertion
             }
         }
-        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("XPATH failed: \"Bjärk!\" (node 0)")))
-        MatcherAssert.assertThat(message.actuals.get("XPATH failed: \"Bjärk!\" (node 0)")!!.value, Matchers.hasItem(Matchers.containsString("Exception")))
+        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("XPATH failed: \"Bjärk!\" (node "+UploadController.LOCATION+")")))
+        MatcherAssert.assertThat(message.actuals.get("XPATH failed: \"Bjärk!\" (node "+UploadController.LOCATION+")")!!.value, Matchers.hasItem(Matchers.containsString("Exception")))
     }
 
     @org.junit.jupiter.api.Test
@@ -971,7 +973,7 @@ class MQTTTest : RequestHandlingFramework() {
                 message = assertion
             }
         }
-        val assertionName = "Delay ${delayAtom.name} could not delay: Expanded expression is not a Long! (node 0)"
+        val assertionName = "Delay ${delayAtom.name} could not delay: Expanded expression is not a Long! (node "+UploadController.LOCATION+")"
         MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo(assertionName)))
         MatcherAssert.assertThat(message.actuals[assertionName]!!.value, Matchers.hasItem("1NaN0"))
     }
@@ -995,8 +997,8 @@ class MQTTTest : RequestHandlingFramework() {
                 message = assertion
             }
         }
-        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("Request request: Could not replace variable(s)  part2 (node 0)")))
-        MatcherAssert.assertThat(message.actuals.get("Request request: Could not replace variable(s)  part2 (node 0)")!!.value, Matchers.hasItem(Matchers.containsString("http://localhost:9000/\$part2")))
+        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("Request request: Could not replace variable(s)  part2 (node "+UploadController.LOCATION+")")))
+        MatcherAssert.assertThat(message.actuals.get("Request request: Could not replace variable(s)  part2 (node "+UploadController.LOCATION+")")!!.value, Matchers.hasItem(Matchers.containsString("http://localhost:9000/\$part2")))
     }
 
     @org.junit.jupiter.api.Test
@@ -1096,8 +1098,8 @@ class MQTTTest : RequestHandlingFramework() {
                 message = assertion
             }
         }
-        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("Has some text (node 0)")))
-        MatcherAssert.assertThat(message.actuals.get("Has some text (node 0)")!!.value, Matchers.hasItem(Matchers.equalTo("xpath \"${xpath}\" returned empty result")))
+        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("Has some text (node "+UploadController.LOCATION+")")))
+        MatcherAssert.assertThat(message.actuals.get("Has some text (node "+UploadController.LOCATION+")")!!.value, Matchers.hasItem(Matchers.equalTo("xpath \"${xpath}\" returned empty result")))
     }
     @org.junit.jupiter.api.Test
     public fun assertionErrorIsThrownIfXPATHIsNotFoundAndPageIsReturned(){
@@ -1127,8 +1129,8 @@ class MQTTTest : RequestHandlingFramework() {
                 message = assertion
             }
         }
-        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("Has some text (node 0)")))
-        MatcherAssert.assertThat(message.actuals.get("Has some text (node 0)")!!.value, Matchers.hasItem(Matchers.equalTo(String(Utils().signupHtml.readAllBytes()))))
+        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("Has some text (node "+UploadController.LOCATION+")")))
+        MatcherAssert.assertThat(message.actuals.get("Has some text (node "+UploadController.LOCATION+")")!!.value, Matchers.hasItem(Matchers.equalTo(String(Utils().signupHtml.readAllBytes()))))
     }
 
     @org.junit.jupiter.api.Test
@@ -1158,8 +1160,8 @@ class MQTTTest : RequestHandlingFramework() {
                 message = assertion
             }
         }
-        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("Has some text (node 0)")))
-        MatcherAssert.assertThat(message.actuals.get("Has some text (node 0)")!!.value, Matchers.hasItem(Matchers.containsString("xpath \"${xpath}\" is invalid")))
+        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("Has some text (node "+UploadController.LOCATION+")")))
+        MatcherAssert.assertThat(message.actuals.get("Has some text (node "+UploadController.LOCATION+")")!!.value, Matchers.hasItem(Matchers.containsString("xpath \"${xpath}\" is invalid")))
     }
 
     @org.junit.jupiter.api.Test
@@ -1247,8 +1249,8 @@ class MQTTTest : RequestHandlingFramework() {
                 message = assertion
             }
         }
-        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo(JSONPATHAssertion.name+" (node 0)")))
-        MatcherAssert.assertThat(message.actuals.get(JSONPATHAssertion.name+" (node 0)")!!.value, Matchers.hasItem(Matchers.equalTo("jsonpath \"${JSONPATH}\" returned empty result")))
+        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo(JSONPATHAssertion.name+" (node "+UploadController.LOCATION+")")))
+        MatcherAssert.assertThat(message.actuals.get(JSONPATHAssertion.name+" (node "+UploadController.LOCATION+")")!!.value, Matchers.hasItem(Matchers.equalTo("jsonpath \"${JSONPATH}\" returned empty result")))
     }
 
     @org.junit.jupiter.api.Test
@@ -1279,8 +1281,8 @@ class MQTTTest : RequestHandlingFramework() {
                 message = assertion
             }
         }
-        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo(JSONPATHAssertion.name+" (node 0)")))
-        MatcherAssert.assertThat(message.actuals.get(JSONPATHAssertion.name+" (node 0)")!!.value, Matchers.hasItem(Matchers.equalTo("{\n\"param\" : \"otherValue\"\n,\"id\" : 40}")))
+        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo(JSONPATHAssertion.name+" (node "+UploadController.LOCATION+")")))
+        MatcherAssert.assertThat(message.actuals.get(JSONPATHAssertion.name+" (node "+UploadController.LOCATION+")")!!.value, Matchers.hasItem(Matchers.equalTo("{\n\"param\" : \"otherValue\"\n,\"id\" : 40}")))
     }
 
     @org.junit.jupiter.api.Test
@@ -1310,8 +1312,8 @@ class MQTTTest : RequestHandlingFramework() {
                 message = assertion
             }
         }
-        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("Has some text (node 0)")))
-        MatcherAssert.assertThat(message.actuals.get("Has some text (node 0)")!!.value, Matchers.hasItem(Matchers.containsString("jsonpath \"${JSONPATH}\" is invalid")))
+        MatcherAssert.assertThat(message!!.actuals, Matchers.hasKey(Matchers.equalTo("Has some text (node "+UploadController.LOCATION+")")))
+        MatcherAssert.assertThat(message.actuals.get("Has some text (node "+UploadController.LOCATION+")")!!.value, Matchers.hasItem(Matchers.containsString("jsonpath \"${JSONPATH}\" is invalid")))
     }
 
 

@@ -24,12 +24,10 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.sync.Semaphore
 import java.lang.Exception
-import java.lang.Long.max
 import java.lang.Thread.sleep
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.collections.HashMap
-import kotlin.math.ceil
 import kotlin.math.floor
 
 //allow frontend to store additional information
@@ -261,8 +259,6 @@ class Test {
         //old testStart should be gone by now
         Event.unsignal(testStartEvent)
         //since only used in some scenarios, it is less shotgun surgery to set it here than to include it in all possible paths through RestClient.
-        TimeStorage.instance.nodeNumber = nodeNumber
-        AssertionStorage.instance.nodeNumber = nodeNumber
         //mapping all files eagerly might improve performance, also this is needed to set an offset in the data
         Arrays.stream(stories).forEach{ story -> Arrays.stream(story.getAtoms()).forEach { atom -> if(atom is Data_Generation){
             atom.offsetPercentage = nodeNumber.toDouble() / nodes

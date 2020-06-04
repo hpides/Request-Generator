@@ -3,6 +3,7 @@ package de.hpi.tdgt.test.story.atom.assertion
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
+import de.hpi.tdgt.controllers.UploadController
 import de.hpi.tdgt.test.ThreadRecycler
 import de.hpi.tdgt.util.Pair
 import de.hpi.tdgt.util.PropertiesReader
@@ -24,7 +25,10 @@ class AssertionStorage private constructor() {
     private val mqttRunnable: Runnable
     private val running = AtomicBoolean(true)
     private var testid: Long = 0
-    var nodeNumber = 0L
+    val node: String
+    get (){
+        return UploadController.LOCATION ?: "unknown node"
+    }
     //needs to be synchronized, because concurrently client might be reset
     @Synchronized
     private fun sendCurrentActualsViaMqtt() { //might be called subsequently if reset is called subsequently
@@ -99,9 +103,9 @@ class AssertionStorage private constructor() {
             Assertion.oneHasFailed = true
         }
         if (isStoreEntriesAsynch) { //needs quite some synchronization time and might run some time, so run it async if possible
-            ThreadRecycler.instance.executorService.submit { doAddFailure("$assertionName (node $nodeNumber)", actual) }
+            ThreadRecycler.instance.executorService.submit { doAddFailure("$assertionName (node $node)", actual) }
         } else {
-            doAddFailure("$assertionName (node $nodeNumber)", actual)
+            doAddFailure("$assertionName (node $node)", actual)
         }
     }
 
