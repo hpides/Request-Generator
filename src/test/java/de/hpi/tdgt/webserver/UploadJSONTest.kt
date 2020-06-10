@@ -68,6 +68,8 @@ class UploadJSONTest : RequestHandlingFramework() {
                 .contentType(MediaType.APPLICATION_JSON).body(exampleStory)
         val response =
             restTemplate!!.exchange(requestEntity, String::class.java)
+        // else there will be side effects on other tests
+        waitForTestEnd()
         assertThat(
             response.statusCode,
             equalTo(HttpStatus.OK)
@@ -112,16 +114,15 @@ class UploadJSONTest : RequestHandlingFramework() {
     @Test
     @Throws(Exception::class)
     fun runningTestCanBeAborted() {
+        sleep(5000)
         val id = System.currentTimeMillis()
         val requestEntity =
             RequestEntity.post(URL("http://localhost:$port/upload/$id").toURI())
                 .contentType(MediaType.APPLICATION_JSON).body(Utils().requestExampleJSONWithDelay)
-        Thread {//make sure a test is actually running, tests take at least 8 s to finish
-            sleep(4000)
-            //test is run async, if aborted should finish immediately
-            publisher.publish(de.hpi.tdgt.test.Test.MQTT_TOPIC, ("abort $id").toByteArray(), 2, false)
-        }.run()
         restTemplate!!.exchange(requestEntity, String::class.java)
+        //test is run async, if aborted should finish immediately
+        publisher.publish(de.hpi.tdgt.test.Test.MQTT_TOPIC, ("abort $id").toByteArray(), 2, false)
+
         waitForTestEnd()
 
         //not all requests to this handler can be sent by now

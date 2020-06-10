@@ -236,8 +236,8 @@ class Test {
                 } catch (e: MqttException) {
                     log.warn("Could not disconnect client: ", e)
                 }
-                //remove a new test must be started
-                async { isTestRunning.acquire() }
+                // a new test must be started
+                Event.unsignal(isTestRunningEventName)
             }
         }
     }
@@ -272,7 +272,7 @@ class Test {
     @Throws(InterruptedException::class)
     private suspend fun runTest(stories: Array<UserStory>): MutableCollection<Future<*>> {
         //from now on, this test can be aborted
-        isTestRunning.release()
+        Event.signal(isTestRunningEventName)
         //invalid now
         val runningStories = Vector<Future<*>>()
         //we do not want to start any story if we are aborted
@@ -410,11 +410,12 @@ class Test {
 
         @JvmStatic
         var lastStartedTest:Test? = null
-        var isTestRunning: Semaphore = Semaphore(1,1);
+        @JvmStatic
+        val isTestRunningEventName = "isTestRunnning"
         @JvmStatic
         public suspend fun abortTest(testID:Long){
-            //make sure there is at least onoe running test (might not be the case if user immediately slams abort)
-            isTestRunning.acquire()
+            //make sure there is at least ono running test (might not be the case if user immediately slams abort)
+            Event.waitFor(isTestRunningEventName)
             if(lastStartedTest?.testId == testID){
                 lastStartedTest?.abort()
             }
