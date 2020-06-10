@@ -26,6 +26,7 @@ import kotlinx.coroutines.sync.Semaphore
 import java.lang.Exception
 import java.lang.Thread.sleep
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.collections.HashMap
 import kotlin.math.floor
@@ -113,8 +114,7 @@ class Test {
         setActiveInstancesForStories(stories)
         Event.unsignal(WarmupEnd.eventName)
         //will run stories with warmup only, so they can run until WarmupEnd is reached
-        val threads =
-            runTest(
+        val threads = runTest(
                 Arrays.stream(stories).filter { obj: UserStory? -> if(obj!=null){obj.hasWarmup()}else{false} }.collect(Collectors.toList()).toTypedArray()
             )
         //now, wait for all warmups to finish
@@ -153,6 +153,7 @@ class Test {
      * @throws InterruptedException if interrupted joining threads
      */
     fun start(threadsFromWarmup: MutableCollection<Future<*>>) {
+
         var threadsFromWarmupReceived = threadsFromWarmup
         prepareMqttClient()
         try { //clear retained messages from last test
@@ -169,20 +170,26 @@ class Test {
         }
         runBlocking {
             for (i in 0 until repeat) {
+                //test is finished when aborted, act accordingly
+                if(isAborted.get()){
+                    break
+                }
                 log.info("Starting test run $i of $repeat")
                 //start all warmup tasks
                 WarmupEnd.startTest()
                 setActiveInstancesForStories(stories)
-                val threads = runTest(
+                val futures = runTest(
                         Arrays.stream(stories).filter(
                                 { story: UserStory -> !story.isStarted }
                         ).collect(Collectors.toList()).toTypedArray()
                 )
                 //can wait for these threads also
-                threads.addAll(threadsFromWarmupReceived)
-                for (thread in threads) { //join thread
+                futures.addAll(threadsFromWarmupReceived)
+                for (thread in futures) { //join thread
                     if(PropertiesReader.AsyncIO() && thread is CompletableFuture){
-                        thread.await()
+                        if(!thread.isCancelled) {
+                            thread.await()
+                        }
                     }
                     else{
                         if (!thread.isCancelled) thread.get()
@@ -201,27 +208,36 @@ class Test {
 
                 log.info("Test run $i complete!")
             }
-            //make sure all times are sent
-            AssertionStorage.instance.flush()
-            TimeStorage.instance.flush()
-            //if there is only this node, the test is over; else, other nodes might still be running
-            val endMessage = (if(nodes == 1L){"testEnd "}else{"nodeEnd $nodeNumber "} +"$testId").toByteArray(StandardCharsets.UTF_8)
             try {
-                client!!.publish(
+                //make sure all times are sent and the testEnd signal is processed
+                AssertionStorage.instance.flush()
+                TimeStorage.instance.flush()
+            } finally {
+                //if there is only this node, the test is over; else, other nodes might still be running
+                val endMessage = (if (nodes == 1L) {
+                    "testEnd "
+                } else {
+                    "nodeEnd $nodeNumber "
+                } + "$testId").toByteArray(StandardCharsets.UTF_8)
+                try {
+                    client!!.publish(
                         MQTT_TOPIC,
                         endMessage,
                         2,
                         false
-                )
-                //clear retained messages for next test
-                client!!.publish(MQTT_TOPIC, ByteArray(0), 0, true)
-            } catch (e: MqttException) {
-                log.error("Could not send control end message: ", e)
-            }
-            try {
-                client!!.disconnect()
-            } catch (e: MqttException) {
-                log.warn("Could not disconnect client: ", e)
+                    )
+                    //clear retained messages for next test
+                    client!!.publish(MQTT_TOPIC, ByteArray(0), 0, true)
+                } catch (e: MqttException) {
+                    log.error("Could not send control end message: ", e)
+                }
+                try {
+                    client!!.disconnect()
+                } catch (e: MqttException) {
+                    log.warn("Could not disconnect client: ", e)
+                }
+                //remove a new test must be started
+                async { isTestRunning.acquire() }
             }
         }
     }
@@ -253,9 +269,16 @@ class Test {
      * Time when user stories actually start running
      */
     var testStart:Long = 0
-
     @Throws(InterruptedException::class)
     private suspend fun runTest(stories: Array<UserStory>): MutableCollection<Future<*>> {
+        //from now on, this test can be aborted
+        isTestRunning.release()
+        //invalid now
+        val runningStories = Vector<Future<*>>()
+        //we do not want to start any story if we are aborted
+        if(isAborted.get()) {
+            return runningStories
+        }
         //old testStart should be gone by now
         Event.unsignal(testStartEvent)
         //since only used in some scenarios, it is less shotgun surgery to set it here than to include it in all possible paths through RestClient.
@@ -271,7 +294,6 @@ class Test {
         } catch (e: ExecutionControl.NotImplementedException) {
             log.error(e)
         }
-        val futures = Vector<Future<*>>()
         for (i in stories.indices) { //repeat stories as often as wished
             var j = 0
             while (j < scaleFactor * stories[i].scalePercentage) {
@@ -289,14 +311,14 @@ class Test {
                         future = GlobalScope.async { stories[i].run() }.asCompletableFuture()
                     //}
                 }
-                futures.add(future)
+                runningStories.add(future)
                 j++
             }
         }
         //cloning takes considerably much time, so make sure all stories are cloned before they actually start
         Event.signal(testStartEvent)
         testStart = System.currentTimeMillis()
-        return futures
+        return runningStories
     }
 
     fun getStories(): Array<UserStory> {
@@ -385,6 +407,22 @@ class Test {
         @JvmStatic
         val testEndWatchdog : MqttClient =
             MqttClient(PropertiesReader.getMqttHost(), UUID.randomUUID().toString(), MemoryPersistence())
+
+        @JvmStatic
+        var lastStartedTest:Test? = null
+        var isTestRunning: Semaphore = Semaphore(1,1);
+        @JvmStatic
+        public suspend fun abortTest(testID:Long){
+            //make sure there is at least onoe running test (might not be the case if user immediately slams abort)
+            isTestRunning.acquire()
+            if(lastStartedTest?.testId == testID){
+                lastStartedTest?.abort()
+            }
+            else {
+                log.info("Could not abort test $testID since no such test was known (only know ${lastStartedTest?.testId}")
+            }
+        }
+
         /**
          * For every test id the number of nodes that have to finish for it to be over
          */
@@ -423,6 +461,16 @@ class Test {
             }
             }
         }
+    }
+    var isAborted:AtomicBoolean = AtomicBoolean(false)
+    private fun abort() {
+        isAborted.set(true)
+        log.error("Test $testId aborted!")
+    }
+
+    constructor() {
+        //we can be aborted now
+        lastStartedTest = this
     }
 }
 

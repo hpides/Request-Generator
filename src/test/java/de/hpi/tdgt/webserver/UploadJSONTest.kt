@@ -75,11 +75,11 @@ class UploadJSONTest : RequestHandlingFramework() {
     }
     val publisherId = UUID.randomUUID().toString()
     val publisher = MqttClient(PropertiesReader.getMqttHost(), publisherId, MemoryPersistence())
-    private fun waitForTestEnd(){
+    private fun waitForTestState(state:String){
         var finished = false;
         publisher.subscribe(de.hpi.tdgt.test.Test.MQTT_TOPIC, IMqttMessageListener { s: String, mqttMessage: MqttMessage ->
             //hamcrest can't handle empty sets in the list for contains, so filter them out
-            if(String(mqttMessage.payload).startsWith("testEnd")){
+            if(String(mqttMessage.payload).startsWith(state)){
                 finished = true
             }
         })
@@ -87,6 +87,13 @@ class UploadJSONTest : RequestHandlingFramework() {
         while(!finished){
             sleep(1000)
         }
+    }
+
+    private fun waitForTestEnd(){
+        waitForTestState("testEnd")
+    }
+    private fun waitForTestStart(){
+        waitForTestState("testStart")
     }
 
     @Test
@@ -100,6 +107,25 @@ class UploadJSONTest : RequestHandlingFramework() {
         waitForTestEnd()
         //requests to this handler are sent
         assertThat(authHandler.numberFailedLogins, Matchers.greaterThan(0))
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun runningTestCanBeAborted() {
+        val id = System.currentTimeMillis()
+        val requestEntity =
+            RequestEntity.post(URL("http://localhost:$port/upload/$id").toURI())
+                .contentType(MediaType.APPLICATION_JSON).body(Utils().requestExampleJSONWithDelay)
+        Thread {//make sure a test is actually running, tests take at least 8 s to finish
+            sleep(4000)
+            //test is run async, if aborted should finish immediately
+            publisher.publish(de.hpi.tdgt.test.Test.MQTT_TOPIC, ("abort $id").toByteArray(), 2, false)
+        }.run()
+        restTemplate!!.exchange(requestEntity, String::class.java)
+        waitForTestEnd()
+
+        //not all requests to this handler can be sent by now
+        assertThat(authHandler.totalRequests, Matchers.lessThan(37))
     }
 
     @Test

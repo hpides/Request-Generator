@@ -10,6 +10,9 @@ import de.hpi.tdgt.test.story.atom.assertion.Assertion
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.test.time_measurement.TimeStorage
 import de.hpi.tdgt.util.PropertiesReader
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.LogManager
 import org.eclipse.paho.client.mqttv3.MqttClient
@@ -59,7 +62,7 @@ class UploadController {
                             )
                         }
                     }
-                else if(request.startsWith(IDENTIFICATION_RESPONSE_MESSAGE)){
+                    else if(request.startsWith(IDENTIFICATION_RESPONSE_MESSAGE)){
                         //format is header space host
                         val parts = request.split(" ")
                         if(parts.size > 1) {
@@ -67,6 +70,23 @@ class UploadController {
                             knownOtherInstances.add(host)
                         }else{
                             log.error("Discovery Protocol violation: identify messages must be the word identify followed by a space and a URL")
+                        } }
+                    else if(request.startsWith(ABORT_MESSAGE)){
+                        //format is abort testid
+                        val parts = request.split(" ")
+                        if(parts.size > 1) {
+                            val testID = parts[1]
+                            try {
+                                val id = testID.toLong()
+                                //will terminate test once one is started and ID is correct
+                                GlobalScope.launch {
+                                    Test.abortTest(id)
+                                }
+                            } catch (e: NumberFormatException){
+                                log.error("Abort protocol violation: test id $testID is no valid ID since no number!")
+                            }
+                        }else{
+                            log.error("Abort Protocol violation: abort messages must be the word abort followed by a space and an ID")
                         }
                     }
                 }
@@ -335,6 +355,8 @@ class UploadController {
         const val IDENTIFICATION_REQUEST_MESSAGE: String = "identify"
 
         const val IDENTIFICATION_RESPONSE_MESSAGE: String = "identification"
+
+        const val ABORT_MESSAGE: String = "abort"
         @Value("\${discovery.timeout}")
         var DISCOVERY_TIMEOUT_MS:Long = 1000L
     }

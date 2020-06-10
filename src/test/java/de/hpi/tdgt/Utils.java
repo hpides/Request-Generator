@@ -25,6 +25,12 @@ public class Utils {
         return writer.toString();
     }
 
+    public String getRequestExampleJSONWithDelay() throws IOException {
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(getClass().getResourceAsStream("RequestExampleWithDelay.json"), writer);
+        return writer.toString();
+    }
+
     public String getRequestExampleWithRepeatJSON() throws IOException {
         StringWriter writer = new StringWriter();
         IOUtils.copy(getClass().getResourceAsStream("RequestExampleWithRepeat.json"), writer);
