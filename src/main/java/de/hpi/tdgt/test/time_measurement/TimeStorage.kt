@@ -226,7 +226,7 @@ class TimeStorage protected constructor() {
         mqttReporter = Runnable {
             try {
                 runBlocking { performTimeSending() }
-            } catch (e: InterruptedException){
+            } catch (e: Exception){
                 //willingly ignored
             }
         }

@@ -72,7 +72,12 @@ abstract class Atom : Cloneable {
 
     @Throws(InterruptedException::class, ExecutionException::class)
     suspend fun run(dataMap: Map<String, String>?) {
-        log.info("Running Atom " + name + " in Thread " + Thread.currentThread().id)
+        log.info("Running Atom $name in Thread ${Thread.currentThread().id}")
+        //do not run if the corresponding test was aborted
+        if(parent?.parent?.isAborted?.get() == true){
+            log.info("Atom $name not running since parent test was aborted!")
+            return
+        }
         predecessorsReady += 1
         knownParams.putAll(dataMap!!)
         if (predecessorsReady >= predecessorCount) { //perform as often as requested
@@ -80,7 +85,7 @@ abstract class Atom : Cloneable {
                 try {
                     perform()
                 } catch(e:Exception){
-                    log.error("Error running atom "+name,e)
+                    log.error("Error running atom $name",e)
                 }
             }
             runSuccessors()
