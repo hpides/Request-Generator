@@ -1,14 +1,24 @@
+
 stages:
   - test
+  - scan
+
+include:
+  - template: SAST.gitlab-ci.yml
+
+variables:
+  SCAN_KUBERNETES_MANIFESTS: "true"
+
 
 junit:
   stage: test
   image: "openjdk:13-alpine"
   # save mosquitto log to debug errors
   artifacts:
-      when: on_failure
       paths:
         - mosquitto.log
+        - .m2/
+        - target/
   tags: 
     - BP-TDGT-CI
   script:
@@ -18,4 +28,21 @@ junit:
     - $(which mosquitto) -c /mosquitto/config/mosquitto.conf > mosquitto.log 2>&1 &
     # config assumes broker is running on same machine as System under Test, so we need this environment for the tests
     - echo "127.0.0.1 mosquitto" >> /etc/hosts
-    - mvn test
+    # use directory as expected by scan
+    - mvn package -Dmaven.repo.local=./.m2/repository
+
+security:
+  stage: scan
+  image: "openjdk:13-alpine"
+  tags:
+    - BP-TDGT-CI
+  dependencies:
+    - junit
+  script:
+    - apk add maven mosquitto
+    - /analyzer run -compile=false
+  variables:
+    MAVEN_REPO_PATH: ./.m2/repository
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
