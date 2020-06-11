@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.util.Properties;
 @Log4j2
 public class PropertiesReader {
+
+    public static String BROKER_URL = null;
     public static String getMqttHost(){
         Properties prop = new Properties();
         try {
