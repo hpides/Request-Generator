@@ -1,7 +1,6 @@
 
 stages:
   - test
-  - scan
 
 include:
   - template: SAST.gitlab-ci.yml
@@ -10,7 +9,7 @@ variables:
   SCAN_KUBERNETES_MANIFESTS: "true"
 
 
-junit:
+spotbugs-sast:
   stage: test
   image: "openjdk:13-alpine"
   # save mosquitto log to debug errors
