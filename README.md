@@ -23,6 +23,13 @@ curl -H "Content-Type: application/json" -X POST --data @src/test/resources/de/h
 ```
 0 might be replaced by the current epoch time in milliseconds.
 
+## Changing mqtt broker location
+
+The broker location is per default derived from the application.properties configuration file. However, it can be overwritten during run time using --broker-url. Refer to --help for documentation.
+
+## Testing correct syntax
+Request Generator accepts an additional flag --noop. If used, it will check if sufficient parameters have been supplied but not run any tests. Note that this does not check the validity of supplied parameters, e.g. if passed pathnames exist.
+
 ## A note on logging
 The default logging level is "info". It will provide a lot of output which will slow the application down. Feel free to overwrite "logging.level.root=info" in application.properties with "warn" or "error".  
 Also, the logging level can be set at run time via the argument "--logging.level.root="error"".  
