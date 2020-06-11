@@ -1,6 +1,7 @@
 
 stages:
   - test
+  - scan
 
 include:
   - template: SAST.gitlab-ci.yml
@@ -9,19 +10,16 @@ variables:
   SCAN_KUBERNETES_MANIFESTS: "true"
 
 
-spotbugs-sast:
+test:
   stage: test
   image: "openjdk:13-alpine"
   # save mosquitto log to debug errors
   artifacts:
       paths:
         - mosquitto.log
-      reports:
-        sast: gl-sast-report.json
+        - ./m2/
   tags: 
     - BP-TDGT-CI
-  variables:
-    MAVEN_REPO_PATH: ./.m2/repository
   script:
     - apk add maven mosquitto
     - mkdir -p /mosquitto/config/
@@ -31,4 +29,16 @@ spotbugs-sast:
     - echo "127.0.0.1 mosquitto" >> /etc/hosts
     # use directory as expected by scan
     - mvn package -Dmaven.repo.local=./.m2/repository
-    - /analyzer run -compile=false
+
+spotbugs-sast:
+  dependencies:
+    - test
+  script:
+    - /analyzer run
+  variables:
+    MAVEN_REPO_PATH: ./.m2/repository
+  tags:
+    - BP-TDGT-CI
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
