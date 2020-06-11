@@ -39,6 +39,7 @@ spotbugs-sast:
     MAVEN_REPO_PATH: ./.m2/repository
   tags:
     - BP-TDGT-CI
+  stage: scan
   artifacts:
     reports:
       sast: gl-sast-report.json
