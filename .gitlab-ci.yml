@@ -17,10 +17,12 @@ junit:
   artifacts:
       paths:
         - mosquitto.log
-        - .m2/
-        - target/
+      reports:
+        sast: gl-sast-report.json
   tags: 
     - BP-TDGT-CI
+  variables:
+    MAVEN_REPO_PATH: ./.m2/repository
   script:
     - apk add maven mosquitto
     - mkdir -p /mosquitto/config/
@@ -30,19 +32,4 @@ junit:
     - echo "127.0.0.1 mosquitto" >> /etc/hosts
     # use directory as expected by scan
     - mvn package -Dmaven.repo.local=./.m2/repository
-
-security:
-  stage: scan
-  image: "openjdk:13-alpine"
-  tags:
-    - BP-TDGT-CI
-  dependencies:
-    - junit
-  script:
-    - apk add maven mosquitto
     - /analyzer run -compile=false
-  variables:
-    MAVEN_REPO_PATH: ./.m2/repository
-  artifacts:
-    reports:
-      sast: gl-sast-report.json
