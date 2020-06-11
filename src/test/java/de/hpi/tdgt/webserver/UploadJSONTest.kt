@@ -1,5 +1,6 @@
 package de.hpi.tdgt.webserver
 
+import com.ginsberg.junit.exit.ExpectSystemExit
 import com.ginsberg.junit.exit.ExpectSystemExitWithStatus
 import de.hpi.tdgt.RequestHandlingFramework
 import de.hpi.tdgt.Utils
@@ -269,6 +270,21 @@ class UploadJSONTest : RequestHandlingFramework() {
         )
         WebApplication.main(args)
         assertThat(UploadController.LOCATION,equalTo("http://localhost:8080"))
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun setsBrokerURL() {
+        //Since everything is fine, the application should exit with 0
+        val args = arrayOf(
+            "--broker-url",
+            "mqtt://mosquitto:1883",
+            "--noop",
+            "./src/test/resources/de/hpi/tdgt",
+            "./src/test/resources/de/hpi/tdgt"
+        )
+        WebApplication.main(args)
+        assertThat(PropertiesReader.BROKER_URL,equalTo("mqtt://mosquitto:1883"))
     }
 
     @Test

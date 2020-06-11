@@ -1,5 +1,6 @@
 package de.hpi.tdgt;
 
+import com.fasterxml.jackson.databind.annotation.JsonAppend;
 import de.hpi.tdgt.controllers.UploadController;
 import de.hpi.tdgt.test.story.atom.Data_Generation;
 import de.hpi.tdgt.test.story.atom.Request;
@@ -62,9 +63,16 @@ public class WebApplication {
         parser.addArgument("--location")
                 .type(String.class)
                 .help("Location of this node relative to other node. Be careful when using localhost:* hosts. Must be a valid HTTP URL.");
+        parser.addArgument("--broker-url")
+                .type(String.class)
+                .help("Location of the broker. Needs to include protocol (mqtt:// or ws:// or wss://) and port. Defaults to \""+PropertiesReader.getMqttHost()+"\"");
          parser.addArgument("--bufferSize")
 		.type(Integer.class)
 		.help("Buffer size per file to read in MiB. Defaults to 64.");
+
+         parser.addArgument("--noop")
+                 .action(Arguments.storeTrue())
+                 .help("Check arguments, but do not start server or CLI-mode test.");
 	val group = parser.addMutuallyExclusiveGroup("cli").description("Run one test and terminate afterwards (default: Run as webserver)");
         group.addArgument("--load").type(String.class).dest("load").nargs("?").help("If set, one test is loaded from the filesystem.");
         group.addArgument("--restTest").type(String.class).setConst(true).setDefault(false).nargs("?").dest("restTest").help("If set, some static rquests are run.");
@@ -92,6 +100,12 @@ public class WebApplication {
 	    if(res.getInt("bufferSize") != null){
 	    		MappedFileReader.setBufferSize(res.getInt("bufferSize") * 1024 * 1024);
 	    }
+	    // optional
+        //note that the name is changed to broker_url by the parser
+	    if(res.getString("broker_url") != null){
+                PropertiesReader.BROKER_URL = res.getString("broker_url");
+	    }
+	    if(!res.getBoolean("noop")) {
             if (load != null) {
                 //If we do not start Spring Boot, many properties like logging get half-way initialized. So we start Spring boot and terminate it when the test is done.
                 ConfigurableApplicationContext ctx = new SpringApplicationBuilder(WebApplication.class)
@@ -99,15 +113,17 @@ public class WebApplication {
                 CLI.loadTest(load);
                 int code = SpringApplication.exit(ctx, () -> {
                     // return the error code
-                    return (Assertion.getOneHasFailed() ? 3 : 0) + (Request.getOneExceededThreshold() ? 2:0);
+                    return (Assertion.getOneHasFailed() ? 3 : 0) + (Request.getOneExceededThreshold() ? 2 : 0);
                 });
                 System.exit(code);
-            } else if(restTest){
+            } else if (restTest) {
                 CLI.restTest();
-            }
-            else {
+            } else {
                 SpringApplication.run(WebApplication.class, args);
             }
+        }else{
+	        log.info("Not running any test since --noop specified.");
+        }
         } catch (ArgumentParserException e) {
             parser.handleError(e);
             System.exit(1);
