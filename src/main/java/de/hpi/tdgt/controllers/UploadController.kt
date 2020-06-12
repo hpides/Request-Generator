@@ -20,6 +20,8 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.web.context.WebServerInitializedEvent
+import org.springframework.context.ApplicationListener
 import org.springframework.http.*
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.RestTemplate
@@ -35,7 +37,7 @@ import kotlin.system.exitProcess
 
 
 @RestController
-class UploadController {
+class UploadController : ApplicationListener<WebServerInitializedEvent> {
     val client:MqttClient
     val knownOtherInstances = HashSet<String>()
     init {
@@ -340,6 +342,10 @@ class UploadController {
         exitProcess(0)
     }
 
+    fun defaultLocation(): String {
+        return "http://localhost:$serverPort";
+    }
+
     companion object {
         private val log = LogManager.getLogger(
             UploadController::class.java
@@ -359,5 +365,16 @@ class UploadController {
         const val ABORT_MESSAGE: String = "abort"
         @Value("\${discovery.timeout}")
         var DISCOVERY_TIMEOUT_MS:Long = 1000L
+    }
+
+    var serverPort = -1;
+
+    override fun onApplicationEvent(event: WebServerInitializedEvent) {
+        serverPort = event.webServer.port;
+        //no LOCATION was passed as startup parameter. In order to function, use the default one.
+        if(LOCATION == null){
+            LOCATION = defaultLocation()
+            log.warn("No --location argument was passed, using location $LOCATION")
+        }
     }
 }
