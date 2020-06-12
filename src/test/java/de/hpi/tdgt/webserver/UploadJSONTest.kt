@@ -61,6 +61,9 @@ class UploadJSONTest : RequestHandlingFramework() {
     @Autowired
     private val restTemplate: TestRestTemplate? = null
 
+    @Autowired
+    private lateinit var uploadController:UploadController;
+
     @Test
     @Throws(Exception::class)
     fun runsUserStoryAgainstTestServerReturns200() {
@@ -143,6 +146,13 @@ class UploadJSONTest : RequestHandlingFramework() {
         waitForTestEnd()
         //requests to this handler are sent
         assertThat(authHandler.numberFailedLogins, Matchers.greaterThan(0))
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun canDetectOwnLocation() {
+        assertThat("UploadController should have been initialised by test framework", ::uploadController.isInitialized)
+        assertThat(uploadController.defaultLocation(), Matchers.equalTo("http://localhost:$port"));
     }
 
     @Test

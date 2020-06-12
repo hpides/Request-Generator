@@ -39,7 +39,7 @@ Also, all other Spring Boot arguments should work as expected.
 ## A note on distributed usage
 To use the distribution feature, connect as many nodes as you like to the same broker.   
 Each node should have a private PDGF instance (because data of the same name might have to be generated).   
-Also, at startup a node needs to be told it's URL relative to the other nodes (parameter --location).   
+Also, at startup a node needs to be told it's URL relative to the other nodes (parameter --location). This defaults to *http://localhost:<own port>* where the used port is the port which Request Generator binds to.   
 The frontend needs to be able to contact one of the nodes (there is no dedicated master node).  
 If these steps are followed, the system should automatically distribute benchmarking to all nodes in the system.  
 Finally, this system can not tolerate adding nodes after the PDGF run of a test (re-run the PDGF step in this case) or losing nodes during the test run (test will never finish).
