@@ -9,6 +9,17 @@ spec:
   resources:
     requests:
       storage: 1Gi
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pdgf-output-claim
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: output-storage
+  resources:
+    requests:
+      storage: 5Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -33,6 +44,9 @@ spec:
         - name: reqgen-pv-storage
           persistentVolumeClaim:
             claimName: pdgf-pv-claim
+        - name: reqgen-output-storage
+          persistentVolumeClaim:
+            claimName: pdgf-output-claim
       containers:
         - name: request-generator
           image: localhost:5000/requestgenerator:${tag}
@@ -47,10 +61,12 @@ spec:
             - name: JVM_OPTS
               value: "-XX:MaxRAM=1G -Xmx512M" #-XX:+UseSerialGC"
             - name: EXTRA_ARGUMENTS
-              value: "--location http://requestgenerator --bufferSize 1 --logging.level.root=error"
+              value: "--location http://requestgenerator --bufferSize 1 --logging.level.root=error --alternative-output-dir /output"
           volumeMounts:
             - mountPath: "/pdgf"
               name: reqgen-pv-storage
+            - mountPath: "/output"
+              name: reqgen-output-storage
           ports:
             - containerPort: 8080
           imagePullPolicy: IfNotPresent
