@@ -5,12 +5,15 @@ import de.hpi.tdgt.controllers.UploadController
 import de.hpi.tdgt.deserialisation.Deserializer.deserialize
 import de.hpi.tdgt.requesthandling.RestClient
 import de.hpi.tdgt.test.story.UserStory
+import de.hpi.tdgt.test.story.atom.Data_Generation
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.io.IOUtils
 import org.apache.logging.log4j.LogManager
+import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import java.io.StringWriter
+import java.net.URISyntaxException
 import java.net.URL
 import java.util.concurrent.ExecutionException
 import kotlin.collections.HashMap

@@ -3,8 +3,8 @@ package de.hpi.tdgt.atom
 import de.hpi.tdgt.Utils
 import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.Atom
-import de.hpi.tdgt.test.story.atom.DataGeneration
-import de.hpi.tdgt.test.story.atom.DataGeneration.Companion.reset
+import de.hpi.tdgt.test.story.atom.Data_Generation
+import de.hpi.tdgt.test.story.atom.Data_Generation.Companion.reset
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.io.IOUtils
 import org.apache.logging.log4j.LogManager
@@ -22,23 +22,23 @@ import java.util.*
 import java.util.concurrent.ExecutionException
 
 class TestDataGeneration {
-    private var firstGeneration: DataGeneration? = null
-    private var secondGeneration: DataGeneration? = null
-    private var thirdGeneration: DataGeneration? = null
+    private var firstGeneration: Data_Generation? = null
+    private var secondGeneration: Data_Generation? = null
+    private var thirdGeneration: Data_Generation? = null
     private var users: File? = null
     private var posts: File? = null
     @BeforeEach
     @Throws(IOException::class)
     fun beforeEach() {
-        firstGeneration = DataGeneration()
+        firstGeneration = Data_Generation()
         firstGeneration!!.data = arrayOf("username", "password")
         firstGeneration!!.table = "users"
         firstGeneration!!.repeat = 1
-        secondGeneration = DataGeneration()
+        secondGeneration = Data_Generation()
         secondGeneration!!.data = arrayOf("username", "password")
         secondGeneration!!.table = "users"
         secondGeneration!!.repeat = 1
-        thirdGeneration = DataGeneration()
+        thirdGeneration = Data_Generation()
         thirdGeneration!!.data = arrayOf("title", "text")
         thirdGeneration!!.table = "posts"
         thirdGeneration!!.repeat = 1
@@ -124,7 +124,7 @@ class TestDataGeneration {
     }
 
     private inner class DataGenRunnable : Runnable {
-        private var gen: DataGeneration? = null
+        private var gen: Data_Generation? = null
         //make sure to access state in the thread the operation ran in
         var knownParams: Map<String, String>? = null
             private set
@@ -142,12 +142,12 @@ class TestDataGeneration {
             knownParams = gen!!.knownParams
         }
 
-        fun setGen(gen: DataGeneration?) {
+        fun setGen(gen: Data_Generation?) {
             this.gen = gen
         }
     }
 
-    private fun runAsync(generation: DataGeneration?): DataGenRunnable {
+    private fun runAsync(generation: Data_Generation?): DataGenRunnable {
         val ret = DataGenRunnable()
         ret.setGen(generation)
         return ret
@@ -263,7 +263,7 @@ class TestDataGeneration {
     @Test
     @Throws(InterruptedException::class, ExecutionException::class)
     fun dataGenerationThrowsNoErrorsIfEmpty() {
-        val dataGeneration = DataGeneration()
+        val dataGeneration = Data_Generation()
         dataGeneration.data = arrayOf()
         dataGeneration.table = ""
         dataGeneration.predecessorCount = 0
@@ -276,7 +276,7 @@ class TestDataGeneration {
     @Test
     @Throws(InterruptedException::class, ExecutionException::class)
     fun dataGenerationCanGenerateStaticValues() {
-        val dataGeneration = DataGeneration()
+        val dataGeneration = Data_Generation()
         dataGeneration.data = arrayOf()
         val valuesToGenerate:MutableMap<String,String> = HashMap<String, String>()
         valuesToGenerate["val1"] = "abc"

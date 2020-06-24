@@ -8,7 +8,7 @@ import java.io.File
 import java.util.*
 import kotlin.collections.HashMap
 
-class DataGeneration : Atom() {
+class Data_Generation : Atom() {
     var data: Array<String> = arrayOf()
     var table: String? = null
 
@@ -29,7 +29,7 @@ class DataGeneration : Atom() {
     }
 
     public override fun performClone(): Atom {
-        val ret = if(actuallyPerformClone){ DataGeneration() } else {this}
+        val ret = if(actuallyPerformClone){ Data_Generation() } else {this}
         ret.table = table
         ret.data = data
         return ret
@@ -141,7 +141,7 @@ class DataGeneration : Atom() {
 
     override fun equals(other: Any?): Boolean {
         if (other === this) return true
-        if (other !is DataGeneration) return false
+        if (other !is Data_Generation) return false
         val otherObject = other
         if (!otherObject.canEqual(this as Any)) return false
         if (!super.equals(otherObject)) return false
@@ -156,7 +156,7 @@ class DataGeneration : Atom() {
     }
 
     override fun canEqual(other: Any?): Boolean {
-        return other is DataGeneration
+        return other is Data_Generation
     }
 
     override fun hashCode(): Int {
@@ -172,11 +172,11 @@ class DataGeneration : Atom() {
     }
 
     override val log: Logger
-        get() = DataGeneration.log
+        get() = Data_Generation.log
 
     companion object {
         private val log = LogManager.getLogger(
-            DataGeneration::class.java
+            Data_Generation::class.java
         )
         //this is used to synchronise current line in all file(s)
         @JsonIgnore
