@@ -52,7 +52,7 @@ class DeserializeAtomTest {
 
     @Test
     fun firstAtomOfFirstStoryIsDataGeneration() {
-        Utils.assertInstanceOf(secondAtomOfFirstStory, Data_Generation::class.java)
+        Utils.assertInstanceOf(secondAtomOfFirstStory, DataGeneration::class.java)
     }
 
     @Test
@@ -68,7 +68,7 @@ class DeserializeAtomTest {
     @Test
     @Throws(IOException::class)
     fun firstAtomOfFirstStoryGetsUsernameAndPasswordFromUsers() {
-        val firstAtomOfFirstStory = secondAtomOfFirstStory as Data_Generation?
+        val firstAtomOfFirstStory = secondAtomOfFirstStory as DataGeneration?
         Assertions.assertArrayEquals(
             arrayOf("username", "password"),
             firstAtomOfFirstStory!!.data
