@@ -43,3 +43,7 @@ Also, at startup a node needs to be told it's URL relative to the other nodes (p
 The frontend needs to be able to contact one of the nodes (there is no dedicated master node).  
 If these steps are followed, the system should automatically distribute benchmarking to all nodes in the system.  
 Finally, this system can not tolerate adding nodes after the PDGF run of a test (re-run the PDGF step in this case) or losing nodes during the test run (test will never finish).
+
+## Troubleshooting
+
+If PDGF can't verify your license (e.g. because it can not get the current time), make sure that it can reach the internet.
