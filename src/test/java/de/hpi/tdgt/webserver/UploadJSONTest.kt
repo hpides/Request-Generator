@@ -1,20 +1,18 @@
 package de.hpi.tdgt.webserver
 
-import com.ginsberg.junit.exit.ExpectSystemExit
 import com.ginsberg.junit.exit.ExpectSystemExitWithStatus
 import de.hpi.tdgt.RequestHandlingFramework
 import de.hpi.tdgt.Utils
 import de.hpi.tdgt.WebApplication
 import de.hpi.tdgt.controllers.UploadController
+import de.hpi.tdgt.test.story.atom.DataGeneration
 import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.LogManager
 import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
-import org.hamcrest.MatcherAssert
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
 import org.hamcrest.Matchers.equalTo
@@ -43,6 +41,9 @@ class UploadJSONTest : RequestHandlingFramework() {
     @LocalServerPort
     private val port = 0
     private lateinit var exampleStory: String
+
+    private var dataGenerationDir:String = ""
+
     @BeforeEach
     @Throws(IOException::class)
     fun prepare() {
@@ -52,10 +53,12 @@ class UploadJSONTest : RequestHandlingFramework() {
         options.isCleanSession = true
         options.connectionTimeout = 10
         publisher.connect(options)
+        dataGenerationDir = DataGeneration.outputDirectory
     }
     @AfterEach
     fun closeDown(){
         publisher.disconnect()
+        DataGeneration.outputDirectory = dataGenerationDir
     }
 
     @Autowired
@@ -263,6 +266,21 @@ class UploadJSONTest : RequestHandlingFramework() {
             "./src/test/resources/de/hpi/tdgt"
         )
         WebApplication.main(args)
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun canChangeDefaultPDGFOutputDirDuringRunTime() {
+        //Since everything is fine, the application should exit with 0
+        val args = arrayOf(
+                "--alternative-output-dir",
+                "/output",
+            "--noop",
+            "./src/test/resources/de/hpi/tdgt",
+            "./src/test/resources/de/hpi/tdgt"
+        )
+        WebApplication.main(args)
+        assertThat(DataGeneration.outputDirectory, equalTo("/output"))
     }
 
     @Test

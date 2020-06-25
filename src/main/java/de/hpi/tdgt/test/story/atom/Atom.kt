@@ -9,7 +9,6 @@ import de.hpi.tdgt.test.story.UserStory
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.util.PropertiesReader
 import kotlinx.coroutines.*
-import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import java.lang.Runnable
 import java.util.*
@@ -27,7 +26,7 @@ import java.util.stream.Collectors
 ) //tell Jackson which subtypes are allowed
 @JsonSubTypes(
     JsonSubTypes.Type(value = Request::class, name = "REQUEST"),
-    JsonSubTypes.Type(value = Data_Generation::class, name = "DATA_GENERATION"),
+    JsonSubTypes.Type(value = DataGeneration::class, name = "DATA_GENERATION"),
     JsonSubTypes.Type(value = Delay::class, name = "DELAY"),
     JsonSubTypes.Type(value = Start::class, name = "START"),
     JsonSubTypes.Type(value = WarmupEnd::class, name = "WARMUP_END"),

@@ -1,8 +1,7 @@
 package de.hpi.tdgt;
 
-import com.fasterxml.jackson.databind.annotation.JsonAppend;
 import de.hpi.tdgt.controllers.UploadController;
-import de.hpi.tdgt.test.story.atom.Data_Generation;
+import de.hpi.tdgt.test.story.atom.DataGeneration;
 import de.hpi.tdgt.test.story.atom.Request;
 import de.hpi.tdgt.test.story.atom.assertion.Assertion;
 import lombok.extern.log4j.Log4j2;
@@ -25,10 +24,7 @@ import de.hpi.tdgt.util.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 
 @Log4j2
 @SpringBootApplication
@@ -63,6 +59,10 @@ public class WebApplication {
         parser.addArgument("--location")
                 .type(String.class)
                 .help("Location of this node relative to other node. Be careful when using localhost:* hosts. Must be a valid HTTP URL.");
+
+        parser.addArgument("--alternative-output-dir")
+                .type(String.class)
+                .help("Output directory for CSV files created by PDGF. Defaults to the output directory of the PDGF directory.");
         parser.addArgument("--broker-url")
                 .type(String.class)
                 .help("Location of the broker. Needs to include protocol (mqtt:// or ws:// or wss://) and port. Defaults to \""+PropertiesReader.getMqttHost()+"\"");
@@ -79,7 +79,9 @@ public class WebApplication {
         try {
             //Spring Boot might handle the other params --> ignore those in the list (the unrecognised ones)
             Namespace res = parser.parseKnownArgs(args, new LinkedList<>());
-            Data_Generation.outputDirectory = res.getString("PDGFDirectory") + File.separator + "output";
+            // the argument parser renames the strings to contain underscores instead of minuses
+            DataGeneration.outputDirectory = res.getString("alternative_output_dir") != null? res.getString("alternative_output_dir") :  res.getString("PDGFDirectory") + File.separator + "output";
+
             UploadController.PDGF_DIR = res.getString("PDGFDirectory");
             UploadController.JAVA_7_DIR = res.getString("JAVA7");
             val load = res.getString("load");
