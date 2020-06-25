@@ -9,7 +9,7 @@ import de.hpi.tdgt.controllers.UploadController
 import de.hpi.tdgt.deserialisation.Deserializer.deserialize
 import de.hpi.tdgt.test.Test
 import de.hpi.tdgt.test.story.UserStory
-import de.hpi.tdgt.test.story.atom.Data_Generation
+import de.hpi.tdgt.test.story.atom.DataGeneration
 import de.hpi.tdgt.test.story.atom.Delay
 import de.hpi.tdgt.test.story.atom.Request
 import de.hpi.tdgt.test.story.atom.assertion.*
@@ -740,7 +740,7 @@ class MQTTTest : RequestHandlingFramework() {
     fun AnAssertionErrorIsSentIfDataGenerationDoesNotFindFile() {
         val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
         //test that does not do anything is sufficient, no need to waste resources here
-        val generation = Data_Generation()
+        val generation = DataGeneration()
         generation.table = "NotThere"
         generation.data = arrayOf("NotThere")
         generation.name = "generation"
@@ -770,7 +770,7 @@ class MQTTTest : RequestHandlingFramework() {
     fun AnAssertionErrorIsSentIfDataGenerationHasTooFewLines() {
         val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
         //test that does not do anything is sufficient, no need to waste resources here
-        val generation = Data_Generation()
+        val generation = DataGeneration()
         generation.table = "values"
         generation.data = arrayOf("username", "password")
         generation.name = "generation"
@@ -813,7 +813,7 @@ class MQTTTest : RequestHandlingFramework() {
     fun AnAssertionErrorIsSentIfDataGenerationHasTooFewColumns() {
         val messages: Set<String> = prepareClient(AssertionStorage.MQTT_TOPIC)
         //test that does not do anything is sufficient, no need to waste resources here
-        val generation = Data_Generation()
+        val generation = DataGeneration()
         generation.table = "values"
         //only 2 columns in file
         generation.data =

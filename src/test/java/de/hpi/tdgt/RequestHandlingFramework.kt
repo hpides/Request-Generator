@@ -1,8 +1,7 @@
 package de.hpi.tdgt
 
 import com.sun.net.httpserver.HttpServer
-import de.hpi.tdgt.test.Test
-import de.hpi.tdgt.test.story.atom.Data_Generation.Companion.reset
+import de.hpi.tdgt.test.story.atom.DataGeneration.Companion.reset
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.test.time_measurement.TimeStorage
 import org.apache.commons.io.IOUtils

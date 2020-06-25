@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import de.hpi.tdgt.concurrency.Event
 import de.hpi.tdgt.test.story.UserStory
-import de.hpi.tdgt.test.story.atom.Data_Generation
+import de.hpi.tdgt.test.story.atom.DataGeneration
 import de.hpi.tdgt.test.story.atom.WarmupEnd
 import de.hpi.tdgt.test.story.atom.assertion.AssertionStorage
 import de.hpi.tdgt.test.time_measurement.TimeStorage
@@ -198,7 +198,7 @@ class Test {
                 stories.iterator().forEach {
                     it.watchdog?.interrupt()
                 }
-                Data_Generation.reset()
+                DataGeneration.reset()
                 //this resets all state atoms might have
                 stories = cloneStories(stories_clone)
                 //do not run another warmup after the last run, because it would not be finished
@@ -283,7 +283,7 @@ class Test {
         Event.unsignal(testStartEvent)
         //since only used in some scenarios, it is less shotgun surgery to set it here than to include it in all possible paths through RestClient.
         //mapping all files eagerly might improve performance, also this is needed to set an offset in the data
-        Arrays.stream(stories).forEach{ story -> Arrays.stream(story.getAtoms()).forEach { atom -> if(atom is Data_Generation){
+        Arrays.stream(stories).forEach{ story -> Arrays.stream(story.getAtoms()).forEach { atom -> if(atom is DataGeneration){
             atom.offsetPercentage = nodeNumber.toDouble() / nodes
             runBlocking {
                 atom.initScanner()
