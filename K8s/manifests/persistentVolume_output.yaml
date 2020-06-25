@@ -6,10 +6,10 @@ spec:
   capacity:
     storage: 5Gi
   accessModes:
-  - ReadWriteOnce
+    - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   storageClassName: output-storage
-  local:
+  hostPath:
     path: /mnt/disk/vol6
   nodeAffinity:
     required:
