@@ -22,6 +22,6 @@ class ThreadRecycler private constructor() {
 
     init {
 
-        executorService = Executors.newUnboundedVirtualThreadExecutor()
+        executorService = Executors.newVirtualThreadExecutor()
     }
 }
