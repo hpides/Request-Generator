@@ -22,10 +22,9 @@
 package de.hpi.tdgt.requesthandling;
 
 /**
- * Some HTTP constants for reuse.
+ * Some HTTP constants for reuse, taken from JMeter
  */
 public class HttpConstants {
-    //copied from jmeter
     public static final String SC_MOVED_PERMANENTLY = "301";
     public static final String SC_MOVED_TEMPORARILY = "302";
     public static final String SC_SEE_OTHER = "303";
