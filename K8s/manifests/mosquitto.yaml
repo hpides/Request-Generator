@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
         - name: mosquitto
-          image: localhost:5000/mosquitto:${tag}
+          image: ${mosquitto_image}:${tag}
           resources:
             requests:
               memory: "64Mi"

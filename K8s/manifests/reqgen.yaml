@@ -69,7 +69,7 @@ spec:
             claimName: pdgf-output-claim
       containers:
         - name: request-generator
-          image: localhost:5000/requestgenerator:${tag}
+          image: ${image}:${tag}
           resources:
             requests:
               memory: "1Gi"
